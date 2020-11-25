@@ -1,0 +1,24 @@
+{
+  "name": "nodedaemon",
+  "version": "1.0.0",
+  "description": "Connects to Home Assistant to collect states and issue commands.",
+  "main": "harunner.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "smarthome",
+    "hass"
+  ],
+  "author": "Mark Radbourne",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/markrad/nodedaemon"
+  },
+  "dependencies": {
+    "commander": "^6.2.0",
+    "log4js": "^6.3.0",
+    "websocket": "^1.0.32"
+  }
+}
