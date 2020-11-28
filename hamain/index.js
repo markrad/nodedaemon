@@ -52,7 +52,17 @@ class HaMain extends EventEmitter {
             });
 
             this.haInterface.on('error', (err) => {
-                throw err;
+                logger.error(`Connection lost ${err} - retrying`);
+                this.haInterface.kill();
+
+                var retryTimer = setInterval(() => {
+                    this.haInterface.start()
+                        .then(() => {
+                            logger.info('Reconnecton complete');
+                            clearInterval(retryTimer);
+                        })
+                        .catch((err) => logger.error(`Reconnection failed: ${err} - retrying`));
+                }, 5000);
             });
 
             logger.info(`Items loaded: ${Object.keys(this.items).length}`);

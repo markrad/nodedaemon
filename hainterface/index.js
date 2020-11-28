@@ -64,18 +64,16 @@ class HaInterface extends EventEmitter {
                 this.connection.on('close', (reasonCode, description) => {
                     logger.info(`Connection closed: ${reasonCode} - ${description}`);
                     this.emit('close', reasonCode, description);
-
-                    if (this.closing == true) {
-                        logger.info('Attempting reconnection');
-                        
-                    }
                 });
 
                 this.pingInterval = setInterval(() => {
                     let ping = { id: ++this.id, type: 'ping' };
                     this.sendPacket(ping, null)
-                        .then((response) => {})
-                        .catch((err) => logger.error(`Ping failed ${err}`));
+                        .then((_response) => {})
+                        .catch((err) => {
+                            logger.error(`Ping failed ${err}`);
+                            this.emit('error', err)
+                        });
                 }, this.pingRate);
 
                 resolve();
@@ -160,6 +158,10 @@ class HaInterface extends EventEmitter {
         });
 
         return ret;
+    }
+
+    kill() {
+        clearTimeout(this.pingInterval);
     }
 
     async subscribe() {
