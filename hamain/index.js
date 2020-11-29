@@ -35,8 +35,8 @@ class HaMain extends EventEmitter {
 
             this.haInterface.subscribe();
             this.haInterface.on('state_changed', (state) => {
+                let name = state.entity_id.split('.')[1];
                 if (state.new_state != null) {
-                    let name = state.entity_id.split('.')[1];
                     logger.trace(`${name} New state: ${state.new_state.state}`);
 
                     if (name in this.items) {
