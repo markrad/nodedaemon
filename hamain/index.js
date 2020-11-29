@@ -34,7 +34,7 @@ class HaMain extends EventEmitter {
             });
 
             this.haInterface.subscribe();
-            this.haInterface.on('state_changed', (state) => {
+            this.haInterface.on('state_changed', async (state) => {
                 let name = state.entity_id.split('.')[1];
                 if (state.new_state != null) {
                     logger.trace(`${name} New state: ${state.new_state.state}`);
@@ -43,7 +43,15 @@ class HaMain extends EventEmitter {
                         this.items[name].setReceivedState(state.new_state);
                     }
                     else {
-                        logger.warn(`Item ${name} not found`);
+                        logger.warn(`Item ${name} not found - refreshing devices`);
+                        let states = await this.haInterface.getStates();
+                        states.forEach((item) => {
+                            if (!item.item.entity_id.split('.')[1] in itemthis.items) {
+                                let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
+                                this.items[itemInstance.name] = itemInstance;
+                                logger.info(`Added new item ${itemInstance.name}`);
+                            }
+                        });
                     }
                 }
                 else {
