@@ -46,7 +46,7 @@ class HaMain extends EventEmitter {
                         logger.warn(`Item ${name} not found - refreshing devices`);
                         let states = await this.haInterface.getStates();
                         states.forEach((item) => {
-                            if (!item.item.entity_id.split('.')[1] in itemthis.items) {
+                            if (!item.entity_id.split('.')[1] in this.items) {
                                 let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
                                 this.items[itemInstance.name] = itemInstance;
                                 logger.info(`Added new item ${itemInstance.name}`);
