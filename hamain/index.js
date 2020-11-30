@@ -63,6 +63,23 @@ class HaMain extends EventEmitter {
                 logger.error(`Connection lost ${err} - retrying`);
                 this.haInterface.kill();
 
+                let connected = false;
+
+                while (!connected) {
+                    this.haInterface.start()
+                        .then(() => {
+                            logger.info('Reconnecton complete');
+                            connected = true;
+                        })
+                        .catch((err) => logger.error(`Reconnection failed: ${err} - retrying`));
+                    
+                    await async (() => {
+                        return new Promise((resolve, _reject) => {
+                            setTimeout(() => resolve(), 5000);
+                        }); 
+                    });
+                }
+
                 var retryTimer = setInterval(() => {
                     this.haInterface.start()
                         .then(() => {
