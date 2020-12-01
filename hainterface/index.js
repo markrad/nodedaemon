@@ -18,6 +18,7 @@ class HaInterface extends EventEmitter {
         this.pingRate = pingRate || 60000;
         this.pingInterval = 0;
         this.closing = false;
+        this.connected = false;
     }
 
     async start() {
@@ -25,6 +26,7 @@ class HaInterface extends EventEmitter {
             try {
                 this.connection = await this._connect();
                 logger.info(`Connection complete`);
+                this.connected = true;
                 let eventCount = 0;
                 let that = this;
 
@@ -58,11 +60,13 @@ class HaInterface extends EventEmitter {
 
                 this.connection.on('error', (err) => {
                     logger.debug(`Connection errored: ${err}`);
+                    this._kill();
                     this.emit('error', err);
                 });
 
                 this.connection.on('close', (reasonCode, description) => {
                     logger.info(`Connection closed: ${reasonCode} - ${description}`);
+                    this._kill();
                     this.emit('close', reasonCode, description);
                 });
 
@@ -153,14 +157,19 @@ class HaInterface extends EventEmitter {
                 clearTimeout(timer);
                 resolve();
             });
-            clearTimeout(this.pingInterval);
+            this._kill();
             this.connection.close(1000);
         });
 
         return ret;
     }
 
-    kill() {
+    get isConnected() {
+        return this.connected;
+    }
+
+    _kill() {
+        this.connected = false;
         clearTimeout(this.pingInterval);
     }
 

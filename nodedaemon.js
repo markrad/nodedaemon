@@ -15,8 +15,16 @@ async function main(config) {
     try {
         var haMain = new HaMain(config);
 
+        process.stdin.resume();
+        ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
+            process.on(eventType, async (signal) => {
+                logger.fatal(`Clean up after event ${signal}`);
+                await haMain.stop();
+                process.exit(4);
+            });
+        });
+
         await haMain.start();
-        //await haMain.stop();
     }
     catch (err) {
         logger.error(`Error: ${err}`);

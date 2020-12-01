@@ -4,6 +4,7 @@ const fs = require('fs');
 var log4js = require('log4js');
 var HaInterface = require('../hainterface');
 var HaItemFactory = require('../haitems');
+const { description } = require('commander');
 
 const CATEGORY = 'HaMain';
 var logger = log4js.getLogger(CATEGORY);
@@ -18,6 +19,7 @@ class HaMain extends EventEmitter {
         this.apps = [];
         this.haItemFactory = null;
         this.config = config;
+        this.stopping = false;
     }
 
     async start() {
@@ -61,33 +63,12 @@ class HaMain extends EventEmitter {
 
             this.haInterface.on('error', async (err) => {
                 logger.error(`Connection lost ${err} - retrying`);
-                this.haInterface.kill();
+                await this._reconnect(err);
+            });
 
-                let connected = false;
-
-                while (!connected) {
-                    this.haInterface.start()
-                        .then(() => {
-                            logger.info('Reconnecton complete');
-                            connected = true;
-                        })
-                        .catch((err) => logger.error(`Reconnection failed: ${err} - retrying`));
-                    
-                    await async (() => {
-                        return new Promise((resolve, _reject) => {
-                            setTimeout(() => resolve(), 5000);
-                        }); 
-                    });
-                }
-
-                var retryTimer = setInterval(() => {
-                    this.haInterface.start()
-                        .then(() => {
-                            logger.info('Reconnecton complete');
-                            clearInterval(retryTimer);
-                        })
-                        .catch((err) => logger.error(`Reconnection failed: ${err} - retrying`));
-                }, 5000);
+            this.haInterface.on('close', async (reasonCode, description) => {
+                logger.info(`Connection closed by server: ${reasonCode} - ${description} ${!this.stopping? "- retrying" : "- shutdown complete"}`);
+                await this._reconnect();
             });
 
             logger.info(`Items loaded: ${Object.keys(this.items).length}`);
@@ -122,16 +103,48 @@ class HaMain extends EventEmitter {
     }
 
     async stop() {
-        try {
-            await this.haInterface.stop();
-        }
-        catch (err) {
-            logger.error(`Error: ${err}`);
-            logger.info(`Stack:\n${err.stack}`);
-            throw err;
-        }
+        return new Promise(async (resolve, reject) => {
+            this.stopping = true;
+            try {
+                if (this.haInterface.isConnected) {
+                    await this.haInterface.stop();
+                }
+                resolve();
+            }
+            catch (err) {
+                logger.error(`Error: ${err}`);
+                logger.info(`Stack:\n${err.stack}`);
+                reject(err);
+            }
+            });
     }
 
+    async _reconnect(err) {
+        return new Promise(async (resolve, reject) => {
+            if (this.stopping || err) {
+                let connected = false;
+
+                while (!connected) {
+
+                    try {
+                        await this.haInterface.start();
+                        logger.info('Reconnecton complete');
+                        connected = true;
+                    }
+                    catch (err) {
+                        logger.error(`Reconnection failed: ${err} - retrying`);
+                    }
+                    
+                    await this._wait(5);
+                }
+            }
+        });
+    }
+
+    async _wait(seconds) {
+        return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    }
+    
     async _getApps() {
         let ret = new Promise(async (resolve, reject) => {
             try {

@@ -9,12 +9,6 @@ class DynDnsUpdater {
     constructor(items, config) {
         this.external_ip = items.external_ip;
         this.lastUpdate = items.last_dns_update;
-        this.updateTime = new Date(this.lastUpdate.state);
-
-        if (isNaN(this.updateTime.getDate())) {
-            this.updateTime = new Date(0);
-        }
-
         this.user = config.dyndnsupdater.user;
         this.updaterKey = config.dyndnsupdater.updaterKey;
         this.hostname = config.dyndnsupdater.hostname;
@@ -24,9 +18,14 @@ class DynDnsUpdater {
     async run() {
         this.external_ip.on('new_state', (item, oldState) => {
             var now = new Date();
+            var then = new Date(this.lastUpdate.state);
 
+            if (isNaN(then.getDate())) {
+                this.updateTime = new Date(0);
+            }
+    
             // Update when IP address changes or at least once every 24 hours
-            if (now.valueOf() - this.updateTime.valueOf() > ONE_DAY || item.state != oldState.state) {
+            if (now.valueOf() / 1000 - then.valueOf() / 1000 > ONE_DAY || item.state != oldState.state) {
                 logger.info(`Updating DynDNS IP address to ${item.state}`);
                 this.first = false;
                 let allchunks = '';
