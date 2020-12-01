@@ -59,7 +59,7 @@ class HaMain extends EventEmitter {
                 }
             });
 
-            this.haInterface.on('error', (err) => {
+            this.haInterface.on('error', async (err) => {
                 logger.error(`Connection lost ${err} - retrying`);
                 this.haInterface.kill();
 

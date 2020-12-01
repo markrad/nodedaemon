@@ -2,13 +2,19 @@ const https = require('https');
 var log4js = require('log4js');
 
 const CATEGORY = 'DynDnsUpdater';
+const ONE_DAY = 86400;
 var logger = log4js.getLogger(CATEGORY);
 
 class DynDnsUpdater {
     constructor(items, config) {
         this.external_ip = items.external_ip;
-        //this.config = config;
-        this.first = true;
+        this.lastUpdate = items.last_dns_update;
+        this.updateTime = new Date(this.lastUpdate.state);
+
+        if (isNaN(this.updateTime.getDate())) {
+            this.updateTime = new Date(0);
+        }
+
         this.user = config.dyndnsupdater.user;
         this.updaterKey = config.dyndnsupdater.updaterKey;
         this.hostname = config.dyndnsupdater.hostname;
@@ -17,7 +23,10 @@ class DynDnsUpdater {
 
     async run() {
         this.external_ip.on('new_state', (item, oldState) => {
-            if (this.first == true || item.state != oldState.state) {
+            var now = new Date();
+
+            // Update when IP address changes or at least once every 24 hours
+            if (now.valueOf() - this.updateTime.valueOf() > ONE_DAY || item.state != oldState.state) {
                 logger.info(`Updating DynDNS IP address to ${item.state}`);
                 this.first = false;
                 let allchunks = '';
@@ -35,6 +44,13 @@ class DynDnsUpdater {
                         switch (allchunks.split(' ')[0]) {
                         case 'good':
                         case 'nochg':
+                            let nowString = now.getFullYear() + '-' +
+                                        (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                                        now.getDate().toString().padStart(2, '0') + ' ' +
+                                        now.getHours().toString().padStart(2, '0') + ':' +
+                                        now.getMinutes().toString().padStart(2, '0') + ':' +
+                                        now.getSeconds().toString().padStart(2, '0');
+                            this.lastUpdate.updateState(nowString);
                             logger.info(`DynDns IP address successfully updated to ${item.state}`);
                             break;
                         case 'badauth':

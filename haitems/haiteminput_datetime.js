@@ -13,19 +13,13 @@ class HaItemInputDateTime extends HaParentItem {
     }
 
     async updateState(newState) {
-        var m = '';
+        var m = new Date(newState);
 
-        if (_.isDate(newState) == false) {
-            m = new Date(newState);
+        if (isNaN(newState.getDate())) {
+            this.logger.error(`Specified date is invalid: ${m}`)
+            return;
+        }
 
-            if (isNaN(newState.getDate())) {
-                this.logger.error(`Specified date is invalid: ${m}`)
-                return;
-            }
-        }
-        else {
-            m = newState;
-        }
         let args = {
             entity_id: this.type + '.' + this.name,
             value: `${m.getFullYear()}-${(m.getMonth() + 1).toString().padStart(2, '0')}-${m.getDate().toString().padStart(2, '0')} ` +
