@@ -5,7 +5,6 @@ const HaParentItem = require('./haparentitem.js');
 class HaItemBinarySensor extends HaParentItem {
     constructor(item, transport) {
         super(item, transport);
-        let x = this.category;
         this.logger = log4js.getLogger(this.category);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {

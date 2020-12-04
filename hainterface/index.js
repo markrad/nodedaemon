@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
-var WebSocketClient = require('websocket').client;
+//var WebSocketClient = require('websocket').client;
+const WebSocket = require('ws');
 var log4js = require('log4js');
 const { reject } = require('underscore');
 
@@ -14,7 +15,7 @@ class HaInterface extends EventEmitter {
         super();
         this.accessToken = accessToken;
         this.connection = null;
-        this.client = new WebSocketClient();
+        this.client = null;
         this.url = url;
         this.id = 0;
         this.tracker = {};
@@ -27,22 +28,22 @@ class HaInterface extends EventEmitter {
     async start() {
         let ret = new Promise(async (resolve, reject) => {
             try {
-                this.connection = await this._connect(this.client, this.url);
+                this.client = await this._connect(this.client, this.url);
                 // await this._authenticate(this.connection);
                 logger.info(`Connection complete`);
                 this.connected = true;
                 let that = this;
 
-                this.connection.on('message', (message) => {
-                    if (message.type != 'utf8') {
-                        logger.warn(`Unrecognized message type: ${message.type}`);
+                this.client.on('message', (message) => {
+                    if (typeof message != 'string') {
+                        logger.warn(`Unrecognized message type: ${typeof message}`);
                     }
                     else {
-                        let msg = JSON.parse(message.utf8Data);
+                        let msg = JSON.parse(message);
         
                         if (msg.type == 'pong' || msg.type == 'result') {
                             if (msg.type != 'pong') {
-                                logger.trace(`Received:\n${JSON.stringify(JSON.parse(message.utf8Data), null, 2)}`);
+                                logger.trace(`Received:\n${JSON.stringify(JSON.parse(message), null, 2)}`);
                             }
 
                             if (msg.id in this.tracker) {
@@ -60,16 +61,16 @@ class HaInterface extends EventEmitter {
                     }
                 });
 
-                this.connection.on('error', async (err) => {
+                this.client.on('error', async (err) => {
                     logger.debug(`Connection errored: ${err} - reconnecting`);
                     this._kill();
-                    this.connection = await this._connect(this.client, this.url);
+                    this.client = await this._connect(this.url);
                     // await this._authenticate(this.connection);
                     logger.info(`Reconnection complete`);
                     this.connected = true;
                     });
 
-                this.connection.on('close', async (reasonCode, description) => {
+                this.client.on('close', async (reasonCode, description) => {
                     logger.info(`Connection closed: ${reasonCode} - ${description}`);
 
                     if (!this.closing) {
@@ -110,13 +111,13 @@ class HaInterface extends EventEmitter {
     async _connect(client, url) {
 
         return new Promise(async (resolve, reject) => {
-            var connection;
+            var client;
 
             while (true) {
                 try {
-                    connection = await this._innerconnect(client, url);
-                    this._authenticate(connection)
-                        .then(() => resolve(connection))
+                    client = await this._innerconnect(url);
+                    this._authenticate(client)
+                        .then(() => resolve(client))
                         .catch((err) => reject(err));
                     //resolve(connection);
                     break;
@@ -151,46 +152,46 @@ class HaInterface extends EventEmitter {
         });
     }
 
-    async _innerconnect(client, url) {
+    async _innerconnect(url) {
         return new Promise((resolve, reject) => {
+            var client = new WebSocket(url);
             var connectFailed = (err) => {
                 client.off('connected', connectSucceeded);
                 reject(ErrorFactory(err));
             };
 
-            var connectSucceeded = (connection) => {
+            var connectSucceeded = () => {
                 client.off('connectFailed', connectFailed);
-                resolve(connection);
+                resolve(client);
             };
-            client.once('connect', connectSucceeded);
-            client.once('connectFailed', connectFailed);
-            client.connect(url, null, null, null, null);
+            client.once('open', connectSucceeded);
+            client.once('error', connectFailed);
         });
     }
 
-    async _authenticate(connection) {
+    async _authenticate(client) {
         let ret = new Promise((resolve, reject) => {
             logger.debug('Authenticating');
 
-            connection.once('message', (message) => {
-                if (message.type != 'utf8') {
-                    logger.debug('wrong data type for auth_required');
+            client.once('message', (message) => {
+                if (typeof message != 'string') {
+                    logger.debug('Wrong data type for auth_required');
                     reject(new WebSocketError('Expected auth_required - received binary packet'));
                 }
 
-                let msg = JSON.parse(message.utf8Data);
+                let msg = JSON.parse(message);
 
                 if (msg.type != 'auth_required') {
                     logger.debug('Did not get auth_required');
                     reject(new AuthenticationError(`Expected auth_required - received ${msg.type}`));
                 }
 
-                connection.once('message', (message) => {
-                    if (message.type != 'utf8') {
+                client.once('message', (message) => {
+                    if (typeof message != 'string') {
                         reject(new WebSocketError('Expected auth - received binary packet'));
                     }
 
-                    let authResponse = JSON.parse(message.utf8Data);
+                    let authResponse = JSON.parse(message);
 
                     if (authResponse.type != 'auth_ok') {
                         if (authResponse.type == 'auth_invalid') {
@@ -202,17 +203,13 @@ class HaInterface extends EventEmitter {
                     }
                     else {
                         logger.info('Authentication is good');
-                        resolve(connection);
+                        resolve();
                     }
                 });
 
                 let auth = { type: 'auth', access_token: this.accessToken };
                 logger.debug(`Sending auth \n${JSON.stringify(auth, null, 2)}`);
-                connection.sendUTF(JSON.stringify(auth), (err) => {
-                    if (err) {
-                        reject(err);
-                    }
-                });
+                client.send(JSON.stringify(auth));
             });
         });
 
@@ -365,11 +362,7 @@ class HaInterface extends EventEmitter {
                     }
                 },
             };
-            this.connection.sendUTF(JSON.stringify(packet), (err) => {
-                if (err) {
-                    reject(err);
-                }
-            });
+            this.client.send(JSON.stringify(packet));
         });
 
         return ret;

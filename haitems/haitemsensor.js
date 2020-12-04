@@ -5,7 +5,6 @@ const HaParentItem = require('./haparentitem.js');
 class HaItemSensor extends HaParentItem {
     constructor(item, transport) {
         super(item, transport);
-        let x = this.category;
         this.logger = log4js.getLogger(this.category);
         if (this.name.startsWith('rr_router')) {
             this.logger.level = 'info';

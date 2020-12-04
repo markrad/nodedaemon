@@ -2,7 +2,7 @@ const log4js = require('log4js');
 
 const HaParentItem = require('./haparentitem.js');
 
-class HaItemMediaPlayer extends HaParentItem {
+class HaItemPersistentNotification extends HaParentItem {
     constructor(item, transport) {
         super(item, transport);
         this.logger = log4js.getLogger(this.category);
@@ -13,4 +13,4 @@ class HaItemMediaPlayer extends HaParentItem {
     }
 }
 
-module.exports = HaItemMediaPlayer;
+module.exports = HaItemPersistentNotification;
