@@ -32,6 +32,7 @@ class HaMain extends EventEmitter {
             states.forEach((item) => {
                 logger.trace(`Item name: ${item.entity_id}`);
                 let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
+                itemInstance.on('callservice', (domain, service, data) => this.haInterface.callService(domain, service, data));
                 this.items[itemInstance.name] = itemInstance;
             });
 
@@ -92,7 +93,9 @@ class HaMain extends EventEmitter {
             logger.info(`Apps loaded: ${this.apps.length}`);
 
             // Construct all apps
-            this.apps.forEach((app) => app.run());
+            this.apps.forEach((app) => {
+                app.run()
+            });
 
         }
         catch (err) {

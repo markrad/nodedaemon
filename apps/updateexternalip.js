@@ -43,10 +43,11 @@ class UpdateExternalIP {
     }
 
     async whatsMyIP() {
+        const IP_HOST = 'api.ipify.org';
         let ret = new Promise((resolve, reject) => {
             const options = {
                 // host: 'ipv4bot.whatismyipaddress.com',
-                host: 'api.ipify.org',
+                host: IP_HOST,
                 port: 80,
                 path: '/',
             };
@@ -58,8 +59,8 @@ class UpdateExternalIP {
                 res.on('data', chunk => allchunks += chunk);
                 res.on('end', () => resolve(allchunks));
             }).on('error', (err) => {
-                logger.error(`Failed to connect to whatismyipaddress.com: ${err}`);
-                rejects(err);
+                logger.error(`Failed to connect to ${IP_HOST}: ${err}`);
+                reject(err);
             });
         });
         

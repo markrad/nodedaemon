@@ -1,4 +1,5 @@
 const EventEmitter = require('events');
+const { emit } = require('process');
 
 class HaParentItem extends EventEmitter {
     constructor(item, transport) {
@@ -65,10 +66,14 @@ class HaParentItem extends EventEmitter {
         this.emit('new_state', this, oldState);
     }
 
-    async updateState(_newState) {
+    updateState(_newState) {
         let ret = new Promise((resolve, reject) => {
             reject(new Error('Descendent class is required to implement sendState'));
         });
+    }
+
+    callService(domain, service, state) {
+        this.emit('callservice', domain, service, state);
     }
 }
 

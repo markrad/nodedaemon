@@ -1,6 +1,9 @@
 const EventEmitter = require('events');
 var WebSocketClient = require('websocket').client;
 var log4js = require('log4js');
+const { reject } = require('underscore');
+
+const { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError, AuthenticationError } = require('./haInterfaceError');
 
 const CATEGORY = 'HaInterface';
 
@@ -24,16 +27,15 @@ class HaInterface extends EventEmitter {
     async start() {
         let ret = new Promise(async (resolve, reject) => {
             try {
-                this.connection = await this._connect();
+                this.connection = await this._connect(this.client, this.url);
+                // await this._authenticate(this.connection);
                 logger.info(`Connection complete`);
                 this.connected = true;
-                let eventCount = 0;
                 let that = this;
 
                 this.connection.on('message', (message) => {
                     if (message.type != 'utf8') {
                         logger.warn(`Unrecognized message type: ${message.type}`);
-                        reject(new Error(`Unrecognized message type: ${message.type}`))
                     }
                     else {
                         let msg = JSON.parse(message.utf8Data);
@@ -58,21 +60,35 @@ class HaInterface extends EventEmitter {
                     }
                 });
 
-                this.connection.on('error', (err) => {
-                    logger.debug(`Connection errored: ${err}`);
+                this.connection.on('error', async (err) => {
+                    logger.debug(`Connection errored: ${err} - reconnecting`);
                     this._kill();
-                    this.emit('error', err);
-                });
+                    this.connection = await this._connect(this.client, this.url);
+                    // await this._authenticate(this.connection);
+                    logger.info(`Reconnection complete`);
+                    this.connected = true;
+                    });
 
-                this.connection.on('close', (reasonCode, description) => {
+                this.connection.on('close', async (reasonCode, description) => {
                     logger.info(`Connection closed: ${reasonCode} - ${description}`);
-                    this._kill();
-                    this.emit('close', reasonCode, description);
+
+                    if (!this.closing) {
+                        logger.debug('Assuming service was restarted - reconnecting');
+                        this._kill();
+                        this.connection = await this._connect(this.client, this.url);
+                        // await this._authenticate(this.connection);
+                        this.connected = true;
+                        logger.info(`Reconnection complete`);
+                        this.connected = true;
+                    }
+                    else {
+                        closing = false;
+                    }
                 });
 
                 this.pingInterval = setInterval(() => {
                     let ping = { id: ++this.id, type: 'ping' };
-                    this.sendPacket(ping, null)
+                    this._sendPacket(ping, null)
                         .then((_response) => {})
                         .catch((err) => {
                             logger.error(`Ping failed ${err}`);
@@ -83,7 +99,7 @@ class HaInterface extends EventEmitter {
                 resolve();
             }
             catch (err) {
-                loggger.error(`Connection failed: ${err}`);
+                logger.fatal(`Connection failed: ${err}`);
                 reject(err);
             }
         });
@@ -91,56 +107,120 @@ class HaInterface extends EventEmitter {
         return ret;
     }
 
-    async _connect() {
-        let ret = new Promise((resolve, reject) => {
+    async _connect(client, url) {
 
-            this.client.once("connect", (connection) => {
-                connection.once('message', (message) => {
-                    if (message.type != 'utf8') {
-                        reject(new Error('Expected auth_required - received binary packet'));
+        return new Promise(async (resolve, reject) => {
+            var connection;
+
+            while (true) {
+                try {
+                    connection = await this._innerconnect(client, url);
+                    this._authenticate(connection)
+                        .then(() => resolve(connection))
+                        .catch((err) => reject(err));
+                    //resolve(connection);
+                    break;
+                }
+                catch (err) {
+                    if (err instanceof DNSError) {
+                        logger.fatal(`Unable to resolve host address: ${url}`);
+                        reject(err);
+                        break;
                     }
-
-                    let msg = JSON.parse(message.utf8Data);
-
-                    if (msg.type != 'auth_required') {
-                        reject(new Error(`Expected auth_required - received ${msg.type}`));
+                    else if (err instanceof GenericSyscallError) {
+                        logger.fatal(`Unhandled syscall error: ${err.syscall}`);
+                        reject(err);
                     }
-
-                    let auth = { type: 'auth', access_token: this.accessToken };
-
-                    connection.once('message', (message) => {
-                        if (message.type != 'utf8') {
-                            reject(new Error('Expected auth - received binary packet'));
-                        }
-
-                        let authResponse = JSON.parse(message.utf8Data);
-
-                        if (authResponse.type != 'auth_ok') {
-                            if (authResponse.type == 'auth_invalid') {
-                                reject(new Error(authResponse.message));
-                            }
-                            else {
-                                reject(new Error(`Expected an auth response - received ${authResponse.type}`));
-                            }
-                        }
-                        else {
-                            logger.info('Authentication is good');
-                            resolve(connection);
-                        }
-                    });
-
-                    connection.sendUTF(JSON.stringify(auth), (err) => {
-                        if (err) {
+                    else if (err instanceof ConnectionError) {
+                        if (err.errno != 'ECONNREFUSED') {
+                            logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
                             reject(err);
                         }
-                    });
-                })
+                        else {
+                            logger.info(`${err.message} - retrying`);
+                        }
+                    }
+                    else {
+                        logger.fatal(`Unhandled error ${err.message}`);
+                        reject(err);
+                    }
+                }
+                
+                this._wait(1);
+            }
+        });
+    }
+
+    async _innerconnect(client, url) {
+        return new Promise((resolve, reject) => {
+            var connectFailed = (err) => {
+                client.off('connected', connectSucceeded);
+                reject(ErrorFactory(err));
+            };
+
+            var connectSucceeded = (connection) => {
+                client.off('connectFailed', connectFailed);
+                resolve(connection);
+            };
+            client.once('connect', connectSucceeded);
+            client.once('connectFailed', connectFailed);
+            client.connect(url, null, null, null, null);
+        });
+    }
+
+    async _authenticate(connection) {
+        let ret = new Promise((resolve, reject) => {
+            logger.debug('Authenticating');
+
+            connection.once('message', (message) => {
+                if (message.type != 'utf8') {
+                    logger.debug('wrong data type for auth_required');
+                    reject(new WebSocketError('Expected auth_required - received binary packet'));
+                }
+
+                let msg = JSON.parse(message.utf8Data);
+
+                if (msg.type != 'auth_required') {
+                    logger.debug('Did not get auth_required');
+                    reject(new AuthenticationError(`Expected auth_required - received ${msg.type}`));
+                }
+
+                connection.once('message', (message) => {
+                    if (message.type != 'utf8') {
+                        reject(new WebSocketError('Expected auth - received binary packet'));
+                    }
+
+                    let authResponse = JSON.parse(message.utf8Data);
+
+                    if (authResponse.type != 'auth_ok') {
+                        if (authResponse.type == 'auth_invalid') {
+                            reject(new AuthenticationError(authResponse.message));
+                        }
+                        else {
+                            reject(new AuthenticationError(`Expected an auth response - received ${authResponse.type}`));
+                        }
+                    }
+                    else {
+                        logger.info('Authentication is good');
+                        resolve(connection);
+                    }
+                });
+
+                let auth = { type: 'auth', access_token: this.accessToken };
+                logger.debug(`Sending auth \n${JSON.stringify(auth, null, 2)}`);
+                connection.sendUTF(JSON.stringify(auth), (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                });
             });
         });
 
-        this.client.connect(this.url, null, null, null, null);
-
         return ret;
+    }
+
+    async _wait(seconds) {
+        return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
 
     async stop() {
@@ -176,7 +256,7 @@ class HaInterface extends EventEmitter {
     async subscribe() {
         let ret = new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'subscribe_events' };
-            this.sendPacket(packet, null)
+            this._sendPacket(packet, null)
                 .then((response) => {
                     logger.info('Subscribed to events');
                     resolve(response.result);
@@ -193,7 +273,7 @@ class HaInterface extends EventEmitter {
     async getStates() {
         let ret = new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_states' };
-            this.sendPacket(packet, null)
+            this._sendPacket(packet, null)
                 .then((response) => {
                     logger.info('States acquired');
                     resolve(response.result);
@@ -210,7 +290,7 @@ class HaInterface extends EventEmitter {
     async getConfig() {
         let ret = new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_config' };
-            this.sendPacket(packet, null)
+            this._sendPacket(packet, null)
                 .then((response) => {
                     logger.info('Config acquired');
                     resolve(response.result);
@@ -227,7 +307,7 @@ class HaInterface extends EventEmitter {
     async getPanels() {
         let ret = new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_panels' };
-            this.sendPacket(packet, null)
+            this._sendPacket(packet, null)
                 .then((response) => {
                     logger.info('Panels acquired');
                     resolve(response.result);
@@ -244,9 +324,9 @@ class HaInterface extends EventEmitter {
     async callService(domain, service, data) {
         let ret = new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'call_service', domain: domain, service: service, service_data: data };
-            this.sendPacket(packet, null)
+            this._sendPacket(packet, null)
                 .then((response) => {
-                    logger.info('Service call successful');
+                    logger.debug('Service call successful');
                     resolve(response.result);
                 })
                 .catch((err) => {
@@ -258,8 +338,11 @@ class HaInterface extends EventEmitter {
         return ret;
     }
 
-    async sendPacket(packet, handler) {
+    async _sendPacket(packet, handler) {
         let ret = new Promise((resolve, reject) => {
+            if (this.connected == false) {
+                reject(new Error('Connection to server has failed'));
+            }
             let timer = setTimeout((packet) => {
                 logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
                 delete this.tracker[packet.id];

@@ -29,6 +29,7 @@ async function main(config) {
     catch (err) {
         logger.error(`Error: ${err}`);
         logger.fatal(err.stack);
+        process.exit(4);
     }
 }
 

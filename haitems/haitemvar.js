@@ -11,13 +11,13 @@ class HaItemVar extends HaParentItem {
         });
     }
 
-    async updateState(newState) {
+    updateState(newState) {
         let args = {
             entity_id: this.type + '.' + this.name,
             value: newState,
         };
 
-        this._transport.callService('var', 'set', args);
+        this.callService('var', 'set', args);
     }
 }
 
