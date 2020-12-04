@@ -1,5 +1,4 @@
 const EventEmitter = require('events');
-//var WebSocketClient = require('websocket').client;
 const WebSocket = require('ws');
 var log4js = require('log4js');
 const { reject } = require('underscore');
@@ -14,7 +13,6 @@ class HaInterface extends EventEmitter {
     constructor(url, accessToken, pingRate) {
         super();
         this.accessToken = accessToken;
-        this.connection = null;
         this.client = null;
         this.url = url;
         this.id = 0;
@@ -28,11 +26,10 @@ class HaInterface extends EventEmitter {
     async start() {
         let ret = new Promise(async (resolve, reject) => {
             try {
-                this.client = await this._connect(this.client, this.url);
-                // await this._authenticate(this.connection);
+                this.client = await this._connect(this.url);
                 logger.info(`Connection complete`);
                 this.connected = true;
-                let that = this;
+                //let that = this;
 
                 this.client.on('message', (message) => {
                     if (typeof message != 'string') {
@@ -64,23 +61,22 @@ class HaInterface extends EventEmitter {
                 this.client.on('error', async (err) => {
                     logger.debug(`Connection errored: ${err} - reconnecting`);
                     this._kill();
-                    this.client = await this._connect(this.url);
-                    // await this._authenticate(this.connection);
-                    logger.info(`Reconnection complete`);
+                    await this.start();
                     this.connected = true;
-                    });
+                    logger.info(`Reconnection complete`);
+                    this.emit('reconnected');
+                });
 
-                this.client.on('close', async (reasonCode, description) => {
-                    logger.info(`Connection closed: ${reasonCode} - ${description}`);
+                this.client.on('close', async (reasonCode) => {
+                    logger.info(`Connection closed: ${reasonCode}`);
 
                     if (!this.closing) {
                         logger.debug('Assuming service was restarted - reconnecting');
                         this._kill();
-                        this.connection = await this._connect(this.client, this.url);
-                        // await this._authenticate(this.connection);
+                        await this.start();
                         this.connected = true;
                         logger.info(`Reconnection complete`);
-                        this.connected = true;
+                        this.emit('reconnected');
                     }
                     else {
                         closing = false;
@@ -93,7 +89,6 @@ class HaInterface extends EventEmitter {
                         .then((_response) => {})
                         .catch((err) => {
                             logger.error(`Ping failed ${err}`);
-                            this.emit('error', err)
                         });
                 }, this.pingRate);
 
@@ -108,7 +103,7 @@ class HaInterface extends EventEmitter {
         return ret;
     }
 
-    async _connect(client, url) {
+    async _connect(url) {
 
         return new Promise(async (resolve, reject) => {
             var client;
@@ -119,7 +114,6 @@ class HaInterface extends EventEmitter {
                     this._authenticate(client)
                         .then(() => resolve(client))
                         .catch((err) => reject(err));
-                    //resolve(connection);
                     break;
                 }
                 catch (err) {

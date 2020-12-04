@@ -39,37 +39,32 @@ class HaMain extends EventEmitter {
             this.haInterface.subscribe();
             this.haInterface.on('state_changed', async (state) => {
                 let name = state.entity_id.split('.')[1];
-                if (state.new_state != null) {
-                    logger.trace(`${name} New state: ${state.new_state.state}`);
 
-                    if (name in this.items) {
+                if (name in this.items) {
+                    if (state.new_state != null) {
+                        logger.trace(`${name} New state: ${state.new_state.state}`);
                         this.items[name].setReceivedState(state.new_state);
                     }
                     else {
-                        logger.warn(`Item ${name} not found - refreshing devices`);
-                        let states = await this.haInterface.getStates();
-                        states.forEach((item) => {
-                            if (!item.entity_id.split('.')[1] in this.items) {
-                                let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
-                                this.items[itemInstance.name] = itemInstance;
-                                logger.info(`Added new item ${itemInstance.name}`);
-                            }
-                        });
+                        logger.info(`Item ${name} has been dropped`);
+                        delete this.items[name];
                     }
                 }
                 else {
-                    logger.warn(`${name} received state update but new state was null`);
+                    logger.warn(`Item ${name} not found - refreshing devices`);
+                    let states = await this.haInterface.getStates();
+                    states.forEach((item) => {
+                        if (!item.entity_id.split('.')[1] in this.items) {
+                            let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
+                            this.items[itemInstance.name] = itemInstance;
+                            logger.info(`Added new item ${itemInstance.name}`);
+                        }
+                    });
                 }
             });
 
-            this.haInterface.on('error', async (err) => {
-                logger.error(`Connection lost ${err} - retrying`);
-                await this._reconnect(err);
-            });
-
-            this.haInterface.on('close', async (reasonCode, description) => {
-                logger.info(`Connection closed by server: ${reasonCode} - ${description} ${!this.stopping? "- retrying" : "- shutdown complete"}`);
-                await this._reconnect();
+            this.haInterface.on('reconnected', () => {
+                this.haInterface.subscribe();
             });
 
             logger.info(`Items loaded: ${Object.keys(this.items).length}`);
