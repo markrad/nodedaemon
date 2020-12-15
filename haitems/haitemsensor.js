@@ -3,8 +3,8 @@ const log4js = require('log4js');
 const HaParentItem = require('./haparentitem.js');
 
 class HaItemSensor extends HaParentItem {
-    constructor(item, transport) {
-        super(item, transport);
+    constructor(item) {
+        super(item);
         this.logger = log4js.getLogger(this.category);
         if (this.name.startsWith('rr_router')) {
             this.logger.level = 'info';

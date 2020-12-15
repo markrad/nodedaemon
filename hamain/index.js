@@ -32,8 +32,21 @@ class HaMain extends EventEmitter {
             states.forEach((item) => {
                 logger.trace(`Item name: ${item.entity_id}`);
                 let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
-                itemInstance.on('callservice', (domain, service, data) => this.haInterface.callService(domain, service, data));
-                this.items[itemInstance.name] = itemInstance;
+                itemInstance.on('callservice', async (domain, service, data) => {
+                    try {
+                        await this.haInterface.callService(domain, service, data)
+                    }
+                    catch (err) {
+                        // Error already logged
+                    }
+                });
+
+                if (itemInstance in this.items) {
+                    logger.fatal('fuck');
+                }
+                else {
+                    this.items[itemInstance.name] = itemInstance;
+                }
             });
 
             this.haInterface.subscribe();
@@ -54,7 +67,7 @@ class HaMain extends EventEmitter {
                     logger.warn(`Item ${name} not found - refreshing devices`);
                     let states = await this.haInterface.getStates();
                     states.forEach((item) => {
-                        if (!item.entity_id.split('.')[1] in this.items) {
+                        if (!(item.entity_id.split('.')[1] in this.items)) {
                             let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
                             this.items[itemInstance.name] = itemInstance;
                             logger.info(`Added new item ${itemInstance.name}`);
@@ -65,6 +78,11 @@ class HaMain extends EventEmitter {
 
             this.haInterface.on('reconnected', () => {
                 this.haInterface.subscribe();
+            });
+
+            this.haInterface.on('fatal_error', (err) => {
+                logger.fatal(`Transport layer reports fatal error - ${err.message}`);
+                process.exit(4);
             });
 
             logger.info(`Items loaded: ${Object.keys(this.items).length}`);
@@ -89,7 +107,12 @@ class HaMain extends EventEmitter {
 
             // Construct all apps
             this.apps.forEach((app) => {
-                app.run()
+                try {
+                    app.run()
+                }
+                catch (err) {
+                    logger.warn(`Could not run app ${app.__proto__.constructor.name} - ${err}`);
+                }
             });
 
         }
@@ -152,7 +175,13 @@ class HaMain extends EventEmitter {
                 for await (const dirent of dir) {
                     if (dirent.name.endsWith('.js')) {
                         let app = require(path.join('../apps', dirent.name));
-                        apps.push(new app(this.items, this.config));
+                        try {
+                            let appobject = new app(this.items, this.config);
+                            apps.push(appobject);
+                        }
+                        catch (err) {
+                            logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
+                        }
                     }
                 }
 

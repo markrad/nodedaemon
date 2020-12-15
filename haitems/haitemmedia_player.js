@@ -3,8 +3,8 @@ const log4js = require('log4js');
 const HaParentItem = require('./haparentitem.js');
 
 class HaItemMediaPlayer extends HaParentItem {
-    constructor(item, transport) {
-        super(item, transport);
+    constructor(item) {
+        super(item);
         this.logger = log4js.getLogger(this.category);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {

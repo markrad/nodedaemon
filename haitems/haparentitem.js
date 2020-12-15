@@ -1,8 +1,9 @@
 const EventEmitter = require('events');
+const { Logger } = require('log4js');
 const { emit } = require('process');
 
 class HaParentItem extends EventEmitter {
-    constructor(item, transport) {
+    constructor(item) {
         super();
         this._itemAttributes = item.attributes;
         this._name = '';
@@ -12,7 +13,6 @@ class HaParentItem extends EventEmitter {
         this._lastChanged = new Date(item.last_changed);
         this._lastUpdated = new Date(item.last_updated);
         this._state = item.state;
-        this._transport = transport;
     }
 
     get itemAttributes() {
@@ -66,14 +66,49 @@ class HaParentItem extends EventEmitter {
         this.emit('new_state', this, oldState);
     }
 
-    updateState(_newState) {
-        let ret = new Promise((resolve, reject) => {
+    async updateState(_newState) {
+        let ret = new Promise((_resolve, reject) => {
             reject(new Error('Descendent class is required to implement sendState'));
         });
     }
 
     callService(domain, service, state) {
         this.emit('callservice', domain, service, state);
+    }
+
+    _callServicePromise(resolve, newState, expectedState, domain, service, state) {
+        
+        if (service == 'error') {
+            err = new Error(`Bad value passed to updateState - ${newState}`);
+            this.logger.error(`${err.message}`);
+            resolve(action, err);
+            return;
+        }
+
+        var timer = setTimeout(() => {
+            var err = new Error('Timeout waiting for state change');
+            this.logger.warn(`${err.message}`);
+            resolve('error', err);
+        }, 3000);
+
+        this.once('new_state', (that, _oldState) => {
+            clearTimeout(timer);
+            
+            if (that.state == expectedState) {
+                resolve('success');
+            }
+            else {
+                var err = new Error('New state did not match expected state');
+                this.logger.info(`${err.message}`);
+                resolve('warn', err);
+            }
+        });
+
+        this.callService(domain, service, state);
+    }
+
+    _getActionAndExpectedSNewtate(newState) {
+        return { action: newState, expectedNewState: newState };
     }
 }
 

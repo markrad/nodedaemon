@@ -29,7 +29,6 @@ class HaInterface extends EventEmitter {
                 this.client = await this._connect(this.url);
                 logger.info(`Connection complete`);
                 this.connected = true;
-                //let that = this;
 
                 this.client.on('message', (message) => {
                     if (typeof message != 'string') {
@@ -58,13 +57,23 @@ class HaInterface extends EventEmitter {
                     }
                 });
 
+                var restart = async (that) => {
+                    that._kill();
+                    
+                    try {
+                        await that.start();
+                        that.connected = true;
+                        logger.info(`Reconnection complete`);
+                        that.emit('reconnected');
+                    }
+                    catch (err) {
+                        that.emit('fatal_error', err);
+                    }
+                }
+
                 this.client.on('error', async (err) => {
                     logger.debug(`Connection errored: ${err} - reconnecting`);
-                    this._kill();
-                    await this.start();
-                    this.connected = true;
-                    logger.info(`Reconnection complete`);
-                    this.emit('reconnected');
+                    restart(this);
                 });
 
                 this.client.on('close', async (reasonCode) => {
@@ -72,11 +81,7 @@ class HaInterface extends EventEmitter {
 
                     if (!this.closing) {
                         logger.debug('Assuming service was restarted - reconnecting');
-                        this._kill();
-                        await this.start();
-                        this.connected = true;
-                        logger.info(`Reconnection complete`);
-                        this.emit('reconnected');
+                        restart(this);
                     }
                     else {
                         closing = false;
@@ -351,7 +356,6 @@ class HaInterface extends EventEmitter {
                         resolve(response);
                     }
                     else {
-                        logger.error(`Call failed: ${response}`);
                         reject(new Error('Bad response:' + JSON.stringify(response)));
                     }
                 },

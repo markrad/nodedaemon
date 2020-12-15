@@ -4,8 +4,8 @@ const _ = require('underscore');
 const HaParentItem = require('./haparentitem.js');
 
 class HaItemInputDateTime extends HaParentItem {
-    constructor(item, transport) {
-        super(item, transport);
+    constructor(item) {
+        super(item);
         this.logger = log4js.getLogger(this.category);
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
@@ -13,20 +13,33 @@ class HaItemInputDateTime extends HaParentItem {
     }
 
     async updateState(newState) {
-        var m = new Date(newState);
+        return new Promise((resolve, _reject) => {
+            var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
 
-        if (isNaN(newState.getDate())) {
-            this.logger.error(`Specified date is invalid: ${m}`)
-            return;
+            if (action == 'error') {
+                err = new Error(`Bad value passed to updateState - ${newState}`);
+                this.logger.error(`${err.message}`);
+                resolve(action, err);
+            }
+            else {
+                this._callServicePromise(resolve, newState, expectedNewState, 'var', action, { entity_id: this.entityId, value: exepectedNewState });
+            }
+        });
+    }
+
+    _getActionAndExpectedSNewtate(newState) {
+        let action = 'set';
+        let m = new Date(newState);
+        let expectedNewState = '';
+
+        if (isNaN(m.getDate())) {
+            action = 'error';
         }
-
-        let args = {
-            entity_id: this.type + '.' + this.name,
-            value: `${m.getFullYear()}-${(m.getMonth() + 1).toString().padStart(2, '0')}-${m.getDate().toString().padStart(2, '0')} ` +
-                `${m.getHours().toString().padStart(2, '0')}:${m.getMinutes().toString().padStart(2, '0')}:${m.getSeconds().toString().padStart(2, '0')}}`,
-        };
-
-        this._transport.callService('var', 'set', args);
+        else {
+            expectedState = `${m.getFullYear()}-${(m.getMonth() + 1).toString().padStart(2, '0')}-${m.getDate().toString().padStart(2, '0')} ` +
+            `${m.getHours().toString().padStart(2, '0')}:${m.getMinutes().toString().padStart(2, '0')}:${m.getSeconds().toString().padStart(2, '0')}}`
+        }
+        return { action: action, expectedNewState: expectedNewState };
     }
 }
 
