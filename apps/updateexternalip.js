@@ -26,10 +26,8 @@ class UpdateExternalIP {
                 try {
                     let currentIP = await this.whatsMyIP();
 
-                    //if (currentIP != this.external_ip.state) {
-                        logger.info(`Updating external IP address to ${currentIP}`);
-                        this.external_ip.updateState(currentIP);
-                    //}
+                    logger.info(`Updating external IP address to ${currentIP}`);
+                    this.external_ip.updateState(currentIP);
                 }
                 catch (err) {
                     logger.error(`Could not get IP address: ${err}`);
@@ -46,7 +44,6 @@ class UpdateExternalIP {
         const IP_HOST = 'api.ipify.org';
         let ret = new Promise((resolve, reject) => {
             const options = {
-                // host: 'ipv4bot.whatismyipaddress.com',
                 host: IP_HOST,
                 port: 80,
                 path: '/',

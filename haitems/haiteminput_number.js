@@ -15,7 +15,7 @@ class HaItemInputNumber extends HaParentItem {
     async updateState(newState) {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
-            this._callServicePromise(resolve, newState, expectedNewState, 'input_number', action, { entity_id: this.entityId, value: expectedNewState });
+            this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId, value: expectedNewState });
         });
     }
 

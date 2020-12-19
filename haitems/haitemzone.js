@@ -11,6 +11,18 @@ class HaItemZone extends HaParentItem {
             this.logger.debug(`Received new state: ${that.state}`);
         });
     }
+
+    get longitude() {
+        return this._itemAttributes.longitude;
+    }
+
+    get latitude() {
+        return this._itemAttributes.latitude;
+    }
+
+    get radius() {
+        return this._itemAttributes.radius;
+    }
 }
 
 module.exports = HaItemZone;

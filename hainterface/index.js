@@ -207,7 +207,7 @@ class HaInterface extends EventEmitter {
                 });
 
                 let auth = { type: 'auth', access_token: this.accessToken };
-                logger.debug(`Sending auth \n${JSON.stringify(auth, null, 2)}`);
+                //logger.debug(`Sending auth \n${JSON.stringify(auth, null, 2)}`);
                 client.send(JSON.stringify(auth));
             });
         });
