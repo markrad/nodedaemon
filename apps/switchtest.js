@@ -19,6 +19,8 @@ class SwitchTest {
             async () => this.bob.updateState(30),
             async () => this.bob.updateState(40),
             async () => this.bob.updateState(50),
+            async () => this.bob.updateState(50),
+            async () => this.bob.updateState(50),
             async () => this.bob.updateState(150),
             async () => this.bob.incrementState(),
             async () => this.bob.decrementState(),

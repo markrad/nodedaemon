@@ -3,6 +3,7 @@
 var sunCalc = require('suncalc');
 //var moment = require('moment');
 var schedule = require('node-schedule');
+const { config } = require('process');
 var EventEmitter = require('events').EventEmitter;
 
 const CATEGORY = 'Astro'
@@ -48,6 +49,7 @@ class Astro extends EventEmitter
         this.latitude = items[config.astro.zone].latitude;
         this.midnight = null;
         this.moon = null;
+        this.config = config.astro;
         logger.debug('Constructed')
     }
     
@@ -72,7 +74,7 @@ class Astro extends EventEmitter
 
         for (var event of this.events)
         {
-            this.times[event] = (Number(times1[event]) > Number(now))?
+            this.times[event] = (this._isAfter(times1[event], now))?
                 times1[event] :
                 times2[event];
 
@@ -81,6 +83,14 @@ class Astro extends EventEmitter
             {
                 logger.debug(`Firing event ${myEvent}`);
                 that.emit('astroevent', myEvent);
+                if (myEvent == config.astro.daystart) {
+                    logger.debug('Firing event isLight');
+                    that.emit('isLight');
+                }
+                else if (myEvent == config.astro.dayend) {
+                    logger.debug('Firing event isDark');
+                    that.emit('isDark');
+                }
             }, Number(this.times[event]) -  Number(now), event, this);
             
             logger.trace(`astro - Compare ${this.times[event].toString()} to ${latest.toString()}`);
@@ -181,26 +191,33 @@ class Astro extends EventEmitter
         return this.lastMoonPhaseSave;
     }
 
-    isDark()
-    {
-        var temp = moment();
+    get isDark() {
+        var temp = new Date();
         var result;
 
-        if (this.times[config.astro.daystart].isBefore(this.times[config.astro.dayend]))
-        {
-            result = (temp.isBetween(this.times[config.astro.daystart], this.times[config.astro.dayend]))? false : true;
-        }
-        else
-        {
-            result = (temp.isBetween(this.times[config.astro.dayend], this.times[config.astro.daystart]))? true : false;
+        if (this._isBefore(this.times[this.config.daystart], this.times[this.config.dayend])) {
+            result = (this._isBetween(temp, this.times[this.config.daystart], this.times[this.config.dayend]))? false : true;
+        } else {
+            result = (this._isBetween(this.times[this.config.dayend], this.times[this.config.daystart]))? true : false;
         }
 
         return result;
     }
 
-    isLight()
-    {
+    get isLight() {
         return this.isDark() == false;
+    }
+
+    _isBetween(test, low, high) {
+        return Number(test) > Number(low) && num < Number(high);
+    }
+
+    _isBefore(test, comparand) {
+        return Number(test) < Number(comparand);
+    }
+
+    _isAfter(test, comparand) {
+        return Number(test) > Number(comparand);
     }
 }
 

@@ -15,6 +15,7 @@ class AstroHelper {
 
     async run() {
         this.astro.on('astroevent', (event) => {
+            let now = new Date();
             this.lastEvent.updateState(event);
             let nowString = now.getFullYear() + '-' +
                 (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
@@ -25,8 +26,11 @@ class AstroHelper {
             this.lastUpdate.updateState(nowString);
         });
         this.astro.on('moonphase', (phase) => this.moon.updateState(phase));
+        this.astro.on('isLight', () => this.dark.updateState(true));
+        this.astro.on('isDark', () => this.dark.updateState(false))
         this.lastEvent.updateState(this.astro.lastEvent);
         this.moon.updateState(this.astro.lastMoonPhase)
+        this.dark.updateState(this.astro.isDark);
     }
     stop() {}
 }
