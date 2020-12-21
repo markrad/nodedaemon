@@ -181,7 +181,7 @@ class Astro extends EventEmitter
     getEvent(eventName)
     {
         if (this.times.hasOwnProperty(eventName))
-            return this.times[eventName].format();
+            return this.times[eventName];
         else
             return "0";
     }
