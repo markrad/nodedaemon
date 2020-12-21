@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const { Logger } = require('log4js');
+const { resolve } = require('path');
 const { emit } = require('process');
 
 class HaParentItem extends EventEmitter {
@@ -85,26 +86,32 @@ class HaParentItem extends EventEmitter {
             return;
         }
 
-        var timer = setTimeout(() => {
-            var err = new Error('Timeout waiting for state change');
-            this.logger.warn(`${err.message}`);
-            resolve('error', err);
-        }, 3000);
+        if (this.state != expectedState) {
+            var timer = setTimeout(() => {
+                var err = new Error('Timeout waiting for state change');
+                this.logger.warn(`${err.message}`);
+                resolve('error', err);
+            }, 3000);
 
-        this.once('new_state', (that, _oldState) => {
-            clearTimeout(timer);
-            
-            if (that.state == expectedState) {
-                resolve('success');
-            }
-            else {
-                var err = new Error('New state did not match expected state');
-                this.logger.info(`${err.message}`);
-                resolve('warn', err);
-            }
-        });
+            this.once('new_state', (that, _oldState) => {
+                clearTimeout(timer);
+                
+                if (that.state == expectedState) {
+                    resolve('success');
+                }
+                else {
+                    var err = new Error('New state did not match expected state');
+                    this.logger.info(`${err.message}`);
+                    resolve('warn', err);
+                }
+            });
 
-        this.callService(domain, service, state);
+            this.callService(domain, service, state);
+        }
+        else {
+            this.logger.debug(`Already in state ${this.state}`);
+            resolve('success');
+        }
     }
 
     _getActionAndExpectedSNewtate(newState) {

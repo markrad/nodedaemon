@@ -39,12 +39,12 @@ try {
     const program = new Command();
 
     const debugLevels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
-    const debugDefault = 'use value from config.json or info';
-
+    const debugDefault = debugLevels[3];
     program.version('1.0.0')
         .name('nodedaemon')
         .option('-D --debug <type>', `Specify logging level [${debugLevels.join(' | ')}]`, debugDefault)
         .option('-c, --config <locaton>', 'Specify name and location of config.json', './config.json')
+        .option('-a, --apps <location>', 'Location of apps directory', './apps')
         .parse(process.argv);
 
     defaultLogger.level = 'fatal';

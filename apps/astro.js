@@ -83,11 +83,11 @@ class Astro extends EventEmitter
             {
                 logger.debug(`Firing event ${myEvent}`);
                 that.emit('astroevent', myEvent);
-                if (myEvent == config.astro.daystart) {
+                if (myEvent == that.config.astro.daystart) {
                     logger.debug('Firing event isLight');
                     that.emit('isLight');
                 }
-                else if (myEvent == config.astro.dayend) {
+                else if (myEvent == that.config.astro.dayend) {
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }

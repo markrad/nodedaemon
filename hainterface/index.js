@@ -228,13 +228,13 @@ class HaInterface extends EventEmitter {
                 logger.warn('Failed to close before timeout')
                 reject(new Error('Failed to close connection'));
             }, 5000);
-            this.connection.once('close', (reason, description) => {
+            this.client.once('close', (reason, description) => {
                 logger.info('Closed');
                 clearTimeout(timer);
                 resolve();
             });
             this._kill();
-            this.connection.close(1000);
+            this.client.close(1000);
         });
 
         return ret;
