@@ -102,7 +102,7 @@ class HaMain extends EventEmitter {
                 logger.info(`${value}: ${itemTypes[value]}`);
             }); 
 
-            this.apps = await this._getApps();
+            this.apps = await this._getApps(this.config.main.appsDir);
             logger.info(`Apps loaded: ${this.apps.length}`);
 
             // Construct all apps
@@ -166,11 +166,11 @@ class HaMain extends EventEmitter {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
     
-    async _getApps() {
+    async _getApps(appsDirectory) {
         let ret = new Promise(async (resolve, reject) => {
             try {
                 let apps = [];
-                const dir = await fs.promises.opendir(path.join(__dirname, '../apps'));
+                const dir = await fs.promises.opendir(appsDirectory);
 
                 for await (const dirent of dir) {
                     if (dirent.name.endsWith('.js')) {

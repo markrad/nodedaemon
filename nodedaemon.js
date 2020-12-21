@@ -1,6 +1,7 @@
 var fs = require('fs');
 var log4js = require('log4js');
 const { Command } = require('commander');
+const path = require('path');
 
 var HaMain = require('./hamain');
 
@@ -39,12 +40,13 @@ try {
     const program = new Command();
 
     const debugLevels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
-    const debugDefault = debugLevels[3];
+    const debugDefault = 'none';
+    const appsdirDefault = 'none';
     program.version('1.0.0')
         .name('nodedaemon')
         .option('-D --debug <type>', `Specify logging level [${debugLevels.join(' | ')}]`, debugDefault)
         .option('-c, --config <locaton>', 'Specify name and location of config.json', './config.json')
-        .option('-a, --apps <location>', 'Location of apps directory', './apps')
+        .option('-a, --appsdir <location>', 'Location of apps directory', appsdirDefault)
         .parse(process.argv);
 
     defaultLogger.level = 'fatal';
@@ -82,10 +84,28 @@ try {
         process.exit(4);
     }
 
-    if (!config.main.debugLevel || program.opts().debug != debugDefault) {
-        config.main.debugLevel = program.opts().debug != debugDefault
-            ? program.opts().debug
-            : 'info';
+    if (program.opts().debug != debugDefault) {
+        config.main.debug = program.opts().debug;
+    }
+    else if (!config.main.debug) {
+        config.main.debug = 'info';
+    }
+
+    // if (!config.main.debugLevel || program.opts().debug != debugDefault) {
+    //     config.main.debugLevel = program.opts().debug != debugDefault
+    //         ? program.opts().debug
+    //         : 'info';
+    // }
+
+    if (program.opts().appsdir != appsdirDefault) {
+        config.main.appsDir = program.opts().appsDir;
+    }
+    else if (!config.main.appsDir) {
+        config.main.appsDir = './apps';
+    }
+
+    if (!path.isAbsolute(config.main.appsDir)) {
+        config.main.appsDir = path.join(process.cwd(), config.main.appsDir);
     }
 
     defaultLogger.level = config.main.debugLevel;
