@@ -5,22 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Test",
-            "program": "${workspaceFolder}/test.js",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "pwa-node"
-        },
-        {
             "type": "pwa-node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Launch nodedaemon",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\nodedaemon.js",
+            "program": "${workspaceFolder}/nodedaemon.js",
             "outputCapture": "std",
             "args": ["-D", "debug"]
         }

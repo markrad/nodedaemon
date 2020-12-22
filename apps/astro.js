@@ -1,7 +1,6 @@
 "use strict";
 
 var sunCalc = require('suncalc');
-//var moment = require('moment');
 var schedule = require('node-schedule');
 const { config } = require('process');
 var EventEmitter = require('events').EventEmitter;
@@ -50,14 +49,16 @@ class Astro extends EventEmitter
         this.midnight = null;
         this.moon = null;
         this.config = config.astro;
+        this._midnight();
+        this._updateMoon();
         logger.debug('Constructed')
     }
     
     run() {
         this.midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
         this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
-        this._midnight();
-        this._updateMoon();
+        // this._midnight();
+        // this._updateMoon();
     }
 
     stop() {
@@ -83,11 +84,11 @@ class Astro extends EventEmitter
             {
                 logger.debug(`Firing event ${myEvent}`);
                 that.emit('astroevent', myEvent);
-                if (myEvent == that.config.astro.daystart) {
+                if (myEvent == that.config.daystart) {
                     logger.debug('Firing event isLight');
                     that.emit('isLight');
                 }
-                else if (myEvent == that.config.astro.dayend) {
+                else if (myEvent == that.config.dayend) {
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }
