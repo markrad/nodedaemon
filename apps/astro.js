@@ -57,8 +57,6 @@ class Astro extends EventEmitter
     run() {
         this.midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
         this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
-        // this._midnight();
-        // this._updateMoon();
     }
 
     stop() {
