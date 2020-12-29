@@ -4,9 +4,9 @@ const CATEGORY = 'SwitchTest';
 var logger = log4js.getLogger(CATEGORY);
 
 class SwitchTest {
-    constructor(items, config) {
-        this.testtoggle = items.testtoggle;
-        this.bob = items.bob;
+    constructor(controller, config) {
+        this.testtoggle = controller.items.testtoggle;
+        this.bob = controller.items.bob;
         this.interval = null;
         logger.debug('Constructed');
     }

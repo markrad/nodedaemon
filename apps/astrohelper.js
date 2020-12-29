@@ -6,14 +6,14 @@ const CATEGORY = 'AstroHelper';
 const logger = require('log4js').getLogger(CATEGORY);
 
 class AstroHelper {
-    constructor(items, config) {
-        this.lastEvent = items[config.astrohelper.lastevent];
-        this.lastUpdate = items[config.astrohelper.lastupdate];
-        this.dark = items[config.astrohelper.dark];
-        this.moon = items[config.astrohelper.moon];
+    constructor(controller, config) {
+        this.lastEvent = controller.items[config.astrohelper.lastevent];
+        this.lastUpdate = controller.items[config.astrohelper.lastupdate];
+        this.dark = controller.items[config.astrohelper.dark];
+        this.moon = controller.items[config.astrohelper.moon];
         this.astro = new (require('./astro'))(items,config);
-        this.sunrise = items[config.astrohelper.sunrise];
-        this.sunset = items[config.astrohelper.sunset];
+        this.sunrise = controller.items[config.astrohelper.sunrise];
+        this.sunset = controller.items[config.astrohelper.sunset];
         logger.debug('Constructed');
     }
 
@@ -30,8 +30,8 @@ class AstroHelper {
             this.lastUpdate.updateState(nowString);
         });
         this.astro.on('moonphase', (phase) => this.moon.updateState(phase));
-        this.astro.on('isLight', () => this.dark.updateState(true));
-        this.astro.on('isDark', () => this.dark.updateState(false))
+        this.astro.on('isLight', () => this.dark.updateState(false));
+        this.astro.on('isDark', () => this.dark.updateState(true))
         this.lastEvent.updateState(this.astro.lastEvent);
         let now = new Date();
         let nowString = now.getFullYear() + '-' +

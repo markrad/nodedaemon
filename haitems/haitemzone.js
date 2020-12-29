@@ -13,15 +13,15 @@ class HaItemZone extends HaParentItem {
     }
 
     get longitude() {
-        return this._itemAttributes.longitude;
+        return this.attributes.longitude;
     }
 
     get latitude() {
-        return this._itemAttributes.latitude;
+        return this.attributes.latitude;
     }
 
     get radius() {
-        return this._itemAttributes.radius;
+        return this.attributes.radius;
     }
 }
 

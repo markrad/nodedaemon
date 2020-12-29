@@ -37,7 +37,8 @@ class GenericSyscallError extends HaInterfaceError {
 class ConnectionError extends HaInterfaceError {
     constructor(err) {
         super(err);
-        this.name - 'ConnectionError';
+        this.name = 'ConnectionError';
+        this.code = err.code;
     }
 }
 

@@ -6,7 +6,7 @@ const { emit } = require('process');
 class HaParentItem extends EventEmitter {
     constructor(item) {
         super();
-        this._itemAttributes = item.attributes;
+        this._attributes = item.attributes;
         this._name = '';
         this._type = '';
         [this._type, this._name] = item.entity_id.split('.');
@@ -16,8 +16,8 @@ class HaParentItem extends EventEmitter {
         this._state = item.state;
     }
 
-    get itemAttributes() {
-        return this._itemAttributes;
+    get attributes() {
+        return this._attributes;
     }
 
     get name() {
@@ -54,7 +54,7 @@ class HaParentItem extends EventEmitter {
 
     setReceivedState(newState) {
         let oldState = {
-            itemAttributes: this.ItemAttributes,
+            attributes: this.attributes,
             state: this.state,
             lastUpdated: this.lastUpdated,
             lastChanged: this.lastChanged,

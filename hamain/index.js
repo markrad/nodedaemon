@@ -15,11 +15,12 @@ class HaMain extends EventEmitter {
     constructor(config) {
         super();
         this.haInterface = null;
-        this.items = {};
+        this._items = {};
         this.apps = [];
         this.haItemFactory = null;
         this.config = config;
         this.stopping = false;
+        this._haConfig = null;
     }
 
     async start() {
@@ -27,6 +28,7 @@ class HaMain extends EventEmitter {
             this.haInterface = new HaInterface(this.config.main.url, this.config.main.accessToken);
             this.haItemFactory = new HaItemFactory();
             await this.haInterface.start();
+            this._haConfig = await this.haInterface.getConfig();
             let states = await this.haInterface.getStates();
 
             states.forEach((item) => {
@@ -41,11 +43,11 @@ class HaMain extends EventEmitter {
                     }
                 });
 
-                if (itemInstance in this.items) {
+                if (itemInstance in this._items) {
                     logger.fatal('fuck');
                 }
                 else {
-                    this.items[itemInstance.name] = itemInstance;
+                    this._items[itemInstance.name] = itemInstance;
                 }
             });
 
@@ -53,23 +55,23 @@ class HaMain extends EventEmitter {
             this.haInterface.on('state_changed', async (state) => {
                 let name = state.entity_id.split('.')[1];
 
-                if (name in this.items) {
+                if (name in this._items) {
                     if (state.new_state != null) {
                         logger.trace(`${name} New state: ${state.new_state.state}`);
-                        this.items[name].setReceivedState(state.new_state);
+                        this._items[name].setReceivedState(state.new_state);
                     }
                     else {
                         logger.info(`Item ${name} has been dropped`);
-                        delete this.items[name];
+                        delete this._items[name];
                     }
                 }
                 else {
                     logger.warn(`Item ${name} not found - refreshing devices`);
                     let states = await this.haInterface.getStates();
                     states.forEach((item) => {
-                        if (!(item.entity_id.split('.')[1] in this.items)) {
+                        if (!(item.entity_id.split('.')[1] in this._items)) {
                             let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
-                            this.items[itemInstance.name] = itemInstance;
+                            this._items[itemInstance.name] = itemInstance;
                             logger.info(`Added new item ${itemInstance.name}`);
                         }
                     });
@@ -85,16 +87,16 @@ class HaMain extends EventEmitter {
                 process.exit(4);
             });
 
-            logger.info(`Items loaded: ${Object.keys(this.items).length}`);
+            logger.info(`Items loaded: ${Object.keys(this._items).length}`);
 
             let itemTypes = {};
             
-            Object.keys(this.items).forEach((value, _index) => {
-                if (this.items[value].__proto__.constructor.name in itemTypes) {
-                    itemTypes[this.items[value].__proto__.constructor.name] += 1;
+            Object.keys(this._items).forEach((value, _index) => {
+                if (this._items[value].__proto__.constructor.name in itemTypes) {
+                    itemTypes[this._items[value].__proto__.constructor.name] += 1;
                 }
                 else {
-                    itemTypes[this.items[value].__proto__.constructor.name] = 1;
+                    itemTypes[this._items[value].__proto__.constructor.name] = 1;
                 }
             });
 
@@ -140,6 +142,14 @@ class HaMain extends EventEmitter {
             });
     }
 
+    get items() {
+        return this._items
+    }
+
+    get haConfig() {
+        return this._haConfig;
+    }
+
     async _reconnect(err) {
         return new Promise(async (resolve, reject) => {
             if (this.stopping || err) {
@@ -176,7 +186,7 @@ class HaMain extends EventEmitter {
                     if (dirent.name.endsWith('.js')) {
                         let app = require(path.join('../apps', dirent.name));
                         try {
-                            let appobject = new app(this.items, this.config);
+                            let appobject = new app(this, this.config);
                             apps.push(appobject);
                         }
                         catch (err) {

@@ -12,9 +12,9 @@ const logger = require('log4js').getLogger(CATEGORY);
 
 var instance = null;
 
-function wrapper(items, config) {
+function wrapper(controller, config) {
     if (instance == null) {
-        instance = new Astro(items,config);
+        instance = new Astro(controller, config);
     }
 
     return instance;
@@ -22,7 +22,7 @@ function wrapper(items, config) {
 
 class Astro extends EventEmitter
 {
-    constructor(items, config)
+    constructor(controller, config)
     {
         super();
         this.times = {};
@@ -44,8 +44,8 @@ class Astro extends EventEmitter
         ];
         this.lastEventSave = '';
         this.lastMoonPhaseSave = '';
-        this.longitude = items[config.astro.zone].longitude;
-        this.latitude = items[config.astro.zone].latitude;
+        this.longitude = controller.items[config.astro.zone].longitude;
+        this.latitude = controller.items[config.astro.zone].latitude;
         this.midnight = null;
         this.moon = null;
         this.config = config.astro;

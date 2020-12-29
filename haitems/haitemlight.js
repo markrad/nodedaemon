@@ -2,7 +2,7 @@ const log4js = require('log4js');
 
 const HaGenericSwitchItem = require('./hagenericswitchitem.js');
 
-class HaItemSwitch extends HaGenericSwitchItem {
+class HaItemLight extends HaGenericSwitchItem {
     constructor(item) {
         super(item);
         this.logger = log4js.getLogger(this.category);
@@ -20,4 +20,4 @@ class HaItemSwitch extends HaGenericSwitchItem {
     }
 }
 
-module.exports = HaItemSwitch;
+module.exports = HaItemLight;

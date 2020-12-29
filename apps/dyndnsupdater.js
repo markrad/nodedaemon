@@ -6,9 +6,9 @@ const ONE_DAY = 86400;
 var logger = log4js.getLogger(CATEGORY);
 
 class DynDnsUpdater {
-    constructor(items, config) {
-        this.external_ip = items.external_ip;
-        this.lastUpdate = items.last_dns_update;
+    constructor(controller, config) {
+        this.external_ip = controller.items.external_ip;
+        this.lastUpdate = controller.items.last_dns_update;
         this.user = config.dyndnsupdater.user;
         this.updaterKey = config.dyndnsupdater.updaterKey;
         this.hostname = config.dyndnsupdater.hostname;

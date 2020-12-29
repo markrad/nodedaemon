@@ -8,8 +8,8 @@ const CATEGORY = 'UpdateExternalIP';
 var logger = log4js.getLogger(CATEGORY);
 
 class UpdateExternalIP {
-    constructor(items, config) {
-        this.external_ip = items.external_ip;
+    constructor(controller, config) {
+        this.external_ip = controller.items.external_ip;
         this.config = config;
         this.delay = 5;
         this.multiplier = 24;       // Check every two minutes

@@ -132,7 +132,7 @@ class HaInterface extends EventEmitter {
                         reject(err);
                     }
                     else if (err instanceof ConnectionError) {
-                        if (err.errno != 'ECONNREFUSED') {
+                        if (err.code != 'ECONNREFUSED') {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
                             reject(err);
                         }
@@ -146,7 +146,7 @@ class HaInterface extends EventEmitter {
                     }
                 }
                 
-                this._wait(1);
+                await this._wait(1);
             }
         });
     }
