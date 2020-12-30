@@ -3,6 +3,11 @@ const { Logger } = require('log4js');
 const { resolve } = require('path');
 const { emit } = require('process');
 
+// Super slow for debugging
+const RESPONSE_TIMEOUT_DEBUG = 30 * 1000
+const RESPONSE_TIMEOUT = 3 * 1000
+
+
 class HaParentItem extends EventEmitter {
     constructor(item) {
         super();
@@ -86,12 +91,12 @@ class HaParentItem extends EventEmitter {
             return;
         }
 
-        if (this.state != expectedState) {
+        if (this.state != expectedState || this._childOveride(state)) {
             var timer = setTimeout(() => {
                 var err = new Error('Timeout waiting for state change');
                 this.logger.warn(`${err.message}`);
                 resolve('error', err);
-            }, 3000);
+            }, RESPONSE_TIMEOUT);
 
             this.once('new_state', (that, _oldState) => {
                 clearTimeout(timer);
@@ -112,6 +117,10 @@ class HaParentItem extends EventEmitter {
             this.logger.debug(`Already in state ${this.state}`);
             resolve('success');
         }
+    }
+
+    _childOveride() {
+        return false;
     }
 
     _getActionAndExpectedSNewtate(newState) {
