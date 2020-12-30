@@ -11,7 +11,7 @@ class AstroHelper {
         this.lastUpdate = controller.items[config.astrohelper.lastupdate];
         this.dark = controller.items[config.astrohelper.dark];
         this.moon = controller.items[config.astrohelper.moon];
-        this.astro = new (require('./astro'))(items,config);
+        this.astro = new (require('./astro'))(controller, config);
         this.sunrise = controller.items[config.astrohelper.sunrise];
         this.sunset = controller.items[config.astrohelper.sunset];
         logger.debug('Constructed');
