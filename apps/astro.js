@@ -44,8 +44,8 @@ class Astro extends EventEmitter
         ];
         this.lastEventSave = '';
         this.lastMoonPhaseSave = '';
-        this.longitude = controller.items[config.astro.zone].longitude;
-        this.latitude = controller.items[config.astro.zone].latitude;
+        this.longitude = controller.haConfig.longitude;
+        this.latitude = controller.haConfig.latitude;
         this.midnight = null;
         this.moon = null;
         this.config = config.astro;
