@@ -1,13 +1,13 @@
 const EventEmitter = require('events');
 const WebSocket = require('ws');
 var log4js = require('log4js');
-const { reject } = require('underscore');
 
 const { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError, AuthenticationError } = require('./haInterfaceError');
 
 const CATEGORY = 'HaInterface';
 
 var logger = log4js.getLogger(CATEGORY);
+logger.level = 'info';
 
 class HaInterface extends EventEmitter {
     constructor(url, accessToken, pingRate) {
@@ -170,7 +170,7 @@ class HaInterface extends EventEmitter {
 
     async _authenticate(client) {
         let ret = new Promise((resolve, reject) => {
-            logger.debug('Authenticating');
+            logger.info('Authenticating');
 
             client.once('message', (message) => {
                 if (typeof message != 'string') {
