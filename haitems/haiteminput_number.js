@@ -40,6 +40,13 @@ class HaItemInputNumber extends HaParentItem {
         }
         else {
             expectedNewState = newState.toString();
+
+            if (Number(expectedNewState) > Number(this.attributes.max)) {
+                expectedNewState = this.attributes.max;
+            }
+            else if (Number(expectedNewState) < Number(this.attributes.min)) {
+                expectedNewState = this.attributes.min;
+            }
         }
 
         return { action: action, expectedNewState: expectedNewState };
