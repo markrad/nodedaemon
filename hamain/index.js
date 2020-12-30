@@ -9,7 +9,9 @@ const { description } = require('commander');
 const CATEGORY = 'HaMain';
 var logger = log4js.getLogger(CATEGORY);
 
-const mod = 'HaMain';
+if (process.env.HAMAIN_LOGGING) {
+    logger.level = process.env.HAMAIN_LOGGING;
+}
 
 class HaMain extends EventEmitter {
     constructor(config) {

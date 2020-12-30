@@ -7,7 +7,10 @@ const { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketE
 const CATEGORY = 'HaInterface';
 
 var logger = log4js.getLogger(CATEGORY);
-logger.level = 'info';
+
+if (process.env.HAINTERFACE_LOGGING) {
+    logger.level = process.env.HAINTERFACE_LOGGING;
+}
 
 class HaInterface extends EventEmitter {
     constructor(url, accessToken, pingRate) {
