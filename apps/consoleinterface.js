@@ -79,11 +79,13 @@ class ConsoleInterface {
                 let dataWords = data.toString().split(/\s/).filter(e => e);
                 logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords.join(' ')}`);
 
-                if (dataWords[0].toLowerCase() in commands) {
-                    commands[dataWords[0]][1](that, sock, dataWords);
-                }
-                else {
-                    sock.write(`Unknown command ${data}\n`);
+                if (dataWords.length > 0) {
+                    if (dataWords[0].toLowerCase() in commands) {
+                        commands[dataWords[0]][1](that, sock, dataWords);
+                    }
+                    else {
+                        sock.write(`Unknown command ${data}\n`);
+                    }
                 }
                 sock.write(`${name} > `);
             });
