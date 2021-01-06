@@ -6,9 +6,9 @@ var logger = log4js.getLogger(CATEGORY);
 
 class ConsoleInterface {
     constructor(controller, config) {
-        this.config = config.consoleInterface || {};
-        this.host = config.host || '0.0.0.0';
-        this.port = config.port || 2022;
+        let _config = config.consoleInterface || {};
+        this.host = _config.host || '0.0.0.0';
+        this.port = _config.port || 2022;
         this.controller = controller;
         this.items = controller.items;
         this.server = null;
@@ -37,6 +37,73 @@ class ConsoleInterface {
         });
     }
 
+    _listApps(that, sock, _data) {
+        logger.debug('listapps called');
+        that.controller.apps.forEach((app) => {
+            sock.write(`${app.name} ${app.path} ${app.status}\n`);
+        });
+    }
+
+    async _appStop(that, sock, data) {
+        return new Promise(async (resolve, _reject) => {
+            let appName = data[1];
+            let aps = that.controller.apps.filter((item) =>item.name == appName);
+            try {
+                if (aps[0].status != 'running') {
+                    sock.write(`Cannot stop app ${aps[0].name} - status is ${aps[0].status}\n`);
+                }
+                else {
+                    await aps[0].instance.stop();
+                    aps[0].status = 'stopped';
+                    sock.write(`App ${aps[0].name} stopped\n`)
+                }
+            }
+            catch (err) {
+                logger.debug(`Failed to stop app ${appName}: ${err.message}`);
+                
+                if (aps.length > 0) {
+                    aps[0].status = 'failed';
+                    sock.write(`Failed to stop app ${appName}: ${err.message}\n`);
+                }
+                else {
+                    sock.write(`Failed to stop app ${appName}: App was not found\n`);
+                }
+            }
+
+            resolve();
+        });
+    }
+
+    async _appStart(that, sock, data) {
+        return new Promise(async (resolve, _reject) => {
+            let appName = data[1];
+            let aps = that.controller.apps.filter((item) =>item.name == appName);
+            try {
+                if (aps[0].status == 'running') {
+                    sock.write(`Cannot start app ${aps[0].name} - already running\n`);
+                }
+                else {
+                    await aps[0].instance.run();
+                    aps[0].status = 'running';
+                    sock.write(`App ${aps[0].name} started\n`)
+                }
+            }
+            catch (err) {
+                logger.debug(`Failed to start app ${appName}: ${err.message}`);
+                
+                if (aps.length > 0) {
+                    aps[0].status = 'failed';
+                    sock.write(`Failed to start app ${appName}: ${err.message}\n`);
+                }
+                else {
+                    sock.write(`Failed to start app ${appName}: App was not found\n`);
+                }
+            }
+
+            resolve();
+        });
+    }
+
     _inspect(that, sock, data) {
         logger.debug(`listitems called with ${data.join(' ')}`);
         let re = data[1]? new RegExp(data[1]) : null;
@@ -50,6 +117,15 @@ class ConsoleInterface {
             sock.write('Attributes:\n');
             sock.write(`${JSON.stringify(that.items[item].attributes, null, 2)}\n`);
         });
+    }
+
+     _stop(that, sock, data) {
+        logger.debug('Stop called');
+        sock.write('Requested stop will occur in five seconds\n');
+        setTimeout(async () => {
+            await that.controller.stop();
+            process.exit(0);
+        }, 5000);
     }
 
     async run() {
@@ -68,23 +144,31 @@ class ConsoleInterface {
                 sock.write(JSON.stringify(that.controller.haConfig, null, 2));
                 sock.write('\n');
             }],
+            'listapps': [': List the applications and states', this._listApps],
+            'appstop': [' appname: Stops the specified app', this._appStop],
+            'appstart': [' appname: Starts the specified app', this._appStart],
+            'stop': [': Stops the service', this._stop],
+            'exit': [': Exit', (_that, sock) => {
+                sock.write('Closing\n');
+                setTimeout(() => sock.end(), 500);
+            }],
         }
         this.server = net.createServer();
         this.server.listen(this.port, this.host);
-        this.server.on('connection', (sock) => {
+        this.server.on('connection', async (sock) => {
             sock.write(`\nConnected to ${name} - enter help for a list of commands\n\n`)
             sock.write(`${name} > `);
             logger.debug(`Socket connected ${sock.remoteAddress}`);
-            sock.on('data', (data) => {
+            sock.on('data', async (data) => {
                 let dataWords = data.toString().split(/\s/).filter(e => e);
                 logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords.join(' ')}`);
 
                 if (dataWords.length > 0) {
                     if (dataWords[0].toLowerCase() in commands) {
-                        commands[dataWords[0]][1](that, sock, dataWords);
+                        await commands[dataWords[0].toLowerCase()][1](that, sock, dataWords);
                     }
                     else {
-                        sock.write(`Unknown command ${data}\n`);
+                        sock.write(`Unknown command ${dataWords.join(' ')}\n`);
                     }
                 }
                 sock.write(`${name} > `);
