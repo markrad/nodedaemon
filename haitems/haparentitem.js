@@ -115,7 +115,7 @@ class HaParentItem extends EventEmitter {
         }
         else {
             this.logger.debug(`Already in state ${this.state}`);
-            resolve('success');
+            resolve('nochange');
         }
     }
 

@@ -15,7 +15,7 @@ class HaItemVar extends HaParentItem {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             var myResolve = (msg, err) => {
-                if (msg != 'error') {
+                if (msg == 'sucess') {
                     // Call var.update to update icons etc.
                     this.callService(this.type, 'update', { entity_id: this.entityId });
                 }
