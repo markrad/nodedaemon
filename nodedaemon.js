@@ -21,9 +21,13 @@ async function main(config) {
             process.on(eventType, async (signal) => {
                 logger.fatal(`Clean up after event ${signal}`);
                 await haMain.stop();
-                process.exit(4);
+                process.exit(eventType == 'SIGTERM'? 0 : 4);
             });
         });
+
+        process.on('uncaughtException', (err) => {
+            logger.error(`Unhandled error: ${err.message}\n${err.stack}`);
+        })
 
         await haMain.start();
     }
