@@ -87,7 +87,7 @@ class HaInterface extends EventEmitter {
                         restart(this);
                     }
                     else {
-                        closing = false;
+                        this.closing = false;
                     }
                 });
 
