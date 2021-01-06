@@ -18,7 +18,7 @@ class HaMain extends EventEmitter {
         super();
         this.haInterface = null;
         this._items = {};
-        this.apps = [];
+        this._apps = [];
         this.haItemFactory = null;
         this.config = config;
         this.stopping = false;
@@ -106,15 +106,17 @@ class HaMain extends EventEmitter {
                 logger.info(`${value}: ${itemTypes[value]}`);
             }); 
 
-            this.apps = await this._getApps(this.config.main.appsDir);
-            logger.info(`Apps loaded: ${this.apps.length}`);
+            this._apps = await this._getApps(this.config.main.appsDir);
+            logger.info(`Apps loaded: ${this._apps.length}`);
 
             // Construct all apps
-            this.apps.forEach((app) => {
+            this._apps.forEach((app) => {
                 try {
-                    app.run()
+                    app.instance.run();
+                    app.status = 'running';
                 }
                 catch (err) {
+                    app.status = 'failed';
                     logger.warn(`Could not run app ${app.__proto__.constructor.name} - ${err}`);
                 }
             });
@@ -130,6 +132,17 @@ class HaMain extends EventEmitter {
     async stop() {
         return new Promise(async (resolve, reject) => {
             this.stopping = true;
+
+            this._apps.forEach(async (app) => {
+                try {
+                    await app.instance.stop();
+                    app.status = 'stopped';
+                }
+                catch (err) {
+                    logger.warn(`Failed to stop app ${app}: ${err.message}`);
+                    app.status = 'failed';
+                }
+            });
             try {
                 if (this.haInterface.isConnected) {
                     await this.haInterface.stop();
@@ -146,6 +159,10 @@ class HaMain extends EventEmitter {
 
     get items() {
         return this._items
+    }
+
+    get apps() {
+        return this._apps;
     }
 
     get haConfig() {
@@ -183,15 +200,17 @@ class HaMain extends EventEmitter {
             try {
                 let apps = [];
                 const dir = await fs.promises.opendir(appsDirectory);
+                let appobject;
 
                 for await (const dirent of dir) {
                     if (dirent.name.endsWith('.js')) {
-                        let app = require(path.join('../apps', dirent.name));
+                        let app = require(path.join(dir.path, dirent.name));
                         try {
-                            let appobject = new app(this, this.config);
-                            apps.push(appobject);
+                            appobject = new app(this, this.config);
+                            apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'constructed' });
                         }
                         catch (err) {
+                            apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
                             logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                         }
                     }
