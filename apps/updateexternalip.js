@@ -1,5 +1,3 @@
-const { rejects } = require('assert');
-const { timeStamp } = require('console');
 const http = require('http');
 var log4js = require('log4js');
 const { resolve } = require('path');
@@ -42,7 +40,7 @@ class UpdateExternalIP {
 
     async whatsMyIP() {
         const IP_HOST = 'api.ipify.org';
-        let ret = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const options = {
                 host: IP_HOST,
                 port: 80,
@@ -52,6 +50,11 @@ class UpdateExternalIP {
             let allchunks = '';
     
             http.get(options, res => {
+                if (res.statusCode != 200) {
+                    let err = new Error(`Error status code returned from IP server ${res.statusCode}`);
+                    logger.error(err.Message);
+                    reject(err)
+                }
                 res.setEncoding('utf8');
                 res.on('data', chunk => allchunks += chunk);
                 res.on('end', () => resolve(allchunks));
@@ -60,8 +63,6 @@ class UpdateExternalIP {
                 reject(err);
             });
         });
-        
-        return ret;
     }
 }
 
