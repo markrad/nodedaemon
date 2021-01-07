@@ -15,9 +15,36 @@ class ConsoleInterface {
         logger.debug('Constructed');
     }
 
+    async _list(that, sock, dataWords) {
+
+        if (dataWords.length > 0) {
+            switch (dataWords[0].toLowerCase()) {
+                case 'apps':
+                    that._listApps(that, sock, dataWords.splice(1));
+                    break;
+                case 'items':
+                    that._listItems(that, sock, dataWords.splice(1));
+                    break;
+                case 'types':
+                    that._listTypes(that, sock, dataWords.splice(1));
+                    break;
+                case 'help':
+                    sock.write('list apps | items <regex> | types <regex>\n');
+                    break;
+                default:
+                    sock.write(`Unknown argument ${dataWords[0]}: must be apps | items <regex> | types <regex>\n`);
+                    logger.debug(`Unknown list option ${dataWords[0]}`);
+                    break;
+            }
+        }
+        else {
+            sock.write('list missing argument - requires apps | items <regex> | types <regex>\n');
+        }
+    }
+
     _listItems(that, sock, data) {
         logger.debug(`listitems called with ${data.join(' ')}`);
-        let re = data[1]? new RegExp(data[1]) : null;
+        let re = data[0]? new RegExp(data[0]) : null;
         Object.keys(that.items)
             .filter(item => re? re.test(that.items[item].entityId) : true)
             .sort((l, r) => that.items[l].entityId < that.items[r].entityId? -1 : 1)
@@ -28,7 +55,7 @@ class ConsoleInterface {
 
     _listTypes(that, sock, data) {
         logger.debug(`listtypes called with ${data.join(' ')}`);
-        let re = data[1]? new RegExp(data[1]) : null;
+        let re = data[0]? new RegExp(data[0]) : null;
         Object.keys(that.items)
             .filter(item => re? re.test(that.items[item].__proto__.constructor.name) : true)
             .sort((l, r) => that.items[l].__proto__.constructor.name + that.items[l].entityId < that.items[r].__proto__.constructor.name + that.items[r].entityId? -1 : 1)
@@ -46,7 +73,7 @@ class ConsoleInterface {
 
     async _appStop(that, sock, data) {
         return new Promise(async (resolve, _reject) => {
-            let appName = data[1];
+            let appName = data[0];
             let aps = that.controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps[0].status != 'running') {
@@ -76,7 +103,7 @@ class ConsoleInterface {
 
     async _appStart(that, sock, data) {
         return new Promise(async (resolve, _reject) => {
-            let appName = data[1];
+            let appName = data[0];
             let aps = that.controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps[0].status == 'running') {
@@ -106,7 +133,7 @@ class ConsoleInterface {
 
     _inspect(that, sock, data) {
         logger.debug(`listitems called with ${data.join(' ')}`);
-        let re = data[1]? new RegExp(data[1]) : null;
+        let re = data[0]? new RegExp(data[0]) : null;
         Object.keys(that.items)
             .filter(item => re? re.test(that.items[item].entityId) : true)
             .sort((l, r) => that.items[l].entityId < that.items[r].entityId? -1 : 1)
@@ -136,15 +163,16 @@ class ConsoleInterface {
                 sock.write('Available commands:\n');
                 Object.keys(commands).forEach((command) => sock.write(`${command}${commands[command][0]}\n`));
             }],
-            'listitems': [' [optional regex]: List items optionally filtered by a regex query', this._listItems],
-            'listtypes': [' [optional regex]: List items by type optionally filtered by a regex query', this._listTypes],
-            'inspect': [' [optional regex]: Inspect items optionally filtered by a regex query', this._inspect],
+            'list': [' apps | items <optional regex> | types <optional regex>]: list the selected type with optional regex filter', this._list],
+            // 'listitems': [' [optional regex]: List items optionally filtered by a regex query', this._listItems],
+            // 'listtypes': [' [optional regex]: List items by type optionally filtered by a regex query', this._listTypes],
+            'inspect': [' <optional regex>: Inspect items optionally filtered by a regex query', this._inspect],
             'getconfig': [': Displays instance configuration', (_that, sock) => {
                 sock.write('Configuration:\n');
                 sock.write(JSON.stringify(that.controller.haConfig, null, 2));
                 sock.write('\n');
             }],
-            'listapps': [': List the applications and states', this._listApps],
+            // 'listapps': [': List the applications and states', this._listApps],
             'appstop': [' appname: Stops the specified app', this._appStop],
             'appstart': [' appname: Starts the specified app', this._appStart],
             'stop': [': Stops the service', this._stop],
@@ -161,14 +189,14 @@ class ConsoleInterface {
             logger.debug(`Socket connected ${sock.remoteAddress}`);
             sock.on('data', async (data) => {
                 let dataWords = data.toString().split(/\s/).filter(e => e);
-                logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords.join(' ')}`);
+                logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords}`);
 
                 if (dataWords.length > 0) {
                     if (dataWords[0].toLowerCase() in commands) {
-                        await commands[dataWords[0].toLowerCase()][1](that, sock, dataWords);
+                        await commands[dataWords[0].toLowerCase()][1](that, sock, dataWords.splice(1));
                     }
                     else {
-                        sock.write(`Unknown command ${dataWords.join(' ')}\n`);
+                        sock.write(`Unknown command ${data}\n`);
                     }
                 }
                 sock.write(`${name} > `);
