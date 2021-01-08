@@ -9,7 +9,6 @@ const CATEGORY = 'main';
 
 async function main(config) {
     var logger = log4js.getLogger(CATEGORY);
-    const mainConfig = config.main;
 
     logger.info('HaRunner is starting');
 
@@ -44,24 +43,30 @@ try {
     const program = new Command();
 
     const debugLevels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
+    const defaultDebug = 3;
     const debugDefault = 'none';
     const appsdirDefault = 'none';
-    program.version('1.0.0')
+
+    var packageJSON = JSON.parse(fs.readFileSync('package.json'));
+
+    program.version(`Version = ${packageJSON.version}\nAuthor  = ${packageJSON.author}\nLicense = ${packageJSON.license}\nWebpage = ${packageJSON.repository.url}`)
         .name('nodedaemon')
-        .option('-D --debug <type>', `Specify logging level [${debugLevels.join(' | ')}]`, debugDefault)
-        .option('-c, --config <locaton>', 'Specify name and location of config.json', './config.json')
-        .option('-a, --appsdir <location>', 'Location of apps directory', appsdirDefault)
+        .option('-a, --appsdir <location>', 'location of apps directory\n(default: if present the value from config.json appsDir otherwise ./apps')
+        .option('-c, --config <locaton>', 'name and location of config.json', './config.json')
+        .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
         .parse(process.argv);
 
     defaultLogger.level = 'fatal';
 
-    if (!fs.existsSync(program.opts().config)) {
-        defaultLogger.fatal(`Config file ${program.opts().config} not found`);
+    configFile = program.opts().config || './config.json';
+
+    if (!fs.existsSync(configFile)) {
+        defaultLogger.fatal(`Config file ${configFile} not found`);
         process.exit(4);
     }
 
     try {
-        var config = JSON.parse(fs.readFileSync(program.opts().config));
+        var config = JSON.parse(fs.readFileSync(configFile));
     }
     catch (err) {
         defaultLogger.fatal(`Config file ${program.opts().config} is invalid: ${err}`);
@@ -83,26 +88,20 @@ try {
         process.exit(4);
     }
 
-    if (!debugLevels.concat(debugDefault).includes(program.opts().debug)) {
-        defaultLogger.fatal(`Debug level is invalid. Must be one of [${debugLevels.join(' | ')}]`);
+    if (program.opts().debug && !debugLevels.includes(program.opts().debug)) {
+        defaultLogger.fatal(`Debug argument is invalid. Must be one of [${debugLevels.join(' | ')}]`);
         process.exit(4);
     }
 
-    if (program.opts().debug != debugDefault) {
-        config.main.debug = program.opts().debug;
+    if (program.opts().debug) {
+        config.main.debugLevel = program.opts().debug;
     }
-    else if (!config.main.debug) {
-        config.main.debug = 'info';
+    else if (!config.main.debugLevel) {
+        config.main.debugLevel = debugLevels[defaultDebug];
     }
 
-    // if (!config.main.debugLevel || program.opts().debug != debugDefault) {
-    //     config.main.debugLevel = program.opts().debug != debugDefault
-    //         ? program.opts().debug
-    //         : 'info';
-    // }
-
-    if (program.opts().appsdir != appsdirDefault) {
-        config.main.appsDir = program.opts().appsDir;
+    if (program.opts().appsdir) {
+        config.main.appsDir = program.opts().appsdir;
     }
     else if (!config.main.appsDir) {
         config.main.appsDir = './apps';
@@ -112,7 +111,15 @@ try {
         config.main.appsDir = path.join(process.cwd(), config.main.appsDir);
     }
 
+    if (!fs.existsSync(config.main.appsDir)) {
+        defaultLogger.fatal(`Apps directory ${config.main.appsDir} does not exist`);
+        process.exit(4);
+    }
+
     defaultLogger.level = config.main.debugLevel;
+    defaultLogger.info(`config file = ${configFile}`);
+    defaultLogger.info(`apps directory = ${config.main.appsDir}`);
+    defaultLogger.info(`Debug level = ${config.main.debugLevel}`);
 }
 catch (err) {
     defaultLogger.fatal(`Unexpected error ${err}`);

@@ -13,7 +13,7 @@
             ],
             "program": "${workspaceFolder}/nodedaemon.js",
             "outputCapture": "std",
-            "args": ["-D", "debug"],
+            "args": ["-D", "debug", "--appsdir", "./apps"],
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "debug",
