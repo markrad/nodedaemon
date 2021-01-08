@@ -71,6 +71,28 @@ class ConsoleInterface {
         });
     }
 
+    async _app(that, sock, dataWords) {
+        if (dataWords.length > 0) {
+            switch(dataWords[0].toLowerCase()) {
+                case 'start':
+                    that._appStart(that, sock, dataWords.splice(1));
+                    break;
+                case 'stop':
+                    that._appStop(that, sock, dataWords.splice(1));
+                    break;
+                case 'list':
+                    that._listApps(that, sock, dataWords.splice(1));
+                    break;
+                default:
+                    sock.write(`Unknown argument ${dataWords[0]}: must be start appname | stop appname | list\n`);
+                    break;
+            }
+        }
+        else {
+            sock.write('app missing arument - requires start appname | stop appname | list\n');
+        }
+    }
+
     async _appStop(that, sock, data) {
         return new Promise(async (resolve, _reject) => {
             let appName = data[0];
@@ -173,8 +195,9 @@ class ConsoleInterface {
                 sock.write('\n');
             }],
             // 'listapps': [': List the applications and states', this._listApps],
-            'appstop': [' appname: Stops the specified app', this._appStop],
-            'appstart': [' appname: Starts the specified app', this._appStart],
+            'app': [' start appname | stop appname | list: Start or stop the specified app or list all apps (same as list apps)', this._app],
+            //'appstop': [' appname: Stops the specified app', this._appStop],
+            //'appstart': [' appname: Starts the specified app', this._appStart],
             'stop': [': Stops the service', this._stop],
             'exit': [': Exit', (_that, sock) => {
                 sock.write('Closing\n');
