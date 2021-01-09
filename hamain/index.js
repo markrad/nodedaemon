@@ -135,7 +135,7 @@ class HaMain extends EventEmitter {
                 if (appIndex != -1) {
                     let appEntry = this._apps[appIndex];
                     if (appEntry.status == 'running') {
-                        appEntry.instance.stop();
+                        await appEntry.instance.stop();
                     }
                     try {
                         let appObject = reload(file);
@@ -157,7 +157,7 @@ class HaMain extends EventEmitter {
                 if (appIndex != -1) {
                     let app = this._apps.splice(appIndex, 1);
                     if (app.status == 'running') {
-                        app.instance.stop();
+                        await app.instance.stop();
                     }
                 }
             });
