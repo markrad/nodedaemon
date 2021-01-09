@@ -7,12 +7,12 @@ var logger = log4js.getLogger(CATEGORY);
 class ConsoleInterface {
     constructor(controller, config) {
         let _config = config.consoleInterface || {};
-        this.host = _config.host || '0.0.0.0';
-        this.port = _config.port || 2022;
-        this.controller = controller;
-        this.items = controller.items;
-        this.server = null;
-        logger.debug('Constructed');
+        this._host = _config.host || '0.0.0.0';
+        this._port = _config.port || 2022;
+        this._controller = controller;
+        this._items = controller.items;
+        this._server = null;
+        logger.debug('Construction complete');
     }
 
     async _list(that, sock, dataWords) {
@@ -42,31 +42,31 @@ class ConsoleInterface {
         }
     }
 
-    _listItems(that, sock, data) {
-        logger.debug(`listitems called with ${data.join(' ')}`);
-        let re = data[0]? new RegExp(data[0]) : null;
-        Object.keys(that.items)
-            .filter(item => re? re.test(that.items[item].entityId) : true)
-            .sort((l, r) => that.items[l].entityId < that.items[r].entityId? -1 : 1)
+    _listItems(that, sock, dataWords) {
+        logger.debug(`listitems called with ${dataWords.join(' ')}`);
+        let re = dataWords[0]? new RegExp(dataWords[0]) : null;
+        Object.keys(that._items)
+            .filter(item => re? re.test(that._items[item].entityId) : true)
+            .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-            sock.write(`${that.items[item].entityId}:${that.items[item].__proto__.constructor.name}\n`)
+            sock.write(`${that._items[item].entityId}:${that._items[item].__proto__.constructor.name}\n`)
         });
     }
 
-    _listTypes(that, sock, data) {
-        logger.debug(`listtypes called with ${data.join(' ')}`);
-        let re = data[0]? new RegExp(data[0]) : null;
-        Object.keys(that.items)
-            .filter(item => re? re.test(that.items[item].__proto__.constructor.name) : true)
-            .sort((l, r) => that.items[l].__proto__.constructor.name + that.items[l].entityId < that.items[r].__proto__.constructor.name + that.items[r].entityId? -1 : 1)
+    _listTypes(that, sock, dataWords) {
+        logger.debug(`listtypes called with ${dataWords.join(' ')}`);
+        let re = dataWords[0]? new RegExp(dataWords[0]) : null;
+        Object.keys(that._items)
+            .filter(item => re? re.test(that._items[item].__proto__.constructor.name) : true)
+            .sort((l, r) => that.items[l].__proto__.constructor.name + that._items[l].entityId < that._items[r].__proto__.constructor.name + that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-            sock.write(`${that.items[item].__proto__.constructor.name}:${that.items[item].entityId}\n`)
+            sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\n`)
         });
     }
 
-    _listApps(that, sock, _data) {
+    _listApps(that, sock, _dataWords) {
         logger.debug('listapps called');
-        that.controller.apps.forEach((app) => {
+        that._controller.apps.forEach((app) => {
             sock.write(`${app.name} ${app.path} ${app.status}\n`);
         });
     }
@@ -93,10 +93,10 @@ class ConsoleInterface {
         }
     }
 
-    async _appStop(that, sock, data) {
+    async _appStop(that, sock, dataWords) {
         return new Promise(async (resolve, _reject) => {
-            let appName = data[0];
-            let aps = that.controller.apps.filter((item) =>item.name == appName);
+            let appName = dataWords[0];
+            let aps = that._controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps[0].status != 'running') {
                     sock.write(`Cannot stop app ${aps[0].name} - status is ${aps[0].status}\n`);
@@ -123,10 +123,10 @@ class ConsoleInterface {
         });
     }
 
-    async _appStart(that, sock, data) {
+    async _appStart(that, sock, dataWords) {
         return new Promise(async (resolve, _reject) => {
-            let appName = data[0];
-            let aps = that.controller.apps.filter((item) =>item.name == appName);
+            let appName = dataWords[0];
+            let aps = that._controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps[0].status == 'running') {
                     sock.write(`Cannot start app ${aps[0].name} - already running\n`);
@@ -153,33 +153,33 @@ class ConsoleInterface {
         });
     }
 
-    _inspect(that, sock, data) {
-        logger.debug(`listitems called with ${data.join(' ')}`);
-        let re = data[0]? new RegExp(data[0]) : null;
-        Object.keys(that.items)
-            .filter(item => re? re.test(that.items[item].entityId) : true)
-            .sort((l, r) => that.items[l].entityId < that.items[r].entityId? -1 : 1)
+    _inspect(that, sock, dataWords) {
+        logger.debug(`listitems called with ${dataWords.join(' ')}`);
+        let re = dataWords[0]? new RegExp(dataWords[0]) : null;
+        Object.keys(that._items)
+            .filter(item => re? re.test(that._items[item].entityId) : true)
+            .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-            sock.write(`Entity Id = ${that.items[item].entityId}\n`);
-            sock.write(`Type = ${that.items[item].__proto__.constructor.name}\n`);
-            sock.write(`State = ${that.items[item].state}\n`);
+            sock.write(`Entity Id = ${that._items[item].entityId}\n`);
+            sock.write(`Type = ${that._items[item].__proto__.constructor.name}\n`);
+            sock.write(`State = ${that._items[item].state}\n`);
             sock.write('Attributes:\n');
-            sock.write(`${JSON.stringify(that.items[item].attributes, null, 2)}\n`);
+            sock.write(`${JSON.stringify(that._items[item].attributes, null, 2)}\n`);
         });
     }
 
-     _stop(that, sock, data) {
+     _stop(that, sock, _dataWords) {
         logger.debug('Stop called');
         sock.write('Requested stop will occur in five seconds\n');
         setTimeout(async () => {
-            await that.controller.stop();
+            await that._controller.stop();
             process.exit(0);
         }, 5000);
     }
 
     async run() {
         let that = this;
-        let name = this.controller.haConfig.location_name;
+        let name = this._controller.haConfig.location_name;
         let commands = {
             'help': [': Print this message', (_that, sock) => {
                 sock.write('Available commands:\n');
@@ -191,7 +191,7 @@ class ConsoleInterface {
             'inspect': [' <optional regex>: Inspect items optionally filtered by a regex query', this._inspect],
             'getconfig': [': Displays instance configuration', (_that, sock) => {
                 sock.write('Configuration:\n');
-                sock.write(JSON.stringify(that.controller.haConfig, null, 2));
+                sock.write(JSON.stringify(that._controller.haConfig, null, 2));
                 sock.write('\n');
             }],
             // 'listapps': [': List the applications and states', this._listApps],
@@ -204,9 +204,9 @@ class ConsoleInterface {
                 setTimeout(() => sock.end(), 500);
             }],
         }
-        this.server = net.createServer();
-        this.server.listen(this.port, this.host);
-        this.server.on('connection', async (sock) => {
+        this._server = net.createServer();
+        this._server.listen(this._port, this._host);
+        this._server.on('connection', async (sock) => {
             sock.write(`\nConnected to ${name} - enter help for a list of commands\n\n`)
             sock.write(`${name} > `);
             logger.debug(`Socket connected ${sock.remoteAddress}`);
@@ -227,12 +227,12 @@ class ConsoleInterface {
             sock.on('close', () => {
                 logger.debug(`Socket ${sock.remoteAddress} closed`);
             });
-        }).listen(this.port, this.host);
+        }).listen(this._port, this._host);
     }
 
     async stop() {
         return new Promise((resolve, _reject) => {
-            this.server.close(() => resolve());
+            this._server.close(() => resolve());
         })
     }
 }
