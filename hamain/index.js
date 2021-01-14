@@ -128,7 +128,7 @@ class HaMain extends EventEmitter {
                 }
             });
         
-            watcher.on('change', (file, _stats) => {
+            watcher.on('change', async (file, _stats) => {
                 logger.debug(`App ${file} changed - will attempt to reload`);
                 let appIndex = this._apps.findIndex(element => element.path == file);
                 
@@ -150,7 +150,7 @@ class HaMain extends EventEmitter {
                 }
             });
         
-            watcher.on('delete', (file) => {
+            watcher.on('delete', async (file) => {
                 logger.debug(`App ${file} deleted - will stop and remove`);
                 let appIndex = this._apps.findIndex(element => element.path == file);
 
