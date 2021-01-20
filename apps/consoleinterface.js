@@ -205,7 +205,7 @@ class ConsoleInterface {
             }],
         }
         this._server = net.createServer();
-        this._server.listen(this._port, this._host);
+        // this._server.listen(this._port, this._host);
         this._server.on('connection', async (sock) => {
             sock.write(`\nConnected to ${name} - enter help for a list of commands\n\n`)
             sock.write(`${name} > `);
