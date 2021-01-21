@@ -12,6 +12,7 @@ class ConsoleInterface {
         this._controller = controller;
         this._items = controller.items;
         this._server = null;
+        this._starttime = new Date();
         logger.debug('Construction complete');
     }
 
@@ -168,6 +169,24 @@ class ConsoleInterface {
         });
     }
 
+    _uptime(that, sock, _dataWords) {
+        var millis = (new Date() - that._starttime);
+        // var milliseconds = millis % 1000;
+        var seconds = (Math.floor((millis / 1000) % 60)).toString().padStart(2, '0');
+        var minutes = (Math.floor((millis / (1000 * 60)) % 60)).toString().padStart(2, '0');
+        var hours = (Math.floor((millis / (1000 * 60 * 60)) % 24)).toString().padStart(2, '0');
+        var days = Math.floor(millis / (1000 * 60 * 60 * 24) % 24);
+        // millis -= millis % 86400000;
+        // var hours = Math.abs(millis / 3600000);
+        // millis -= hours * 3600000;
+        // var minutes = millis % 60000
+        // millis -= minutes;
+        // var seconds = millis % 1000;
+        // var milliseconds = millis - seconds * 1000;
+        // sock.write(`millis = ${millis}\n`);
+        sock.write(`${days} days ${hours} hours ${minutes} minutes ${seconds} seconds\n`); // ${milliseconds}\n`);
+    }
+
      _stop(that, sock, _dataWords) {
         logger.debug('Stop called');
         sock.write('Requested stop will occur in five seconds\n');
@@ -186,18 +205,14 @@ class ConsoleInterface {
                 Object.keys(commands).forEach((command) => sock.write(`${command}${commands[command][0]}\n`));
             }],
             'list': [' apps | items <optional regex> | types <optional regex>]: list the selected type with optional regex filter', this._list],
-            // 'listitems': [' [optional regex]: List items optionally filtered by a regex query', this._listItems],
-            // 'listtypes': [' [optional regex]: List items by type optionally filtered by a regex query', this._listTypes],
             'inspect': [' <optional regex>: Inspect items optionally filtered by a regex query', this._inspect],
             'getconfig': [': Displays instance configuration', (_that, sock) => {
                 sock.write('Configuration:\n');
                 sock.write(JSON.stringify(that._controller.haConfig, null, 2));
                 sock.write('\n');
             }],
-            // 'listapps': [': List the applications and states', this._listApps],
             'app': [' start appname | stop appname | list: Start or stop the specified app or list all apps (same as list apps)', this._app],
-            //'appstop': [' appname: Stops the specified app', this._appStop],
-            //'appstart': [' appname: Starts the specified app', this._appStart],
+            'uptime': [': Time since last restart', this._uptime],
             'stop': [': Stops the service', this._stop],
             'exit': [': Exit', (_that, sock) => {
                 sock.write('Closing\n');
@@ -214,7 +229,7 @@ class ConsoleInterface {
                 let dataWords = data.toString().split(/\s/).filter(e => e);
                 logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords}`);
 
-                if (dataWords.length > 0) {
+                if (dataWords.length > 0 && dataWords[0].charCodeAt != 0) {
                     if (dataWords[0].toLowerCase() in commands) {
                         await commands[dataWords[0].toLowerCase()][1](that, sock, dataWords.splice(1));
                     }
