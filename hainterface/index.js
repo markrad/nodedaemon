@@ -2,7 +2,7 @@ const EventEmitter = require('events');
 const WebSocket = require('ws');
 var log4js = require('log4js');
 
-const { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError, AuthenticationError } = require('./haInterfaceError');
+const { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError, AuthenticationError } = require('../common/haInterfaceError');
 
 const CATEGORY = 'HaInterface';
 
