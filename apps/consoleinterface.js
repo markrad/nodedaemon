@@ -12,7 +12,6 @@ class ConsoleInterface {
         this._controller = controller;
         this._items = controller.items;
         this._server = null;
-        this._starttime = new Date();
         logger.debug('Construction complete');
     }
 
@@ -59,7 +58,7 @@ class ConsoleInterface {
         let re = dataWords[0]? new RegExp(dataWords[0]) : null;
         Object.keys(that._items)
             .filter(item => re? re.test(that._items[item].__proto__.constructor.name) : true)
-            .sort((l, r) => that.items[l].__proto__.constructor.name + that._items[l].entityId < that._items[r].__proto__.constructor.name + that._items[r].entityId? -1 : 1)
+            .sort((l, r) => that._items[l].__proto__.constructor.name + that._items[l].entityId < that._items[r].__proto__.constructor.name + that._items[r].entityId? -1 : 1)
             .forEach((item) => {
             sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\n`)
         });
@@ -170,21 +169,16 @@ class ConsoleInterface {
     }
 
     _uptime(that, sock, _dataWords) {
-        var millis = (new Date() - that._starttime);
-        // var milliseconds = millis % 1000;
-        var seconds = (Math.floor((millis / 1000) % 60)).toString().padStart(2, '0');
-        var minutes = (Math.floor((millis / (1000 * 60)) % 60)).toString().padStart(2, '0');
-        var hours = (Math.floor((millis / (1000 * 60 * 60)) % 24)).toString().padStart(2, '0');
-        var days = Math.floor(millis / (1000 * 60 * 60 * 24) % 24);
-        // millis -= millis % 86400000;
-        // var hours = Math.abs(millis / 3600000);
-        // millis -= hours * 3600000;
-        // var minutes = millis % 60000
-        // millis -= minutes;
-        // var seconds = millis % 1000;
-        // var milliseconds = millis - seconds * 1000;
-        // sock.write(`millis = ${millis}\n`);
-        sock.write(`${days} days ${hours} hours ${minutes} minutes ${seconds} seconds\n`); // ${milliseconds}\n`);
+        var millis = (new Date() - that._controller.startTime);
+        var seconds = (Math.floor((millis / 1000) % 60)).toString().padStart(2, '0') + ' second';
+        var minutes = (Math.floor((millis / (1000 * 60)) % 60)).toString().padStart(2, '0') + ' minute';
+        var hours = (Math.floor((millis / (1000 * 60 * 60)) % 24)).toString().padStart(2, '0') + ' hour';
+        var days = (Math.floor(millis / (1000 * 60 * 60 * 24) % 24)).toString() + ' day';
+        if (!seconds.startsWith('01')) seconds += 's';
+        if (!minutes.startsWith('01')) minutes += 's';
+        if (!hours.startsWith('01')) hours += 's';
+        if (!days.startsWith('1')) days += 's';
+        sock.write(`${days} ${hours} ${minutes} ${seconds}\n`);
     }
 
      _stop(that, sock, _dataWords) {
