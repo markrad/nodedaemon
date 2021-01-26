@@ -4,7 +4,6 @@ const fs = require('fs');
 var log4js = require('log4js');
 var HaInterface = require('../hainterface');
 var HaItemFactory = require('../haitems');
-//const { description } = require('commander');
 var reload = require('require-reload');
 const hound = require('hound');
 
@@ -25,6 +24,7 @@ class HaMain extends EventEmitter {
         this.config = config;
         this.stopping = false;
         this._haConfig = null;
+        this._starttime = new Date();
     }
 
     async start() {
@@ -223,6 +223,10 @@ class HaMain extends EventEmitter {
 
     get haConfig() {
         return this._haConfig;
+    }
+
+    get startTime() {
+        return this._starttime;
     }
 
     async _reconnect(err) {
