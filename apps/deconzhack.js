@@ -21,7 +21,8 @@ class DeconzHack {
         if (!this._deconz.host) this._deconz.host = '127.0.0.1';
         if (!this._deconz.port) this._deconz.port = 8443;
 
-        this._devices = config.deconzhack.devices.map(dev => dev.toString());
+        this._deviceIds = config.deconzhack.devices.map(item => Object.keys(item));
+        this._deviceTargets = config.deconzhack.devices.map(item => Object.values(item));
         
         if (!this._mqtt.topic) this._mqtt.topic = 'deconzhack/switch/device_';
         this._client = null;
@@ -53,10 +54,13 @@ class DeconzHack {
 
                 this._ws.onmessage = (msg) => {
                     var msgData = JSON.parse(msg.data);
-        
-                    if (this._devices.includes(msgData.id || '') && msgData.state && msgData.state.buttonevent) {
-                        logger.debug(`Device ${msgData.id} state changed to ${msgData.state.buttonevent}`)
-                        this._client.publish(this._mqtt.topic + msgData.id, msgData.state.buttonevent.toString());
+
+                    logger.trace(`Received:\n${JSON.stringify(msgData, null, 2)}`);
+                    
+                    let index = this._deviceIds.findIndex(item => item == msgData.uniqueid);
+                    if (index != -1 && msgData.state && msgData.state.buttonevent) {
+                        logger.debug(`Device ${this._deviceTargets[index]} state changed to ${msgData.state.buttonevent}`)
+                        this._client.publish(this._mqtt.topic + this._deviceTargets[index], msgData.state.buttonevent.toString());
                     }
                 }
 
