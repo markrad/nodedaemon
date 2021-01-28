@@ -8,7 +8,9 @@ class HaItemLight extends HaGenericSwitchItem {
         this.logger = log4js.getLogger(this.category);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {
-            this.logger.debug(`Received new state: ${that.state} ${that.attributes.brightness? 'Brightness: ' + that.attributes.brightness : ''}`);
+            let brightnessMsg = `${that.attributes.brightness? 'Brightness: ' + that.attributes.brightness : ''}`;
+            let tempMsg = `${that.attributes.color_temp? 'Temperature: ' + that.attributes.color_temp : ''}`;
+            this.logger.debug(`Received new state: ${that.state} ${brightnessMsg} ${tempMsg}`);
         });
     }
 
