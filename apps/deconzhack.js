@@ -1,4 +1,4 @@
-const WebSocket = require('ws');
+const WebSocket = require('../common/wswrapper');
 var mqtt = require('mqtt');
 var log4js = require('log4js');
 
@@ -13,18 +13,13 @@ class DeconzHack {
             throw new Error('Missing deconzhack.devices section in config');
         }
 
-        this._mqtt = config.deconzhack.mqtt || {};
-        this._deconz = config.deconzhack.deconz || {};
-
-        if (!this._mqtt.host) this._mqtt.host = '127.0.0.1';
-        if (!this._mqtt.port) this._mqtt.port = 8883;
-        if (!this._deconz.host) this._deconz.host = '127.0.0.1';
-        if (!this._deconz.port) this._deconz.port = 8443;
-
+        this._mqtt = { ...{ host: '127.0.0.1', port: 8883, topicTemplate: 'deconzhack/switch/device_%deviceid%' }, ...(config.deconzhack.mqtt ?? {}) };
+        if (this._mqtt.topicTemplate.search('%deviceid%') == -1) this._mqtt.topicTemplate += '%deviceid%'
+        this._deconz = { ...{ host: '127.0.0.1', port: 8443}, ...(config.deconzhack.deconz ?? {}) };
         this._deviceIds = config.deconzhack.devices.map(item => Object.keys(item));
         this._deviceTargets = config.deconzhack.devices.map(item => Object.values(item));
         
-        if (!this._mqtt.topic) this._mqtt.topic = 'deconzhack/switch/device_';
+        if (!this._mqtt.topicTemplate) this._mqtt.topicTemplate = 'deconzhack/switch/device_';
         this._client = null;
         this._ws = null;
 
@@ -32,46 +27,46 @@ class DeconzHack {
     }
 
     async run() {
-        return new Promise((resolve, reject) => {
-            setTimeout(async () => {
-                var timeout = setTimeout(() => {
-                    reject(new Error('Timeout awaiting connection to MQTT server'));
-                }, 3000);
-
-                this._client = mqtt.connect(`mqtt://${this._mqtt.host}:${this._mqtt.port}`, { clientId: 'deCONZHack'});
-                await new Promise(resolve => this._client.once('connect', resolve));
-                clearTimeout(timeout);
-                logger.debug('Connected to MQTT server');
-
-                timeout = setTimeout(() => {
-                    reject(new Error('Timeout awaiting connection to deCONZ server'));
-                }, 30000);
-
-                this._ws = new WebSocket(`ws://${this._deconz.host}:${this._deconz.port}`);
-                await new Promise(resolve => this._ws.once('open', resolve));
-                clearTimeout(timeout);
-                logger.debug('Connected to deCONZ server');
-
-                this._ws.onmessage = (msg) => {
-                    var msgData = JSON.parse(msg.data);
-
-                    logger.trace(`Received:\n${JSON.stringify(msgData, null, 2)}`);
-                    
-                    let index = this._deviceIds.findIndex(item => item == msgData.uniqueid);
-                    if (index != -1 && msgData.state && msgData.state.buttonevent) {
-                        logger.debug(`Device ${this._deviceTargets[index]} state changed to ${msgData.state.buttonevent}`)
-                        this._client.publish(this._mqtt.topic + this._deviceTargets[index], msgData.state.buttonevent.toString());
-                    }
-                }
-
-                resolve();
+        return new Promise(async (resolve, reject) => {
+            // setTimeout(async () => {
+            var timeout = setTimeout(() => {
+                reject(new Error('Timeout awaiting connection to MQTT server'));
             }, 3000);
+
+            this._client = mqtt.connect(`mqtt://${this._mqtt.host}:${this._mqtt.port}`, { clientId: 'deCONZHack'});
+            await new Promise(resolve => this._client.once('connect', resolve));
+            clearTimeout(timeout);
+            logger.debug('Connected to MQTT server');
+            this._ws = new WebSocket(`ws://${this._deconz.host}:${this._deconz.port}`, 60);
+            await this._ws.open();
+            // await new Promise(resolve => this._ws.once('open', resolve));
+            // clearTimeout(timeout);
+            logger.debug('Connected to deCONZ server');
+
+            this._ws.on('message', (msg) => {
+                var msgData = JSON.parse(msg);
+
+                logger.trace(`Received:\n${JSON.stringify(msgData, null, 2)}`);
+                
+                let index = this._deviceIds.findIndex(item => item == msgData.uniqueid);
+                if (index != -1 && msgData.state && msgData.state.buttonevent) {
+                    logger.debug(`Device ${this._deviceTargets[index]} state changed to ${msgData.state.buttonevent}`)
+                    this._client.publish(this._mqtt.topicTemplate.replace('%deviceid%', this._deviceTargets[index]), msgData.state.buttonevent.toString());
+                }
+            });
+
+            resolve();
+            // }, 3000);
         });
     }
 
+    send(data) {
+        this._ws.send(data);
+    }
+
     async stop() {
-        return new Promise((resolve, reject) => {
-            this._ws.close();
+        return new Promise(async (resolve, reject) => {
+            await this._ws.close();
             this._client.end(resolve);
         });
     }
