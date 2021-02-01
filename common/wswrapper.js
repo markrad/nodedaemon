@@ -86,12 +86,13 @@ class WSWrapper extends EventEmitter {
     }
 
     async close() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, _reject) => {
             this._closing = true;
             logger.info('Closing');
             this._connected = false;
-            await new Promise((resolve, reject) => {
-                let timer = setTimeout(() => {
+            let timer = 0;
+            await new Promise((resolve, _reject) => {
+                timer = setTimeout(() => {
                     logger.warn('Failed to close before timeout')
                     resolve(new Error('Failed to close connection'));
                 }, 5000);
@@ -132,7 +133,7 @@ class WSWrapper extends EventEmitter {
             let pingId = 0;
             let pingOutstanding = 0;
             let pongWait = 0;
-            this._client.once('pong', (_data) => {
+            this._client.on('pong', (_data) => {
                 clearTimeout(pongWait);
                 pingOutstanding = 0;
             });
