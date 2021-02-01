@@ -34,11 +34,11 @@ class SwitchTest {
             // async () => this.testtoggle.toggle(),
             // async () => this.testtoggle.toggle(),
             async () => this.patio.turnOff(),
-            async () => this.patio.updateState(20),
-            async () => this.patio.updateState(40),
-            async () => this.patio.updateState(60),
-            async () => this.patio.updateState(80),
-            async () => this.patio.updateState(100),
+            async () => this.patio.updateBrightness(20),
+            async () => this.patio.updateBrightness(40),
+            async () => this.patio.updateBrightness(60),
+            async () => this.patio.updateBrightness(80),
+            async () => this.patio.updateBrightness(100),
             async () => this.patio.turnOff(),
         ];
         //return;

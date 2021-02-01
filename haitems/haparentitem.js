@@ -22,7 +22,7 @@ class HaParentItem extends EventEmitter {
     }
 
     get attributes() {
-        return this._attributes;
+        return this._attributes ?? {};
     }
 
     get name() {
@@ -30,7 +30,7 @@ class HaParentItem extends EventEmitter {
     }
 
     get friendlyName() {
-        return this._friendlyName;
+        return this._friendlyName ?? '';
     }
 
     get type() {
@@ -74,7 +74,7 @@ class HaParentItem extends EventEmitter {
 
     async updateState(_newState) {
         let ret = new Promise((_resolve, reject) => {
-            reject(new Error('Descendent class is required to implement sendState'));
+            reject(new Error('Descendent class is required to implement updateState'));
         });
     }
 
@@ -87,7 +87,7 @@ class HaParentItem extends EventEmitter {
         if (service == 'error') {
             err = new Error(`Bad value passed to updateState - ${newState}`);
             this.logger.error(`${err.message}`);
-            resolve(action, err);
+            resolve('error', err);
             return;
         }
 
