@@ -28,17 +28,20 @@ class ConsoleInterface {
                 case 'types':
                     that._listTypes(that, sock, dataWords.splice(1));
                     break;
+                case 'names':
+                    that._listNames(that, sock, dataWords.splice(1));
+                    break;
                 case 'help':
                     sock.write('list apps | items <regex> | types <regex>\n');
                     break;
                 default:
-                    sock.write(`Unknown argument ${dataWords[0]}: must be apps | items <regex> | types <regex>\n`);
+                    sock.write(`Unknown argument ${dataWords[0]}: must be apps | items <regex> | types <regex> | names <regex>\n`);
                     logger.debug(`Unknown list option ${dataWords[0]}`);
                     break;
             }
         }
         else {
-            sock.write('list missing argument - requires apps | items <regex> | types <regex>\n');
+            sock.write('list missing argument - requires apps | items <regex> | types <regex> | names <regex>\n');
         }
     }
 
@@ -49,8 +52,8 @@ class ConsoleInterface {
             .filter(item => re? re.test(that._items[item].entityId) : true)
             .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-            sock.write(`${that._items[item].entityId}:${that._items[item].__proto__.constructor.name}\n`)
-        });
+                sock.write(`${that._items[item].entityId}:${that._items[item].__proto__.constructor.name}\n`)
+            });
     }
 
     _listTypes(that, sock, dataWords) {
@@ -60,8 +63,19 @@ class ConsoleInterface {
             .filter(item => re? re.test(that._items[item].__proto__.constructor.name) : true)
             .sort((l, r) => that._items[l].__proto__.constructor.name + that._items[l].entityId < that._items[r].__proto__.constructor.name + that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-            sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\n`)
-        });
+                sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\n`)
+            });
+    }
+
+    _listNames(that, sock, dataWords) {
+        logger.debug(`listnames called with ${dataWords.join(' ')}`);
+        let re = dataWords[0]? new RegExp(dataWords[0]) : null;
+        Object.keys(that._items)
+            .filter(item => re? re.test(that._items[item].attributes.friendly_name) : true)
+            .sort((l, r) => that._items[l].attributes.friendly_name < that._items[r].attributes.friendly_name)
+            .forEach((item) => {
+                sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}:${that._items[item].attributes.friendly_name}\n`)
+            })
     }
 
     _listApps(that, sock, _dataWords) {
@@ -194,21 +208,21 @@ class ConsoleInterface {
         let that = this;
         let name = this._controller.haConfig.location_name;
         let commands = {
-            'help': [': Print this message', (_that, sock) => {
+            'help': ['\t\t\t\tPrint this message', (_that, sock) => {
                 sock.write('Available commands:\n');
                 Object.keys(commands).forEach((command) => sock.write(`${command}${commands[command][0]}\n`));
             }],
-            'list': [' apps | items <optional regex> | types <optional regex>]: list the selected type with optional regex filter', this._list],
-            'inspect': [' <optional regex>: Inspect items optionally filtered by a regex query', this._inspect],
-            'getconfig': [': Displays instance configuration', (_that, sock) => {
+            'list': [' \tapps\n\titems <optional regex>\n\ttypes <optional regex>\n\tnames <optional regex>\tList the selected type with optional regex filter', this._list],
+            'inspect': [' <optional regex>\tInspect items optionally filtered by a regex query', this._inspect],
+            'getconfig': ['\t\t\tDisplays instance configuration', (_that, sock) => {
                 sock.write('Configuration:\n');
                 sock.write(JSON.stringify(that._controller.haConfig, null, 2));
                 sock.write('\n');
             }],
-            'app': [' start appname | stop appname | list: Start or stop the specified app or list all apps (same as list apps)', this._app],
-            'uptime': [': Time since last restart', this._uptime],
-            'stop': [': Stops the service', this._stop],
-            'exit': [': Exit', (_that, sock) => {
+            'app': ['\tstart appname\n\tstop appname\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)', this._app],
+            'uptime': ['\t\t\t\tTime since last restart', this._uptime],
+            'stop': ['\t\t\t\tStops the service', this._stop],
+            'exit': ['\t\t\t\tExit', (_that, sock) => {
                 sock.write('Closing\n');
                 setTimeout(() => sock.end(), 500);
             }],
