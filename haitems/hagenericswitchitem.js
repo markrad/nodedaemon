@@ -53,11 +53,11 @@ class HaGenericSwitchItem extends HaParentItem {
     }
 
     get brightness() {
-        return this.attributes.brightness ?? NaN
+        return this.isBrightnessSupported? this.attributes.brightness : NaN
     }
 
     get temperature() {
-        return this.attributes.color_temp ?? NaN
+        return this.isTemperatureSupported? this.attributes.color_temp : NaN
     }
 
     async updateBrightness(_newValue) { 
@@ -75,6 +75,7 @@ class HaGenericSwitchItem extends HaParentItem {
                 resolve('error', new Error('Brightness value must be a number between 1 and 100'));
             }
             else {
+                // temp = 255 * temp / 100;
                 var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
                 this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, brightness: temp });
             }
