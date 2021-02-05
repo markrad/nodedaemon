@@ -253,7 +253,7 @@ class HaInterface extends EventEmitter {
     }
 
     async subscribe() {
-        let ret = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'subscribe_events' };
             this._sendPacket(packet, null)
                 .then((response) => {
@@ -265,8 +265,6 @@ class HaInterface extends EventEmitter {
                     reject(err);
                 });
         });
-
-        return ret;
     }
 
     async getStates() {
