@@ -55,7 +55,7 @@ class HaMain extends EventEmitter {
                 }
             });
 
-            this.haInterface.subscribe();
+            await this.haInterface.subscribe();
             this.haInterface.on('state_changed', async (state) => {
                 let name = state.entity_id.split('.')[1];
 
@@ -82,8 +82,8 @@ class HaMain extends EventEmitter {
                 }
             });
 
-            this.haInterface.on('reconnected', () => {
-                this.haInterface.subscribe();
+            this.haInterface.on('reconnected', async () => {
+                await this.haInterface.subscribe();
             });
 
             this.haInterface.on('fatal_error', (err) => {
