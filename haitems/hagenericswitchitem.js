@@ -19,7 +19,7 @@ class HaGenericSwitchItem extends HaParentItem {
 
         this.on('new_state', (that, _oldstate) => {
             let brightnessMsg = `${that.isOn && that.isBrightnessSupported? 'Brightness: ' + that.brightness : ''}`;
-            let tempMsg = `${that.isOn && that.isTemperatureSupported? 'Temperature: ' + that.color_temp : ''}`;
+            let tempMsg = `${that.isOn && that.isTemperatureSupported? 'Temperature: ' + that.temperature : ''}`;
             this.logger.debug(`Received new state: ${that.state} ${brightnessMsg} ${tempMsg}`);
         });
     }
@@ -70,14 +70,15 @@ class HaGenericSwitchItem extends HaParentItem {
 
     _updateBrightness(newValue) {
         return new Promise((resolve, _reject) => {
-            var temp = Number(newValue);
-            if (temp == NaN) {
-                resolve('error', new Error('Brightness value must be a number between 1 and 100'));
+            var level = Number(newValue);
+            if (level == NaN) {
+                resolve('error', new Error('Brightness value must be a number between 1 and 254'));
             }
             else {
-                // temp = 255 * temp / 100;
+                if (level < 0) level = 0;
+                else if (level > 254) level = 254;
                 var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
-                this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, brightness: temp });
+                this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, brightness: level });
             }
         });
     }
