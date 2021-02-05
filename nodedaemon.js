@@ -51,12 +51,13 @@ try {
 
     program.version(`Version = ${packageJSON.version}\nAuthor  = ${packageJSON.author}\nLicense = ${packageJSON.license}\nWebpage = ${packageJSON.repository.url}`)
         .name('nodedaemon')
-        .option('-a, --appsdir <location>', 'location of apps directory\n(default: if present the value from config.json appsDir otherwise ./apps')
+        .option('-a, --appsdir <location...>', 'location of apps directory\n(default: if present the value from config.json appsDir otherwise ./apps')
+        .option('-r, --replace', 'replace config file appsdir with command line appsdir - default is to merge them')
         .option('-c, --config <locaton>', 'name and location of config.json', './config.json')
         .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
         .parse(process.argv);
 
-    defaultLogger.level = 'fatal';
+    defaultLogger.level = 'error';
 
     configFile = program.opts().config || './config.json';
 
@@ -101,20 +102,39 @@ try {
     }
 
     if (program.opts().appsdir) {
-        config.main.appsDir = program.opts().appsdir;
+        let appsdir = program.opts().appsdir.map((item) => {
+            return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
+        });
+        if (!config.main.appsDir || program.opts.replace) {
+            config.main.appsDir = appsdir;
+        }
+        else {
+            if (!Array.isArray(config.main.appsDir)) {
+                config.main.appsDir = [ config.main.appsDir ];
+            }
+            config.main.appsDir = config.main.appsDir.map((item) => {
+                if (typeof item != 'string') {
+                    defaultLogger.fatal('appsDir is an invalid type - string or array of strings expected');
+                    process.exit(4);
+                }
+                return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
+            });
+            config.main.appsDir = Array.from(new Set(config.main.appsDir.concat(appsdir)));
+        }
+
     }
     else if (!config.main.appsDir) {
-        config.main.appsDir = './apps';
+        config.main.appsDir = path.join(process.cwd(), 'apps');
     }
 
-    if (!path.isAbsolute(config.main.appsDir)) {
-        config.main.appsDir = path.join(process.cwd(), config.main.appsDir);
-    }
+    config.main.appsDir.forEach((item, index) => {
+        if (!fs.existsSync(item)) {
+            config.main.appsDir[index] = null;
+            defaultLogger.error(`Specified appsdir ${item} does not exist`);
+        }
+    });
 
-    if (!fs.existsSync(config.main.appsDir)) {
-        defaultLogger.fatal(`Apps directory ${config.main.appsDir} does not exist`);
-        process.exit(4);
-    }
+    config.main.appsDir = config.main.appsDir.filter(item => item != null);
 
     defaultLogger.level = config.main.debugLevel;
     defaultLogger.info(`config file = ${configFile}`);
