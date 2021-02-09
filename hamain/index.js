@@ -108,82 +108,33 @@ class HaMain extends EventEmitter {
                 logger.info(`${value}: ${itemTypes[value]}`);
             }); 
 
+            let workApps = [];
+            let appPromises = []
             this.config.main.appsDir.forEach(async (item) => {
-                var watcher = hound.watch(item);
+                this._setWatcher(item);
+            
+                appPromises.push(this._getApps(item));
+            });
 
-                watcher.on('create', (file, _stats) => {
-                    if (this.config.main.appsDir.includes(path.dirname(file)) && path.extname(file) == '.js') {
-                        logger.debug(`App ${file} created - will attempt to load`);
-                        let appobject;
+            Promise.all(appPromises)
+                .then((results) => {
+                    results.forEach(result => this._apps = this._apps.concat(result));
+                    // Construct all apps
+                    let goodapps = 0;
+                    this._apps.forEach((app) => {
                         try {
-                            let app = reload(file);
-                            appobject = new app(this, this.config);
-                            this._apps.push({ name: appobject.__proto__.constructor.name, path: path.join(file), instance: appobject, status: 'constructed' });
-                            appobject.run();
-                            this._apps[this.apps.length - 1].status = 'running';
+                            app.instance.run();
+                            app.status = 'running';
+                            goodapps++;
                         }
                         catch (err) {
-                            this._apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
-                            logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
+                            app.status = 'failed';
+                            logger.warn(`Could not run app ${app.__proto__.constructor.name} - ${err}`);
                         }
-                    }
+                    });
+                    logger.info(`Apps loaded: ${this._apps.length}`);
                 });
-            
-                watcher.on('change', async (file, _stats) => {
-                    if (this.config.main.appsDir.includes(path.dirname(file)) && path.extname(file) == '.js') {
-                        logger.debug(`App ${file} changed - will attempt to reload`);
-                        let appIndex = this._apps.findIndex(element => element.path == file);
-                        
-                        if (appIndex != -1) {
-                            let appEntry = this._apps[appIndex];
-                            if (appEntry.status == 'running') {
-                                await appEntry.instance.stop();
-                            }
-                            try {
-                                let appObject = reload(file);
-                                appEntry.instance = new appObject(this, this.config);
-                                appEntry.instance.run();
-                                appEntry.status = 'running';
-                            }
-                            catch (err) {
-                                logger.error(`Failed to refreshh app ${appEntry.name}: ${err}`);
-                                appEntry.status = 'failed';
-                            }
-                        }
-                    }
-                });
-            
-                watcher.on('delete', async (file) => {
-                    if (this.config.main.appsDir.includes(path.dirname(file)) && path.extname(file) == '.js') {
-                        logger.debug(`App ${file} deleted - will stop and remove`);
-                        let appIndex = this._apps.findIndex(element => element.path == file);
 
-                        if (appIndex != -1) {
-                            let app = this._apps.splice(appIndex, 1);
-                            if (app.status == 'running') {
-                                await app.instance.stop();
-                            }
-                        }
-                    }
-                });
-            
-                this._apps.concat(await this._getApps(item));
-            });
-
-            // Construct all apps
-            let goodapps = 0;
-            this._apps.forEach((app) => {
-                try {
-                    app.instance.run();
-                    app.status = 'running';
-                    goodapps++;
-                }
-                catch (err) {
-                    app.status = 'failed';
-                    logger.warn(`Could not run app ${app.__proto__.constructor.name} - ${err}`);
-                }
-            });
-            // logger.info(`Apps loaded: ${this._apps.length}`);
         }
         catch (err) {
             logger.error(`Error: ${err}`);
@@ -260,6 +211,63 @@ class HaMain extends EventEmitter {
 
     async _wait(seconds) {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    }
+
+    _setWatcher(item) {
+        hound.watch(item)
+            .on('create', (file, _stats) => {
+                if (this.config.main.appsDir.includes(path.dirname(file)) && path.extname(file) == '.js') {
+                    logger.debug(`App ${file} created - will attempt to load`);
+                    let appobject;
+                    try {
+                        let app = reload(file);
+                        appobject = new app(this, this.config);
+                        this._apps.push({ name: appobject.__proto__.constructor.name, path: path.join(file), instance: appobject, status: 'constructed' });
+                        appobject.run();
+                        this._apps[this.apps.length - 1].status = 'running';
+                    }
+                    catch (err) {
+                        this._apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
+                        logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
+                    }
+                }
+            })
+            .on('change', async (file, _stats) => {
+                if (this.config.main.appsDir.includes(path.dirname(file)) && path.extname(file) == '.js') {
+                    logger.debug(`App ${file} changed - will attempt to reload`);
+                    let appIndex = this._apps.findIndex(element => element.path == file);
+                    
+                    if (appIndex != -1) {
+                        let appEntry = this._apps[appIndex];
+                        if (appEntry.status == 'running') {
+                            await appEntry.instance.stop();
+                        }
+                        try {
+                            let appObject = reload(file);
+                            appEntry.instance = new appObject(this, this.config);
+                            appEntry.instance.run();
+                            appEntry.status = 'running';
+                        }
+                        catch (err) {
+                            logger.error(`Failed to refreshh app ${appEntry.name}: ${err}`);
+                            appEntry.status = 'failed';
+                        }
+                    }
+                }
+            })
+            .on('delete', async (file) => {
+                if (this.config.main.appsDir.includes(path.dirname(file)) && path.extname(file) == '.js') {
+                    logger.debug(`App ${file} deleted - will stop and remove`);
+                    let appIndex = this._apps.findIndex(element => element.path == file);
+
+                    if (appIndex != -1) {
+                        let app = this._apps.splice(appIndex, 1);
+                        if (app.status == 'running') {
+                            await app.instance.stop();
+                        }
+                    }
+                }
+            });
     }
     
     async _getApps(appsDirectory) {
