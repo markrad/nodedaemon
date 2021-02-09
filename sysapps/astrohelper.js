@@ -7,17 +7,24 @@ const logger = require('log4js').getLogger(CATEGORY);
 
 class AstroHelper {
     constructor(controller, config) {
+        this._controller = controller;
         this.lastEvent = controller.items[config.astrohelper.lastevent];
         this.lastUpdate = controller.items[config.astrohelper.lastupdate];
         this.dark = controller.items[config.astrohelper.dark];
         this.moon = controller.items[config.astrohelper.moon];
-        this.astro = new (require('./astro'))(controller, config);
+        this.astro = null;
         this.sunrise = controller.items[config.astrohelper.sunrise];
         this.sunset = controller.items[config.astrohelper.sunset];
         logger.debug('Constructed');
     }
 
     async run() {
+        this.astro = this._controller.getApp('Astro')?.instance;
+
+        if (!this.astro) {
+            logger.error('Astro module has not been loaded - cannot continue');
+        }
+
         this.astro.on('astroevent', (event) => {
             let now = new Date();
             this.lastEvent.updateState(event);

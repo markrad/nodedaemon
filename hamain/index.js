@@ -179,6 +179,10 @@ class HaMain extends EventEmitter {
         return this._apps;
     }
 
+    getApp(name) {
+        return this.apps.find(item => item.name == name);
+    }
+
     get haConfig() {
         return this._haConfig;
     }

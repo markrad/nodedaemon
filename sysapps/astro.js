@@ -9,17 +9,6 @@ const CATEGORY = 'Astro'
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
 
 const logger = require('log4js').getLogger(CATEGORY);
-
-var instance = null;
-
-function wrapper(controller, config) {
-    if (instance == null) {
-        instance = new Astro(controller, config);
-    }
-
-    return instance;
-}
-
 class Astro extends EventEmitter
 {
     constructor(controller, config)
@@ -220,4 +209,4 @@ class Astro extends EventEmitter
     }
 }
 
-module.exports = wrapper;
+module.exports = Astro;
