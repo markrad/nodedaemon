@@ -57,7 +57,7 @@ try {
         .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
         .parse(process.argv);
 
-    defaultLogger.level = 'error';
+    defaultLogger.level = 'info';
 
     configFile = program.opts().config || './config.json';
 
@@ -101,31 +101,40 @@ try {
         config.main.debugLevel = debugLevels[defaultDebug];
     }
 
-    if (program.opts().appsdir) {
-        let appsdir = program.opts().appsdir.map((item) => {
-            return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
-        });
-        if (!config.main.appsDir || program.opts.replace) {
-            config.main.appsDir = appsdir;
-        }
-        else {
-            if (!Array.isArray(config.main.appsDir)) {
-                config.main.appsDir = [ config.main.appsDir ];
-            }
-            config.main.appsDir = config.main.appsDir.map((item) => {
-                if (typeof item != 'string') {
-                    defaultLogger.fatal('appsDir is an invalid type - string or array of strings expected');
-                    process.exit(4);
-                }
-                return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
-            });
-            config.main.appsDir = Array.from(new Set(config.main.appsDir.concat(appsdir)));
-        }
+    if (!config.main.appsDir) {
+        config.main.appsDir = [];
+    }
+    else if (!Array.isArray(config.main.appsDir)) {
+        config.main.appsDir = [ config.main.appsDir ];
+    }
 
+    let cmdAppsDir = [];
+
+    if (!program.opts().appsdir) {
+        if (program.opts().replace) {
+            defaultLogger.fatal('--appsdir is required when --replace is specified');
+            process.exit(4);
+        }
     }
-    else if (!config.main.appsDir) {
-        config.main.appsDir = path.join(process.cwd(), 'apps');
+    else {
+        cmdAppsDir = program.opts().appsdir;
     }
+
+    config.main.appsDir = program.opts().replace? cmdAppsDir : config.main.appsDir.concat(cmdAppsDir);
+
+    if (config.main.appsDir.length == 0) {
+        config.main.appsDir.push('./apps');
+    }
+
+    config.main.appsDir = config.main.appsDir.map((item) => {
+        if (typeof item != 'string') {
+            defaultLogger.fatal(`appsDir ${item} is invalid`);
+            process.exit(4);
+        }
+        return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
+    });
+
+    config.main.appsDir = Array.from(new Set(config.main.appsDir));
 
     config.main.appsDir.forEach((item, index) => {
         if (!fs.existsSync(item)) {
@@ -135,6 +144,11 @@ try {
     });
 
     config.main.appsDir = config.main.appsDir.filter(item => item != null);
+
+    if (config.main.appsDir.length == 0) {
+        defaultLogger.fatal('No valid apps directories were found');
+        process.exit(4);
+    }
 
     defaultLogger.level = config.main.debugLevel;
     defaultLogger.info(`config file = ${configFile}`);
