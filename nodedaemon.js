@@ -150,6 +150,21 @@ try {
         process.exit(4);
     }
 
+    if (!config.main.ignoreApps) {
+        config.main.ignoreApps = [];
+    }
+    else if (!Array.isArray(config.main.ignoreApps)) {
+        config.main.ignoreApps = [ config.main.ignoreApps ];
+    }
+
+    config.main.ignoreApps = config.main.ignoreApps.map((item) => {
+        if (typeof item != 'string') {
+            defaultLogger.fatal(`ignoreApps ${item} is invalid`);
+            process.exit(4);
+        }
+        return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
+    });
+
     defaultLogger.level = config.main.debugLevel;
     defaultLogger.info(`config file = ${configFile}`);
     defaultLogger.info(`apps directory = ${config.main.appsDir}`);
