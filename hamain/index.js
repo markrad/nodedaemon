@@ -108,12 +108,11 @@ class HaMain extends EventEmitter {
                 logger.info(`${value}: ${itemTypes[value]}`);
             }); 
 
-            let workApps = [];
             let appPromises = []
             this.config.main.appsDir.forEach(async (item) => {
                 this._setWatcher(item);
             
-                appPromises.push(this._getApps(item));
+                appPromises.push(this._getApps(this.config.main.ignoreApps, item));
             });
 
             Promise.all(appPromises)
@@ -277,7 +276,7 @@ class HaMain extends EventEmitter {
             });
     }
     
-    async _getApps(appsDirectory) {
+    async _getApps(ignoreApps, appsDirectory) {
         let ret = new Promise(async (resolve, reject) => {
             try {
                 let apps = [];
@@ -286,23 +285,29 @@ class HaMain extends EventEmitter {
 
                 for await (const dirent of dir) {
                     if (dirent.isDirectory()) {
-                        let fullname = path.join(dir.path, dirent.name, 'index.js');
-                        fs.access(fullname, (err) => {
-                            if (!err) {
-                                let app = reload(fullname);
-                                try {
-                                    appobject = new app(this, this.config);
-                                    apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'constructed' });
+                        let location = path.join(dir.path, dirent.name);
+                        if (ignoreApps.includes(location)) {
+                            logger.debug(`App ${dirent.name} ignored`);
+                        }
+                        else {
+                            let fullname = path.join(dir.path, dirent.name, 'index.js');
+                            fs.access(fullname, (err) => {
+                                if (!err) {
+                                    let app = reload(fullname);
+                                    try {
+                                        appobject = new app(this, this.config);
+                                        apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'constructed' });
+                                    }
+                                    catch (err) {
+                                        apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
+                                        logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
+                                    }
                                 }
-                                catch (err) {
-                                    apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
-                                    logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
+                                else {
+                                    logger.warn(`Search for index.js in ${dirent.name} failed - ${err}`);
                                 }
-                            }
-                            else {
-                                logger.warn(`Search for index.js in ${dirent.name} failed - ${err}`);
-                            }
-                        });
+                            });
+                        }
                     }
                 }
 
