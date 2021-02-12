@@ -13,7 +13,7 @@ class WSWrapper extends EventEmitter {
 
         if (!url) throw new Error('Error: WSWrapper requires url');
         this._url = url;
-        this._pingRate = pingRate || 0;
+        this._pingRate = pingRate ?? 0;
         this._pingTimer = null;
         this._connected = false;
         this._closing = false;
@@ -138,14 +138,19 @@ class WSWrapper extends EventEmitter {
                 pingOutstanding = 0;
             });
             this._pingTimer = setInterval(() => {
-                if (pingOutstanding > 5) {
-                    logger.warn(`Outstanding ping count: ${pingOutstanding}`);
+                if (!this._connected) {
+                    clearInterval(this._pingTimer);
                 }
-                pongWait = setTimeout(() => {
-                    logger.warn('Pong not received');
-                }, 5000);
-                pingOutstanding++;
-                this._client.ping((++pingId).toString(), true);
+                else {
+                    if (pingOutstanding > 5) {
+                        logger.warn(`Outstanding ping count: ${pingOutstanding}`);
+                    }
+                    pongWait = setTimeout(() => {
+                        logger.warn('Pong not received');
+                    }, 5000);
+                    pingOutstanding++;
+                    this._client.ping((++pingId).toString(), true);
+                }
             }, this._pingRate * 1000);
         }
     }
