@@ -170,6 +170,15 @@ class HaMain extends EventEmitter {
             });
     }
 
+    getItemByFriendlyName(name) {
+        let index = Object.keys(this.items).findIndex((item) => { 
+            logger.debug(this.items[item].attributes.friendly_name);
+            return this.items[item].attributes.friendly_name == name
+        });
+
+        return index != -1? Object.values(this.items)[index] : null;
+    }
+
     get items() {
         return this._items
     }
