@@ -1,5 +1,13 @@
 {
     "files.associations": {
         "*.yaml": "home-assistant"
+    },
+
+    "[pug]": {
+        "editor.tabSize": 2
+    },
+
+    "[js]": {
+        "editor.tabSize": 4
     }
 }
