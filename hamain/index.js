@@ -227,14 +227,14 @@ class HaMain extends EventEmitter {
 
     _setWatcher(item) {
         hound.watch(item)
-            .on('create', (file, _stats) => {
-                if (this.config.main.appsDir.includes(path.dirname(file)) && path.basename(file) == 'index.js') {
+            .on('create', (file, stats) => {
+                if (this._isApp(this.config.main.appsDir, file, stats)) {
                     logger.debug(`App ${file} created - will attempt to load`);
                     let appobject;
                     try {
                         let app = reload(file);
                         appobject = new app(this, this.config);
-                        this._apps.push({ name: appobject.__proto__.constructor.name, path: path.join(file), instance: appobject, status: 'constructed' });
+                        this._apps.push({ name: appobject.__proto__.constructor.name, path: path.dirname(file), instance: appobject, status: 'constructed' });
                         appobject.run();
                         this._apps[this.apps.length - 1].status = 'running';
                         logger.info(`App ${file} loaded`);
@@ -245,10 +245,10 @@ class HaMain extends EventEmitter {
                     }
                 }
             })
-            .on('change', async (file, _stats) => {
-                if (this.config.main.appsDir.includes(path.dirname(file)) && path.basename(file) == 'index.js') {
+            .on('change', async (file, stats) => {
+                if (this._isApp(this.config.main.appsDir, file, stats)) {
                     logger.debug(`App ${file} changed - will attempt to reload`);
-                    let appIndex = this._apps.findIndex(element => element.path == file);
+                    let appIndex = this._apps.findIndex(element => path.join(element.path, 'index.js') == file);
                     
                     if (appIndex != -1) {
                         let appEntry = this._apps[appIndex];
@@ -270,9 +270,9 @@ class HaMain extends EventEmitter {
                 }
             })
             .on('delete', async (file) => {
-                if (this.config.main.appsDir.includes(path.dirname(file)) && path.basename(file) == 'index.js') {
+                if (this._isApp(this.config.main.appsDir, file)) {
                     logger.debug(`App ${file} deleted - will stop and remove`);
-                    let appIndex = this._apps.findIndex(element => element.path == file);
+                    let appIndex = this._apps.findIndex(element => path.join(element.path, 'index.js') == file);
 
                     if (appIndex != -1) {
                         let app = this._apps.splice(appIndex, 1);
@@ -283,6 +283,16 @@ class HaMain extends EventEmitter {
                     }
                 }
             });
+    }
+
+    _isApp(appsDir, file, stats) {
+        stats = stats ?? { isFile: () => { return true; } }
+        if (stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
     
     async _getApps(ignoreApps, appsDirectory) {
