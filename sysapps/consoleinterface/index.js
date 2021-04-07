@@ -1,4 +1,3 @@
-const net = require('net');
 var log4js = require('log4js');
 
 const CATEGORY = 'ConsoleInterface';
@@ -6,12 +5,10 @@ var logger = log4js.getLogger(CATEGORY);
 
 class ConsoleInterface {
     constructor(controller, config) {
-        let _config = config.consoleInterface || {};
-        this._host = _config.host || '0.0.0.0';
-        this._port = _config.port || 2022;
+        this._config = config.consoleInterface || {};
         this._controller = controller;
         this._items = controller.items;
-        this._server = null;
+        this._transports = [];
         logger.debug('Construction complete');
     }
 
@@ -32,16 +29,16 @@ class ConsoleInterface {
                     that._listNames(that, sock, dataWords.splice(1));
                     break;
                 case 'help':
-                    sock.write('list apps | items <regex> | types <regex>\n');
+                    sock.write('list apps | items <regex> | types <regex>\r\n');
                     break;
                 default:
-                    sock.write(`Unknown argument ${dataWords[0]}: must be apps | items <regex> | types <regex> | names <regex>\n`);
+                    sock.write(`Unknown argument ${dataWords[0]}: must be apps | items <regex> | types <regex> | names <regex>\r\n`);
                     logger.debug(`Unknown list option ${dataWords[0]}`);
                     break;
             }
         }
         else {
-            sock.write('list missing argument - requires apps | items <regex> | types <regex> | names <regex>\n');
+            sock.write('list missing argument - requires apps | items <regex> | types <regex> | names <regex>\r\n');
         }
     }
 
@@ -52,7 +49,7 @@ class ConsoleInterface {
             .filter(item => re? re.test(that._items[item].entityId) : true)
             .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-                sock.write(`${that._items[item].entityId}:${that._items[item].__proto__.constructor.name}\n`)
+                sock.write(`${that._items[item].entityId}:${that._items[item].__proto__.constructor.name}\r\n`)
             });
     }
 
@@ -63,7 +60,7 @@ class ConsoleInterface {
             .filter(item => re? re.test(that._items[item].__proto__.constructor.name) : true)
             .sort((l, r) => that._items[l].__proto__.constructor.name + that._items[l].entityId < that._items[r].__proto__.constructor.name + that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-                sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\n`)
+                sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\r\n`)
             });
     }
 
@@ -74,14 +71,14 @@ class ConsoleInterface {
             .filter(item => re? re.test(that._items[item].attributes.friendly_name) : true)
             .sort((l, r) => that._items[l].attributes.friendly_name < that._items[r].attributes.friendly_name)
             .forEach((item) => {
-                sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}:${that._items[item].attributes.friendly_name}\n`)
+                sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}:${that._items[item].attributes.friendly_name}\r\n`)
             })
     }
 
     _listApps(that, sock, _dataWords) {
         logger.debug('listapps called');
         that._controller.apps.forEach((app) => {
-            sock.write(`${app.name} ${app.path} ${app.status}\n`);
+            sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
         });
     }
 
@@ -98,12 +95,12 @@ class ConsoleInterface {
                     that._listApps(that, sock, dataWords.splice(1));
                     break;
                 default:
-                    sock.write(`Unknown argument ${dataWords[0]}: must be start appname | stop appname | list\n`);
+                    sock.write(`Unknown argument ${dataWords[0]}: must be start appname | stop appname | list\r\n`);
                     break;
             }
         }
         else {
-            sock.write('app missing arument - requires start appname | stop appname | list\n');
+            sock.write('app missing arument - requires start appname | stop appname | list\r\n');
         }
     }
 
@@ -113,12 +110,12 @@ class ConsoleInterface {
             let aps = that._controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps[0].status != 'running') {
-                    sock.write(`Cannot stop app ${aps[0].name} - status is ${aps[0].status}\n`);
+                    sock.write(`Cannot stop app ${aps[0].name} - status is ${aps[0].status}\r\n`);
                 }
                 else {
                     await aps[0].instance.stop();
                     aps[0].status = 'stopped';
-                    sock.write(`App ${aps[0].name} stopped\n`)
+                    sock.write(`App ${aps[0].name} stopped\r\n`)
                 }
             }
             catch (err) {
@@ -126,10 +123,10 @@ class ConsoleInterface {
                 
                 if (aps.length > 0) {
                     aps[0].status = 'failed';
-                    sock.write(`Failed to stop app ${appName}: ${err.message}\n`);
+                    sock.write(`Failed to stop app ${appName}: ${err.message}\r\n`);
                 }
                 else {
-                    sock.write(`Failed to stop app ${appName}: App was not found\n`);
+                    sock.write(`Failed to stop app ${appName}: App was not found\r\n`);
                 }
             }
 
@@ -143,12 +140,12 @@ class ConsoleInterface {
             let aps = that._controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps[0].status == 'running') {
-                    sock.write(`Cannot start app ${aps[0].name} - already running\n`);
+                    sock.write(`Cannot start app ${aps[0].name} - already running\r\n`);
                 }
                 else {
                     await aps[0].instance.run();
                     aps[0].status = 'running';
-                    sock.write(`App ${aps[0].name} started\n`)
+                    sock.write(`App ${aps[0].name} started\r\n`)
                 }
             }
             catch (err) {
@@ -156,10 +153,10 @@ class ConsoleInterface {
                 
                 if (aps.length > 0) {
                     aps[0].status = 'failed';
-                    sock.write(`Failed to start app ${appName}: ${err.message}\n`);
+                    sock.write(`Failed to start app ${appName}: ${err.message}\r\n`);
                 }
                 else {
-                    sock.write(`Failed to start app ${appName}: App was not found\n`);
+                    sock.write(`Failed to start app ${appName}: App was not found\r\n`);
                 }
             }
 
@@ -174,11 +171,11 @@ class ConsoleInterface {
             .filter(item => re? re.test(that._items[item].entityId) : true)
             .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
             .forEach((item) => {
-            sock.write(`Entity Id = ${that._items[item].entityId}\n`);
-            sock.write(`Type = ${that._items[item].__proto__.constructor.name}\n`);
-            sock.write(`State = ${that._items[item].state}\n`);
-            sock.write('Attributes:\n');
-            sock.write(`${JSON.stringify(that._items[item].attributes, null, 2)}\n`);
+            sock.write(`Entity Id = ${that._items[item].entityId}\r\n`);
+            sock.write(`Type = ${that._items[item].__proto__.constructor.name}\r\n`);
+            sock.write(`State = ${that._items[item].state}\r\n`);
+            sock.write('Attributes:\r\n');
+            sock.write(`${JSON.stringify(that._items[item].attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
         });
     }
 
@@ -192,12 +189,12 @@ class ConsoleInterface {
         if (!minutes.startsWith('01')) minutes += 's';
         if (!hours.startsWith('01')) hours += 's';
         if (!days.startsWith('1')) days += 's';
-        sock.write(`${days} ${hours} ${minutes} ${seconds}\n`);
+        sock.write(`${days} ${hours} ${minutes} ${seconds}\r\n`);
     }
 
      _stop(that, sock, _dataWords) {
         logger.debug('Stop called');
-        sock.write('Requested stop will occur in five seconds\n');
+        sock.write('Requested stop will occur in five seconds\r\n');
         setTimeout(async () => {
             await that._controller.stop();
             process.exit(0);
@@ -209,17 +206,17 @@ class ConsoleInterface {
         let name = this._controller.haConfig.location_name;
         let commands = {
             'help': ['\t\t\t\tPrint this message', (_that, sock) => {
-                sock.write('Available commands:\n');
-                Object.keys(commands).forEach((command) => sock.write(`${command}${commands[command][0]}\n`));
+                sock.write('Available commands:\r\n');
+                Object.keys(commands).forEach((command) => sock.write(`${command}${commands[command][0]}\r\n`));
             }],
-            'list': [' \tapps\n\titems <optional regex>\n\ttypes <optional regex>\n\tnames <optional regex>\tList the selected type with optional regex filter', this._list],
+            'list': [' \tapps\r\n\titems <optional regex>\r\n\ttypes <optional regex>\r\n\tnames <optional regex>\tList the selected type with optional regex filter', this._list],
             'inspect': [' <optional regex>\tInspect items optionally filtered by a regex query', this._inspect],
             'getconfig': ['\t\t\tDisplays instance configuration', (_that, sock) => {
-                sock.write('Configuration:\n');
-                sock.write(JSON.stringify(that._controller.haConfig, null, 2));
-                sock.write('\n');
+                sock.write('Configuration:\r\n');
+                sock.write(JSON.stringify(that._controller.haConfig, null, 2).replace(/\n/g, '\r\n'));
+                sock.write('\r\n');
             }],
-            'app': ['\tstart appname\n\tstop appname\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)', this._app],
+            'app': ['\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)', this._app],
             'uptime': ['\t\t\t\tTime since last restart', this._uptime],
             'stop': ['\t\t\t\tStops the service', this._stop],
             'exit': ['\t\t\t\tExit', (_that, sock) => {
@@ -227,36 +224,34 @@ class ConsoleInterface {
                 setTimeout(() => sock.end(), 500);
             }],
         }
-        this._server = net.createServer();
-        // this._server.listen(this._port, this._host);
-        this._server.on('connection', async (sock) => {
-            sock.write(`\nConnected to ${name} - enter help for a list of commands\n\n`)
-            sock.write(`${name} > `);
-            logger.debug(`Socket connected ${sock.remoteAddress}`);
-            sock.on('data', async (data) => {
-                let dataWords = data.toString().split(/\s/).filter(e => e);
-                logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords}`);
 
-                if (dataWords.length > 0 && dataWords[0].charCodeAt != 0) {
-                    if (dataWords[0].toLowerCase() in commands) {
-                        await commands[dataWords[0].toLowerCase()][1](that, sock, dataWords.splice(1));
+        if (this._config?.transports) {
+            try {
+                this._config.transports.forEach(transport => {
+                    try {
+                        this._transports.push(new (require(transport))(name, this, commands, this._config));
                     }
-                    else {
-                        sock.write(`Unknown command ${data}\n`);
+                    catch (err) {
+                        logger.error(`Failed to create transport ${transport}: ${err}`);
                     }
-                }
-                sock.write(`${name} > `);
-            });
-            sock.on('close', () => {
-                logger.debug(`Socket ${sock.remoteAddress} closed`);
-            });
-        }).listen(this._port, this._host);
+                });
+            }
+            catch (err) {
+                logger.error(`Failed to interate transports ${err}`);
+            }
+        }
+
+        this._transports.forEach(async (transport) => await transport.start());
     }
 
     async stop() {
-        return new Promise((resolve, _reject) => {
-            this._server.close(() => resolve());
-        })
+        return new Promise((resolve, reject) => {
+            let rets = [];
+            this._transports.forEach(async (transport) => rets.push(transport.stop()));
+            Promise.all(rets)
+                .then(() => resolve())
+                .catch((err) => reject(err));
+        });
     }
 }
 
