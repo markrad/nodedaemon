@@ -318,7 +318,7 @@ class HaMain extends EventEmitter {
                                         apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'constructed' });
                                     }
                                     catch (err) {
-                                        apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
+                                        apps.push({ name: appobject?.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
                                         logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                                     }
                                 }
