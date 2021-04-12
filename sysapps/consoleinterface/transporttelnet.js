@@ -14,6 +14,20 @@ class TransportTelnet {
         this._server = null;
     }
 
+    async _parseAndSend(stream, cmd) {
+
+        let words = cmd.trim().split(' ');
+
+        let command = this._commands.find((entry) => entry.commandName == words[0].toLowerCase());
+
+        if (!command) {
+            stream.write(`Unknown command: ${words[0]}\r\n`);
+        }
+        else {
+            await command.execute(words, this._parent, stream, this);
+        }
+    }
+
     async start() {
         this._server = net.createServer();
         this._server.on('connection', async (sock) => {
@@ -21,24 +35,20 @@ class TransportTelnet {
             sock.write(`${this._name} > `);
             logger.debug(`Socket connected ${sock.remoteAddress}`);
             sock.on('data', async (data) => {
-                let dataWords = data.toString().split(/\s/).filter(e => e);
-                logger.debug(`Reveived from ${sock.remoteAddress}: ${dataWords}`);
-
-                if (dataWords.length > 0 && dataWords[0].charCodeAt != 0) {
-                    if (dataWords[0].toLowerCase() in this._commands) {
-                        await this._commands[dataWords[0].toLowerCase()][1](this._parent, sock, dataWords.splice(1));
-                    }
-                    else {
-                        sock.write(`Unknown command ${data}\n`);
-                    }
+                if (data.toString() == 'exit\r\n') {
+                    sock.write('Closing\n');
+                    setTimeout(() => sock.end(), 500);
                 }
-                sock.write(`${this._name} $ `);
+                else {
+                    await this._parseAndSend(sock, data.toString());
+                    sock.write(`${this._name} $ `);
+                }
             });
             sock.on('close', () => {
                 logger.debug(`Socket ${sock.remoteAddress} closed`);
             });
         }).listen(this._port, this._host);
-        logger.debug(`Telnet transport started on port ${this._port}`);
+        logger.info(`Telnet server listening on port ${this._port}`);
     }
 
     async stop() {

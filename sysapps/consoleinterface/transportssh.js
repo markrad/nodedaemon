@@ -5,8 +5,9 @@ var ssh2 = require('ssh2');
 var utils = ssh2.utils;
 var log4js = require('log4js');
 const { intersection } = require('underscore');
+const { command } = require('commander');
 
-const CATEGORY = 'TransportTSSH';
+const CATEGORY = 'TransportSSH';
 var logger = log4js.getLogger(CATEGORY);
 
 class TransportSSH {
@@ -18,6 +19,7 @@ class TransportSSH {
         this._commands = commands;
         this._server = null;
         this._users = [];
+        this._server = null;
 
         if (!config?.ssh.certFile || !config?.ssh.keyFile) {
             throw new err('Required certificate or key file locations are missing');
@@ -54,18 +56,20 @@ class TransportSSH {
         if (interactive) {
             stream.write('\r\n');
         }
-        let words = cmd.split(' ');
+        let words = cmd.trim().split(' ');
 
-        if (words[0].toLowerCase() in this._commands) {
-            await this._commands[words[0].toLowerCase()][1](this._parent, stream, words.splice(1));
+        let command = this._commands.find((entry) => entry.commandName == words[0].toLowerCase());
+
+        if (!command) {
+            stream.write(`Unknown command: ${words[0]}\r\n`);
         }
         else {
-            stream.write(`Unknown command: ${words[0]}\r\n`);
+            await command.execute(words, this._parent, stream, this);
         }
     }
 
     async start() {
-        new ssh2.Server({ hostKeys: [this._hostKey] }, (client) => {
+        this._server = new ssh2.Server({ hostKeys: [this._hostKey] }, (client) => {
             logger.info('New client connected');
 
             client
@@ -265,7 +269,7 @@ class TransportSSH {
                                 }
                                 cursor--;
                             } },
-                            { name: "enter", value: Buffer.from([13]), action: () => { 
+                            { name: "enter", value: Buffer.from([13]), action: async () => { 
                                 if (sig && len > 0) {
                                     let cmd = line.toString().substr(0, len);
                                     if (cmd == 'exit') {
@@ -275,7 +279,7 @@ class TransportSSH {
                                         return;
                                     }
                                     else {
-                                        this._parseAndSend(stream, line.slice(0, len).toString(), true);
+                                        await this._parseAndSend(stream, line.slice(0, len).toString(), true);
                                     }
                                     if (history.length == 0 || cmd != history[0]) {
                                         history.unshift(cmd);
