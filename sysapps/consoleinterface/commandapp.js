@@ -77,6 +77,17 @@ class CommandApp extends CommandBase {
         });
     }
 
+    tabTargets(that, tabCount, parameters) {
+        let possibles = that._controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
+        
+        if (possibles.length == 0 || (tabCount < 2 && possibles.length > 1)) {
+            return [];
+        }
+        else {
+            return possibles;
+        }
+    }
+
     async execute(inputArray, that, sock) {
         try {
             this.validateParameters(inputArray);

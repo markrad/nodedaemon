@@ -17,7 +17,6 @@ class TransportSSH {
         this._host = config?.ssh.host || '0.0.0.0';
         this._port = config?.ssh.port || 8822;
         this._commands = commands;
-        this._server = null;
         this._users = [];
         this._server = null;
 
@@ -158,6 +157,7 @@ class TransportSSH {
                         const rightarrow = Buffer.from([27, 91, 67]);
                         const leftarrow = Buffer.from([27, 91, 68]);
                         const normal = 'QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890';
+                        let tabCount = 0;
                         let keys = [
                             { name: "uparrow", value: Buffer.from([27, 91, 65]), action: () => {
                                 if (historyPointer + 1 < history.length) {
@@ -269,6 +269,60 @@ class TransportSSH {
                                 }
                                 cursor--;
                             } },
+                            { name: "tab", value: Buffer.from([9]), action: (data) => {
+                                let allCmds;
+                                if (len == 0 || !sig) {
+                                    if (++tabCount > 1) {
+                                        allCmds = this._commands.map((cmd) => cmd.commandName.padEnd(8));
+                                        stream.write('\r\n');
+                                        stream.write(`${allCmds.join('\t')}\r\n`);
+                                        stream.write(`$ ${line.slice(0, len).toString()}`);
+                                        //  .find((entry) => entry.commandName == words[0].toLowerCase());
+                                    }
+                                }
+                                else {
+                                    let cmdWords = line.slice(0, cursor).toString().split(' ');
+                                    if (cmdWords.length == 1) {
+                                        allCmds = this._commands.filter((cmd) => cmd.commandName.startsWith(cmdWords[0])).map((cmd) => cmd.commandName);
+                                        if (allCmds.length == 1) {
+                                            // stream.write(allCmds[0].substring(cmdWords[0].length));
+                                            let cursorAdjust = line.slice(cursor, len).toString().length;
+                                            line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].substring(cmdWords[0].length)), line.slice(cursor)]);
+                                            len += allCmds[0].length - cmdWords[0].length;
+                                            stream.write(line.slice(cursor, len).toString());
+                                            cursor += allCmds[0].length - cmdWords[0].length;
+                                            while (cursorAdjust-- > 0) {
+                                                stream.write(leftarrow);
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        let command = this._commands.find((entry) => entry.commandName == cmdWords[0].toLowerCase());
+                                        if (command) {
+                                            let possibles = command.tabParameters(this._parent, ++tabCount, cmdWords);
+                                            switch (possibles.length) {
+                                                case 0:
+                                                break;
+                                                case 1:
+                                                    let cursorAdjust = line.slice(cursor, len).toString().length;
+                                                    line = Buffer.concat([line.slice(0, cursor), Buffer.from(possibles[0].substring(cmdWords[cmdWords.length - 1].length)), line.slice(cursor)]);
+                                                    len += possibles[0].length - cmdWords[cmdWords.length - 1].length;
+                                                    stream.write(line.slice(cursor, len).toString());
+                                                    cursor += possibles[0].length - cmdWords[cmdWords.length - 1].length;
+                                                    while (cursorAdjust-- > 0) {
+                                                        stream.write(leftarrow);
+                                                    }
+                                                break;
+                                                default:
+                                                    stream.write('\r\n');
+                                                    stream.write(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
+                                                    stream.write(`$ ${line.slice(0, len).toString()}`);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            } },
                             { name: "enter", value: Buffer.from([13]), action: async () => { 
                                 if (sig && len > 0) {
                                     let cmd = line.toString().substr(0, len);
@@ -299,6 +353,9 @@ class TransportSSH {
                         ];
                         const tab = Buffer.from([9]);
                         stream.on('data', (data) => {
+                            if (Buffer.compare(tab, data) != 0) {
+                                tabCount = 0;
+                            }
                             // console.log(`->cursor=${cursor};len=${len}`);
                             let handled = keys.find(key => Buffer.compare(key.value, data) == 0);
                             if (handled) {

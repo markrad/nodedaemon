@@ -13,6 +13,14 @@ class CommandInspect extends CommandBase {
         return `${this.commandName} <optional regex>\tInspect items optionally filtered by a regex query`;
     }
 
+    tabParameters(that, tabCount, parameters) {
+        let possibles = Object.keys(that._items)
+            .filter((item) => that._items[item].entityId.startsWith(parameters[1]))
+            .map((item) => that._items[item].entityId)
+            .sort((l, r) => l < r? -1 : 1);
+        return (possibles.length == 1 || tabCount > 1)? possibles : [];
+    }
+
     execute(inputArray, that, sock) {
         try {
             this.validateParameters(inputArray.slice(0, inputArray.length - 1));

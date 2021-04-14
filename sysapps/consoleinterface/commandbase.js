@@ -32,6 +32,32 @@ class CommandBase {
         }
     }
 
+    tabTargets(_that, _tabCount, _parameters) {
+        // If the command accepts a target then this needs to be overriden in the child
+        return [];
+    }
+
+    tabParameters(that, tabCount, parameters) {
+        if (parameters.length == 2) {
+            if (this.parameters == null) {
+                return [];
+            }
+            else {
+                let possibles = this.parameters.filter((param) => param.startsWith(parameters[1]));
+
+                if (possibles.length == 0 || (tabCount < 2 && possibles.length > 1)) {
+                    return [];
+                }
+                else {
+                    return possibles;
+                }
+            }
+        }
+        else {
+            return this.tabTargets(that, tabCount, parameters);
+        }
+    }
+
     _validateInputParameters(parameters) {
         if (!parameters) {
             return null;
