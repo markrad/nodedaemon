@@ -106,3 +106,4 @@ dist
 config.json
 apps/
 test*.js
+.certs/
