@@ -19,7 +19,7 @@ class CommandStop extends CommandBase {
             logger.debug('Stop called');
             sock.write('Requested stop will occur in five seconds\r\n');
             setTimeout(async () => {
-                await that._controller.stop();
+                await that.controller.stop();
                 process.exit(0);
             }, 5000);
             }

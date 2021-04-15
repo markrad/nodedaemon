@@ -18,7 +18,7 @@ class CommandApp extends CommandBase {
         return new Promise(async (resolve, reject) => {
             logger.debug('app start called');
             let appName = inputArray[2];
-            let aps = that._controller.apps.filter((item) =>item.name == appName);
+            let aps = that.controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps.length != 1) {
                     return reject(new Error(`App ${inputArray[2]} does not exist`));
@@ -46,7 +46,7 @@ class CommandApp extends CommandBase {
         return new Promise(async (resolve, reject) => {
             logger.debug('app stop called');
             let appName = inputArray[2];
-            let aps = that._controller.apps.filter((item) =>item.name == appName);
+            let aps = that.controller.apps.filter((item) =>item.name == appName);
             try {
                 if (aps.length != 1) {
                     return reject(new Error(`App ${inputArray[2]} does not exist`));
@@ -72,13 +72,13 @@ class CommandApp extends CommandBase {
 
     _listapps(_inputArray, that, sock) {
         logger.debug('app list called');
-        that._controller.apps.forEach((app) => {
+        that.controller.apps.forEach((app) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
         });
     }
 
     tabTargets(that, tabCount, parameters) {
-        let possibles = that._controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
+        let possibles = that.controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
         
         if (possibles.length == 0 || (tabCount < 2 && possibles.length > 1)) {
             return [];

@@ -16,7 +16,7 @@ class CommandUptime extends CommandBase {
     execute(inputArray, that, sock) {
         try {
             this.validateParameters(inputArray);
-            var millis = (new Date() - that._controller.startTime);
+            var millis = (new Date() - that.controller.startTime);
             var seconds = (Math.floor((millis / 1000) % 60)).toString().padStart(2, '0') + ' second';
             var minutes = (Math.floor((millis / (1000 * 60)) % 60)).toString().padStart(2, '0') + ' minute';
             var hours = (Math.floor((millis / (1000 * 60 * 60)) % 24)).toString().padStart(2, '0') + ' hour';

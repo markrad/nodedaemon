@@ -12,9 +12,16 @@ class ConsoleInterface {
         logger.debug('Construction complete');
     }
 
+    get items() {
+        return this._items;
+    }
+
+    get controller() {
+        return this._controller;
+    }
+
     async run() {
-        let that = this;
-        let name = this._controller.haConfig.location_name;
+        let name = this.controller.haConfig.location_name;
         let cmds = [
             new (require('./commandhelp'))(),
             new (require('./commandgetconfig'))(),

@@ -19,21 +19,21 @@ class CommandList extends CommandBase {
             case 'apps':
                 return [];
             case 'items':
-                possibles = Object.keys(that._items)
-                    .filter((item) => that._items[item].entityId.startsWith(parameters[2]))
-                    .map((item) => that._items[item].entityId)
+                possibles = Object.keys(that.items)
+                    .filter((item) => that.items[item].entityId.startsWith(parameters[2]))
+                    .map((item) => that.items[item].entityId)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             case 'types':
-                possibles = Object.keys(that._items)
-                    .filter(item => that._items[item].__proto__.constructor.name.startsWith(parameters[2]))
-                    .map((item) => that._items[item].__proto__.constructor.name)
+                possibles = Object.keys(that.items)
+                    .filter(item => that.items[item].__proto__.constructor.name.startsWith(parameters[2]))
+                    .map((item) => that.items[item].__proto__.constructor.name)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             case 'names':
-                possibles = Object.keys(that._items)
-                    .filter(item => that._items[item].attributes.friendly_name != undefined && that._items[item].attributes.friendly_name.startsWith(parameters[2]))
-                    .map((item) => that._items[item].attributes.friendly_name)
+                possibles = Object.keys(that.items)
+                    .filter(item => that.items[item].attributes.friendly_name != undefined && that.items[item].attributes.friendly_name.startsWith(parameters[2]))
+                    .map((item) => that.items[item].attributes.friendly_name)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             default:
@@ -41,14 +41,6 @@ class CommandList extends CommandBase {
             break;
         }
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
-        // let possibles = that._controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
-        
-        // if (possibles.length == 0 || (tabCount < 2 && possibles.length > 1)) {
-        //     return [];
-        // }
-        // else {
-        //     return possibles;
-        // }
     }
 
     execute(inputArray, that, sock) {
@@ -70,11 +62,11 @@ class CommandList extends CommandBase {
                         throw new Error(`Too many parameters passed`);
                     }
                     re = inputArray[2]? new RegExp(inputArray[2]) : null;
-                    Object.keys(that._items)
-                        .filter(item => re? re.test(that._items[item].entityId) : true)
-                        .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
+                    Object.keys(that.items)
+                        .filter(item => re? re.test(that.items[item].entityId) : true)
+                        .sort((l, r) => that.items[l].entityId < that.items[r].entityId? -1 : 1)
                         .forEach((item) => {
-                            sock.write(`${that._items[item].entityId}:${that._items[item].__proto__.constructor.name}\r\n`)
+                            sock.write(`${that.items[item].entityId}:${that.items[item].__proto__.constructor.name}\r\n`)
                         });
                 break;
                 case 'types':
@@ -83,11 +75,11 @@ class CommandList extends CommandBase {
                         throw new Error(`Too many parameters passed`);
                     }
                     re = inputArray[2]? new RegExp(inputArray[2]) : null;
-                    Object.keys(that._items)
-                        .filter(item => re? re.test(that._items[item].__proto__.constructor.name) : true)
-                        .sort((l, r) => that._items[l].__proto__.constructor.name + that._items[l].entityId < that._items[r].__proto__.constructor.name + that._items[r].entityId? -1 : 1)
+                    Object.keys(that.items)
+                        .filter(item => re? re.test(that.items[item].__proto__.constructor.name) : true)
+                        .sort((l, r) => that.items[l].__proto__.constructor.name + that.items[l].entityId < that.items[r].__proto__.constructor.name + that.items[r].entityId? -1 : 1)
                         .forEach((item) => {
-                            sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}\r\n`)
+                            sock.write(`${that.items[item].__proto__.constructor.name}:${that.items[item].entityId}\r\n`)
                         });
                 break;
                 case 'names':
@@ -96,11 +88,11 @@ class CommandList extends CommandBase {
                         throw new Error(`Too many parameters passed`);
                     }
                     re = inputArray[2]? new RegExp(inputArray[2]) : null;
-                    Object.keys(that._items)
-                        .filter(item => re? re.test(that._items[item].attributes.friendly_name) : true)
-                        .sort((l, r) => that._items[l].attributes.friendly_name < that._items[r].attributes.friendly_name)
+                    Object.keys(that.items)
+                        .filter(item => re? re.test(that.items[item].attributes.friendly_name) : true)
+                        .sort((l, r) => that.items[l].attributes.friendly_name < that.items[r].attributes.friendly_name)
                         .forEach((item) => {
-                            sock.write(`${that._items[item].__proto__.constructor.name}:${that._items[item].entityId}:${that._items[item].attributes.friendly_name}\r\n`)
+                            sock.write(`${that.items[item].__proto__.constructor.name}:${that.items[item].entityId}:${that.items[item].attributes.friendly_name}\r\n`)
                         })
                 break;
             }
@@ -115,7 +107,7 @@ class CommandList extends CommandBase {
 
     _listapps(that, sock) {
         logger.debug('listapps called');
-        that._controller.apps.forEach((app) => {
+        that.controller.apps.forEach((app) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
         });
     }

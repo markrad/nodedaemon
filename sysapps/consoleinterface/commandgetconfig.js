@@ -17,7 +17,7 @@ class CommandGetConfig extends CommandBase {
         try {
             this.validateParameters(inputArray);
             sock.write('Configuration:\r\n');
-            sock.write(JSON.stringify(that._controller.haConfig, null, 2).replace(/\n/g, '\r\n'));
+            sock.write(JSON.stringify(that.controller.haConfig, null, 2).replace(/\n/g, '\r\n'));
             sock.write('\r\n');
         }
         catch (err) {
