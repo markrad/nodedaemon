@@ -40,6 +40,9 @@ class ConsoleInterface {
                 logger.error(`Failed to interate transports ${err}`);
             }
         }
+        else {
+            logger.warn('No transports specified');
+        }
 
         this._transports.forEach(async (transport) => await transport.start());
     }
