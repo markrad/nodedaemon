@@ -7,6 +7,8 @@ class HaGenericSwitchItem extends HaParentItem {
     constructor(item) {
         super(item);
         this.logger = log4js.getLogger(this.category);
+        this.moment = 0;
+        this.timer = null;
         this._SUPPORT_BRIGHTNESS = 1
         this._SUPPORT_COLOR_TEMP = 2
         this._SUPPORT_EFFECT = 4
@@ -21,6 +23,12 @@ class HaGenericSwitchItem extends HaParentItem {
             let brightnessMsg = `${that.isOn && that.isBrightnessSupported? 'Brightness: ' + that.brightness : ''}`;
             let tempMsg = `${that.isOn && that.isTemperatureSupported? 'Temperature: ' + that.temperature : ''}`;
             this.logger.debug(`Received new state: ${that.state} ${brightnessMsg} ${tempMsg}`);
+            if (this.moment != 0) {
+                this.logger.debug('Cancelling off timer');
+                clearTimeout(this.timer);
+                this.timer = null;
+                this.moment = 0;
+            }
         });
     }
 
@@ -32,6 +40,29 @@ class HaGenericSwitchItem extends HaParentItem {
         return this.updateState('off');
     }
 
+    async turnOffAt(moment) {
+        if (this.isOff || (this.isOn && this.moment != 0 && this.moment < moment)) {
+            if (this.isOff) {
+                await this.turnOn();
+            }
+            if (this.moment > 0) {
+                clearTimeout(this.timer);
+                this.timer = null;
+            }
+            this.moment = moment;
+            this.timer = setTimeout(() => {
+                this.turnOff();
+                this.moment = 0;
+                this.timer = null;
+            }, this.moment - Date.now());
+            this.logger.debug(`Turning off at ${new Date(this.moment)}`);
+        }
+        else {
+            this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this.moment};requested=${moment}`);
+        }
+    }
+
+
     toggle() {
         return this.updateState('toggle');
     }
@@ -42,6 +73,16 @@ class HaGenericSwitchItem extends HaParentItem {
 
     get isOff() {
         return this.state == 'off';
+    }
+
+    get isTimerRunning() {
+        return this.moment != 0;
+    }
+
+    get timeBeforeOff() {
+        return this.moment == 0
+                ? 0
+                : moment - Date.now();
     }
 
     get isBrightnessSupported() {
@@ -58,6 +99,10 @@ class HaGenericSwitchItem extends HaParentItem {
 
     get temperature() {
         return this.isTemperatureSupported? this.attributes.color_temp : NaN
+    }
+
+    get isSwitch() {
+        return true;
     }
 
     async updateBrightness(_newValue) { 

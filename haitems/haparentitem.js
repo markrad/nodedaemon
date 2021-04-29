@@ -57,6 +57,10 @@ class HaParentItem extends EventEmitter {
         return `${this.__proto__.constructor.name}:${this.entityId}`;
     }
 
+    get isSwitch() {
+        return false;
+    }
+
     setReceivedState(newState) {
         let oldState = {
             attributes: this.attributes,
