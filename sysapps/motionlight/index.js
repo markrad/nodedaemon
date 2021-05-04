@@ -8,13 +8,13 @@ class MotionLight {
     constructor(controller, config) {
         this.execute = true;
         this.actioners = [];
+        this.trips = null;
         if (!config.MotionLight) {
             logger.debug('No config specified');
             this.execute = false;
         }
-        if (!config?.MotionLight.devices) {
+        else if (!config?.MotionLight.devices) {
             logger.error('No devices specified');
-            this.trips = null;
         }
         else {
             if (!isArray(config.MotionLight.devices)) {
@@ -34,19 +34,21 @@ class MotionLight {
                 else if (controller.items[value[0]].type != 'binary_sensor') {
                     logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`)
                 }
-                else if (!value[1].reduce((_flag, value) => {
+                else if (false == value[1].reduce((flag, value) => {
                     if (!controller.items[value]) {
                         logger.error(`Specified target light does not exist: ${value}`);
-                        return false;
+                        flag = false;
                     }
-                    else if (!controller.items[value].isLight) {
+                    else if (!controller.items[value].isSwitch) {
                         logger.error(`Specified target light is not a switch or a light: ${value[1]}`);
-                        return false;
+                        flag = false;
                     }
-                    else {
-                        return true;
-                    }
-                })) {
+
+                    return flag;
+                    // else {
+                    //     return true;
+                    // }
+                }, true)) {
                     logger.error(`No valid lights found in target array`);
                 }
                 else if (typeof(value[2]) != 'number') {
@@ -56,19 +58,21 @@ class MotionLight {
                     let lights = value[1].map((value) => controller.items[value]);
                     return [ controller.items[value[0]], lights, value[2]];
                 }
-            });
+            }).filter(item => item != undefined);
             logger.info('Constructed');
         }
     }
 
     async run() {
         if (this.execute == false) {
-            logger.info('No config found - run request ignored');
-            return;
+            let err = new Error('No config found - run request ignored');
+            logger.info(err.message);
+            throw err;
         }
-        if (this.trips == null) {
-            logger.error('No valid device pairs found');
-            return;
+        if (this.trips == null || this.trips.length == 0) {
+            let err = new Error('No valid device pairs found');
+            logger.warn(err.message);
+            throw err;
         }
 
         this.trips.forEach((trip) => this.actioners.push(new actioner(trip)));
