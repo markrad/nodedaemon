@@ -7,10 +7,17 @@ var HaMain = require('./hamain');
 
 const CATEGORY = 'main';
 
-async function main(config) {
-    var logger = log4js.getLogger(CATEGORY);
-
-    logger.info('HaRunner is starting');
+async function main(version, config) {
+    const LOGO = `
+                                                  
+             |         |                         
+___  ___  ___| ___  ___| ___  ___  _ _  ___  ___ 
+|   )|   )|   )|___)|   )|   )|___)| | )|   )|   )
+|  / |__/ |__/ |__  |__/ |__/||__  |  / |__/ |  / 
+                                                   Version ${version} is starting
+`;
+var logger = log4js.getLogger(CATEGORY);
+    logger.info(`${LOGO}`);
 
     try {
         var haMain = new HaMain(config);
@@ -175,4 +182,4 @@ catch (err) {
     process.exit(4);
 }
 
-main(config);
+main(packageJSON.version, config);
