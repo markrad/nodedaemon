@@ -100,6 +100,11 @@ class HaInterface extends EventEmitter {
                         });
                 }, this.pingRate);
 
+                while ((await this.getConfig()).state != 'RUNNING') {
+                    logger.debug('Waiting for Home Assistant to signal RUNNING');
+                    await this._wait(1);
+                }
+
                 resolve();
             }
             catch (err) {
