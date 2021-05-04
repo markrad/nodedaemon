@@ -119,21 +119,18 @@ class HaMain extends EventEmitter {
                 .then((results) => {
                     results.forEach(result => this._apps = this._apps.concat(result));
                     // Construct all apps
-                    let goodapps = 0;
-                    this._apps.forEach((app) => {
+                    this._apps.forEach(async (app) => {
                         try {
-                            app.instance.run();
+                            await app.instance.run();
                             app.status = 'running';
-                            goodapps++;
                         }
                         catch (err) {
                             app.status = 'failed';
-                            logger.warn(`Could not run app ${app.__proto__.constructor.name} - ${err}`);
+                            logger.warn(`Could not run app ${app.name} - ${err}`);
                         }
                     });
                     logger.info(`Apps loaded: ${this._apps.length}`);
                 });
-
         }
         catch (err) {
             logger.error(`Error: ${err}`);
