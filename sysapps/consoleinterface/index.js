@@ -4,12 +4,17 @@ const CATEGORY = 'ConsoleInterface';
 var logger = log4js.getLogger(CATEGORY);
 
 class ConsoleInterface {
-    constructor(controller, config) {
-        this._config = config.consoleInterface || {};
+    constructor(controller) {
+        this._config;
         this._controller = controller;
         this._items = controller.items;
         this._transports = [];
-        logger.debug('Construction complete');
+    }
+
+    validate(config) {
+        this._config = config;
+        logger.info('Construction complete');
+        return true;
     }
 
     get items() {
