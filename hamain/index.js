@@ -46,9 +46,16 @@ class HaMain extends EventEmitter {
                         // Error already logged
                     }
                 });
-
-                if (itemInstance in this._items) {
-                    logger.fatal('fuck');
+                let tempName = itemInstance.name;
+                if (itemInstance.name in this._items) {
+                    let tempName = itemInstance.name + '_';
+                    let suffix = 1;
+                    let newName = `${tempName}${suffix}`;
+                    while (newName in this.items) {
+                        newName  = `${tempName}${++suffix}`;
+                    }
+                    logger.warn(`Item ${itemInstance.entityId} renamed to ${newName}`);
+                    this._items[newName] = itemInstance;
                 }
                 else {
                     this._items[itemInstance.name] = itemInstance;
@@ -121,8 +128,13 @@ class HaMain extends EventEmitter {
                     // Construct all apps
                     this._apps.forEach(async (app) => {
                         try {
-                            await app.instance.run();
-                            app.status = 'running';
+                            if (app.status == 'constructed') {
+                                await app.instance.run();
+                                app.status = 'running';
+                            }
+                            else {
+                                logger.warn(`App is not in a runnable state ${app.name} - ${app.status}`);
+                            }
                         }
                         catch (err) {
                             app.status = 'failed';
@@ -169,7 +181,7 @@ class HaMain extends EventEmitter {
 
     getItemByFriendlyName(name) {
         let index = Object.keys(this.items).findIndex((item) => { 
-            logger.debug(this.items[item].attributes.friendly_name);
+            logger.trace(this.items[item].attributes.friendly_name);
             return this.items[item].attributes.friendly_name == name
         });
 
@@ -311,8 +323,19 @@ class HaMain extends EventEmitter {
                                 if (!err) {
                                     let app = reload(fullname);
                                     try {
-                                        appobject = new app(this, this.config);
-                                        apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'constructed' });
+                                        let loc = path.join(dir.path, dirent.name);
+                                        if (!this.config[dirent.name]) {
+                                            logger.warn(`Ignoring ${dirent.name} - no config`);
+                                        }
+                                        else {
+                                            appobject = new app(this, this.config);
+                                            if (appobject.validate == undefined || appobject.validate(this.config[dirent.name])) {
+                                                apps.push({ name: appobject.__proto__.constructor.name, path: loc, instance: appobject, status: 'constructed' });
+                                            }
+                                            else {
+                                                apps.push({ name: appobject.__proto__.constructor.name, path: loc, instance: appobject, status: 'bad_config' });
+                                            }
+                                        }
                                     }
                                     catch (err) {
                                         apps.push({ name: appobject?.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });

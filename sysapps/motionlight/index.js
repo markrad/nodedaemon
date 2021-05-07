@@ -5,49 +5,46 @@ const CATEGORY = 'MotionLight';
 var logger = log4js.getLogger(CATEGORY);
 
 class MotionLight {
-    constructor(controller, config) {
+    constructor(controller) {
+        this.controller = controller;
         this.execute = true;
         this.actioners = [];
         this.trips = null;
-        if (!config.MotionLight) {
-            logger.debug('No config specified');
-            this.execute = false;
-        }
-        else if (!config?.MotionLight.devices) {
+    }
+
+    validate(config) {
+        if (!config.devices) {
             logger.error('No devices specified');
         }
         else {
-            if (!isArray(config.MotionLight.devices)) {
+            if (!isArray(config.devices)) {
                 logger.error('Invalid device specification');
                 return;
             }
-            this.trips = config.MotionLight.devices.map((value) => {
+            this.trips = config.devices.map((value) => {
                 if (!isArray(value[1])) {
                     value[1] = [ value[1] ];
                 }
                 if (!isArray(value)) {
                     logger.error(`Specified value is not an array: ${value}`);
                 }
-                else if (!controller.items[value[0]]) {
+                else if (!this.controller.items[value[0]]) {
                     logger.error(`Specified motion sensor does not exist: ${value[0]}`);
                 }
-                else if (controller.items[value[0]].type != 'binary_sensor') {
+                else if (this.controller.items[value[0]].type != 'binary_sensor') {
                     logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`)
                 }
                 else if (false == value[1].reduce((flag, value) => {
-                    if (!controller.items[value]) {
+                    if (!this.controller.items[value]) {
                         logger.error(`Specified target light does not exist: ${value}`);
                         flag = false;
                     }
-                    else if (!controller.items[value].isSwitch) {
+                    else if (!this.controller.items[value].isSwitch) {
                         logger.error(`Specified target light is not a switch or a light: ${value[1]}`);
                         flag = false;
                     }
 
                     return flag;
-                    // else {
-                    //     return true;
-                    // }
                 }, true)) {
                     logger.error(`No valid lights found in target array`);
                 }
@@ -55,11 +52,13 @@ class MotionLight {
                     logger.error(`Minutes before action is not numeric`);
                 }
                 else {
-                    let lights = value[1].map((value) => controller.items[value]);
-                    return [ controller.items[value[0]], lights, value[2]];
+                    let lights = value[1].map((value) => this.controller.items[value]);
+                    return [ this.controller.items[value[0]], lights, value[2]];
                 }
             }).filter(item => item != undefined);
             logger.info('Constructed');
+
+            return true;
         }
     }
 
