@@ -13,7 +13,7 @@ class ConsoleInterface {
 
     validate(config) {
         this._config = config;
-        logger.info('Construction complete');
+        logger.info('Constructed');
         return true;
     }
 
