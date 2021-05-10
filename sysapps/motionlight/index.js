@@ -102,11 +102,13 @@ class actioner {
                         this.timer = null;
                     }
                     else if (this.trip[0].state == 'on') {
+                        logger.trace(`Checking motion sensor status: ${this.trip[0].state}`);
                         this.trip[1].forEach((light) => {
+                            logger.debug('Extenting turn off time');
                             light.turnOffAt(Date.now() + this.trip[2] * 60 * 1000);
                         });
                     }
-                }, 10000);
+                }, 60000);
             }
             else {
                 clearInterval(this.timer);
