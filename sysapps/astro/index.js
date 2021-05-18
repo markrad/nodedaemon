@@ -40,7 +40,7 @@ class Astro extends EventEmitter
         this.config = config.astro;
         this._midnight();
         this._updateMoon();
-        logger.debug('Constructed')
+        logger.info('Constructed')
     }
     
     run() {
