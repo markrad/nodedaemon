@@ -28,18 +28,18 @@ class MotionLight {
                 if (!isArray(value)) {
                     logger.error(`Specified value is not an array: ${value}`);
                 }
-                else if (!this.controller.items[value[0]]) {
+                else if (!this.controller.items.getItem(value[0])) {
                     logger.error(`Specified motion sensor does not exist: ${value[0]}`);
                 }
-                else if (this.controller.items[value[0]].type != 'binary_sensor') {
+                else if (this.controller.items.getItem(value[0]).type != 'binary_sensor') {
                     logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`)
                 }
                 else if (false == value[1].reduce((flag, value) => {
-                    if (!this.controller.items[value]) {
+                    if (!this.controller.items.getItem(value)) {
                         logger.error(`Specified target light does not exist: ${value}`);
                         flag = false;
                     }
-                    else if (!this.controller.items[value].isSwitch) {
+                    else if (!this.controller.items.getItem(value).isSwitch) {
                         logger.error(`Specified target light is not a switch or a light: ${value[1]}`);
                         flag = false;
                     }
@@ -52,8 +52,8 @@ class MotionLight {
                     logger.error(`Minutes before action is not numeric`);
                 }
                 else {
-                    let lights = value[1].map((value) => this.controller.items[value]);
-                    return [ this.controller.items[value[0]], lights, value[2]];
+                    let lights = value[1].map((value) => this.controller.items.getItem(value));
+                    return [ this.controller.items.getItem(value[0]), lights, value[2]];
                 }
             }).filter(item => item != undefined);
             logger.info('Constructed');

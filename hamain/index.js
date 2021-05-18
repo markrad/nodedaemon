@@ -4,6 +4,7 @@ const fs = require('fs');
 var log4js = require('log4js');
 var HaInterface = require('../hainterface');
 var HaItemFactory = require('../haitems');
+const ItemsManager = require('./itemsmanager');
 var reload = require('require-reload');
 const hound = require('hound');
 
@@ -18,7 +19,7 @@ class HaMain extends EventEmitter {
     constructor(config) {
         super();
         this.haInterface = null;
-        this._items = {};
+        this._items = new ItemsManager();
         this._apps = [];
         this.haItemFactory = null;
         this.config = config;
@@ -27,16 +28,10 @@ class HaMain extends EventEmitter {
         this._starttime = new Date();
     }
 
-    async start() {
-        try {
-            this.haInterface = new HaInterface(this.config.main.url, this.config.main.accessToken);
-            this.haItemFactory = new HaItemFactory();
-            await this.haInterface.start();
-            this._haConfig = await this.haInterface.getConfig();
-            let states = await this.haInterface.getStates();
-
-            states.forEach((item) => {
-                logger.trace(`Item name: ${item.entity_id}`);
+    _processItems(states) {
+        states.forEach((item) => {
+            logger.trace(`Item name: ${item.entity_id}`);
+            if (!this.items.getItem(item.entityId)) {
                 let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
                 itemInstance.on('callservice', async (domain, service, data) => {
                     try {
@@ -46,46 +41,36 @@ class HaMain extends EventEmitter {
                         // Error already logged
                     }
                 });
-                let tempName = itemInstance.name;
-                if (itemInstance.name in this._items) {
-                    let tempName = itemInstance.name + '_';
-                    let suffix = 1;
-                    let newName = `${tempName}${suffix}`;
-                    while (newName in this.items) {
-                        newName  = `${tempName}${++suffix}`;
-                    }
-                    logger.warn(`Item ${itemInstance.entityId} renamed to ${newName}`);
-                    this._items[newName] = itemInstance;
-                }
-                else {
-                    this._items[itemInstance.name] = itemInstance;
-                }
-            });
+                this._items.addItem(itemInstance);
+            }
+        });
+    }
+
+    async start() {
+        try {
+            this.haInterface = new HaInterface(this.config.main.url, this.config.main.accessToken);
+            this.haItemFactory = new HaItemFactory();
+            await this.haInterface.start();
+            this._haConfig = await this.haInterface.getConfig();
+            this._processItems(await this.haInterface.getStates());
 
             await this.haInterface.subscribe();
             this.haInterface.on('state_changed', async (state) => {
-                let name = state.entity_id.split('.')[1];
+                // let name = state.entity_id.split('.')[1];
 
-                if (name in this._items) {
+                if (this._items.getItem(state.entity_id)) {
                     if (state.new_state != null) {
-                        logger.trace(`${name} New state: ${state.new_state.state}`);
-                        this._items[name].setReceivedState(state.new_state);
+                        logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
+                        this.items.getItem(state.entity_id).setReceivedState(state.new_state);
                     }
                     else {
                         logger.info(`Item ${name} has been dropped`);
-                        delete this._items[name];
+                        delete this.items.deleteItem(state.entityId);
                     }
                 }
                 else {
                     logger.warn(`Item ${name} not found - refreshing devices`);
-                    let states = await this.haInterface.getStates();
-                    states.forEach((item) => {
-                        if (!(item.entity_id.split('.')[1] in this._items)) {
-                            let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
-                            this._items[itemInstance.name] = itemInstance;
-                            logger.info(`Added new item ${itemInstance.name}`);
-                        }
-                    });
+                    this._processItems(await this.haInterface.getStates());
                 }
             });
 
