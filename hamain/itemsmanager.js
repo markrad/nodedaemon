@@ -29,23 +29,35 @@ class ItemsManager {
     }
 
     getItemByName(name, useRegEx) {
-        let re = useRegEx? new RegExp(name) : null;
+        let re = !name
+            ? null
+            : useRegEx
+            ? new RegExp(name)
+            : new RegExp(`^${name}$`);
         return Object.values(this.items)
-            .filter(item => re ? re.test(item.name) : item.name == name)
+            .filter(item =>  re? re.test(item.name) : true)
             .sort((l, r) => l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
     }
 
     getItemByType(type, useRegEx) {
-        let re = useRegEx? new RegExp(type) : null;
+        let re = !type
+            ? null
+            : useRegEx
+            ? new RegExp(type)
+            : new RegExp(`^${type}$`);
         return Object.values(this.items)
-            .filter(item => re ? re.test(item.type) : item.type == type)
+            .filter(item => re? re.test(item.type) : true)
             .sort((l, r) => l.type < r.type ? -1 : l.type > r.type ? 1 : 0);
     }
 
     getItemByFriendly(friendly, useRegEx) {
-        let re = useRegEx? new RegExp(friendly) : null;
+        let re = !friendly
+            ? null
+            : useRegEx
+            ? new RegExp(friendly)
+            : new RegExp(`^${friendly}$`);
         return Object.values(this.items)
-            .filter(item => re ? re.test(item.attributes.friendly_name) : item.attributes.friendly_name == friendly)
+            .filter(item => re? re.test(item.attributes.friendly_name) : true)
             .sort((l, r) => l.attributes.friendly_name < r.attributes.friendly_name ? -1 : l.attributes.friendly_name > r.attributes.friendly_name ? 1 : 0);
     }
 }
