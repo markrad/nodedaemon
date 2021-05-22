@@ -10,7 +10,7 @@ class CommandGetConfig extends CommandBase {
     }
 
     get helpText() {
-        return `${this.commandName}\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)`;
+        return `${this.commandName}\t\t\tReturns the Home Assistand configuration`;
     }
 
     execute(inputArray, that, sock) {
