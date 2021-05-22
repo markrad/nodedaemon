@@ -47,6 +47,7 @@ class CommandList extends CommandBase {
         try {
             this.validateParameters(inputArray);
             let re;
+            let items;
             switch (inputArray[1]) {
                 case 'apps':
                     if (inputArray.length != 2) {
@@ -61,39 +62,28 @@ class CommandList extends CommandBase {
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
-                    re = inputArray[2]? new RegExp(inputArray[2]) : null;
-                    Object.keys(that.items)
-                        .filter(item => re? re.test(that.items[item].entityId) : true)
-                        .sort((l, r) => that.items[l].entityId < that.items[r].entityId? -1 : 1)
-                        .forEach((item) => {
-                            sock.write(`${that.items[item].entityId}:${that.items[item].__proto__.constructor.name}\r\n`)
-                        });
+                    items = inputArray[2]? that.items.getItemByName(inputArray[2], true) : Object.values(that.items.items).sort((l, r) => l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
+                    this._printItems(sock, items);
                 break;
                 case 'types':
                     logger.debug(`listtypes called with ${inputArray.join(' ')}`);
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
-                    re = inputArray[2]? new RegExp(inputArray[2]) : null;
-                    Object.keys(that.items)
-                        .filter(item => re? re.test(that.items[item].__proto__.constructor.name) : true)
-                        .sort((l, r) => that.items[l].__proto__.constructor.name + that.items[l].entityId < that.items[r].__proto__.constructor.name + that.items[r].entityId? -1 : 1)
-                        .forEach((item) => {
-                            sock.write(`${that.items[item].__proto__.constructor.name}:${that.items[item].entityId}\r\n`)
-                        });
+                    items = inputArray[2]? that.items.getItemByType(inputArray[2], true) : Object.values(that.items.items).sort((l, r) => l.type < r.type ? -1 : l.type > r.type ? 1 : 0);
+                    this._printItems(sock, items);
                 break;
                 case 'names':
                     logger.debug(`listnames called with ${inputArray.join(' ')}`);
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
-                    re = inputArray[2]? new RegExp(inputArray[2]) : null;
-                    Object.keys(that.items)
-                        .filter(item => re? re.test(that.items[item].attributes.friendly_name) : true)
-                        .sort((l, r) => that.items[l].attributes.friendly_name < that.items[r].attributes.friendly_name)
-                        .forEach((item) => {
-                            sock.write(`${that.items[item].__proto__.constructor.name}:${that.items[item].entityId}:${that.items[item].attributes.friendly_name}\r\n`)
-                        })
+                    items = inputArray[2]? that.items.getItemByFriendly(inputArray[2], true) : Object.values(that.items.items).sort((l, r) => l.attributes.friendly_name < r.attributes.friendly_name 
+                        ? -1 
+                        : l.attributes.friendly_name > r.attributes.friendly_name 
+                        ? 1 
+                        : 0);
+                    this._printItems(sock, items);
                 break;
             }
         }
@@ -102,6 +92,18 @@ class CommandList extends CommandBase {
             sock.write('Usage:\r\n');
             sock.write(this.helpText);
             sock.write('\r\n');
+        }
+    }
+
+    _printItems(sock, items) {
+        if (items.length == 0) {
+            sock.write('No matching items found\r\n');
+        }
+        else {
+            let maxType = 1 + items.reduce((max, item) => max = Math.max(max, item.type.length), 0);
+            let maxName = 1 + items.reduce((max, item) => max = Math.max(max, item.name.length), 0);
+            sock.write(`${'Type'.padEnd(maxType)}${'Name'.padEnd(maxName)}Friendly Name\r\n`);
+            items.forEach((item) => sock.write(`${item.type.padEnd(maxType)}${item.name.padEnd(maxName)}${item.attributes.friendly_name}\r\n`));
         }
     }
 
