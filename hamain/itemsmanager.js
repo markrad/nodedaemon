@@ -28,13 +28,19 @@ class ItemsManager {
         return this._items[entityId];
     }
 
+    getItemsAsArray(sortFunction) {
+        return typeof(sortFunction) == 'function'
+            ? Object.values(this.items).sort(sortFunction)
+            : Object.values(this.items);
+    }
+
     getItemByName(name, useRegEx) {
         let re = !name
             ? null
             : useRegEx
             ? new RegExp(name)
             : new RegExp(`^${name}$`);
-        return Object.values(this.items)
+        return this.getItemsAsArray()
             .filter(item =>  re? re.test(item.name) : true)
             .sort((l, r) => l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
     }
@@ -45,9 +51,9 @@ class ItemsManager {
             : useRegEx
             ? new RegExp(type)
             : new RegExp(`^${type}$`);
-        return Object.values(this.items)
+        return this.getItemsAsArray()
             .filter(item => re? re.test(item.type) : true)
-            .sort((l, r) => l.type < r.type ? -1 : l.type > r.type ? 1 : 0);
+            .sort((l, r) => l.type < r.type ? -1 : l.type > r.type ? 1 : l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
     }
 
     getItemByFriendly(friendly, useRegEx) {
@@ -56,7 +62,7 @@ class ItemsManager {
             : useRegEx
             ? new RegExp(friendly)
             : new RegExp(`^${friendly}$`);
-        return Object.values(this.items)
+        return this.getItemsAsArray()
             .filter(item => re? re.test(item.attributes.friendly_name) : true)
             .sort((l, r) => l.attributes.friendly_name < r.attributes.friendly_name ? -1 : l.attributes.friendly_name > r.attributes.friendly_name ? 1 : 0);
     }

@@ -62,7 +62,9 @@ class CommandList extends CommandBase {
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
-                    items = inputArray[2]? that.items.getItemByName(inputArray[2], true) : Object.values(that.items.items).sort((l, r) => l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
+                    items = inputArray[2]
+                        ? that.items.getItemByName(inputArray[2], true) 
+                        : that.items.getItemByName();
                     this._printItems(sock, items);
                 break;
                 case 'types':
@@ -70,7 +72,9 @@ class CommandList extends CommandBase {
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
-                    items = inputArray[2]? that.items.getItemByType(inputArray[2], true) : Object.values(that.items.items).sort((l, r) => l.type < r.type ? -1 : l.type > r.type ? 1 : 0);
+                    items = inputArray[2]
+                        ? that.items.getItemByType(inputArray[2], true) 
+                        : that.items.getItemByType();
                     this._printItems(sock, items);
                 break;
                 case 'names':
@@ -78,11 +82,9 @@ class CommandList extends CommandBase {
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
-                    items = inputArray[2]? that.items.getItemByFriendly(inputArray[2], true) : Object.values(that.items.items).sort((l, r) => l.attributes.friendly_name < r.attributes.friendly_name 
-                        ? -1 
-                        : l.attributes.friendly_name > r.attributes.friendly_name 
-                        ? 1 
-                        : 0);
+                    items = inputArray[2]
+                        ? that.items.getItemByFriendly(inputArray[2], true) 
+                        : that.items.getItemByFriendly();
                     this._printItems(sock, items);
                 break;
             }
