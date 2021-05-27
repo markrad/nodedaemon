@@ -16,7 +16,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
 |  / |__/ |__/ |__  |__/ |__/||__  |  / |__/ |  / 
                                                    Version ${version} is starting
 `;
-var logger = log4js.getLogger(CATEGORY);
+    var logger = log4js.getLogger(CATEGORY);
     logger.info(`${LOGO}`);
 
     try {
@@ -43,6 +43,19 @@ var logger = log4js.getLogger(CATEGORY);
         process.exit(4);
     }
 }
+
+log4js.configure({
+    appenders: {
+        out: { type: 'stdout' },
+        mqtt: { 
+            type: 'common/mqttlogger', 
+            host: "192.168.1.13" 
+        }
+    },
+    categories: {
+        default: { appenders: ['out', 'mqtt'], level: 'debug' }
+    }
+});
 
 var defaultLogger = log4js.getLogger();
 
