@@ -28,17 +28,16 @@ class CommandInspect extends CommandBase {
                 throw new Error('Missing or invalid inspection target');
             }
             logger.debug(`inspect called with ${inputArray.join(' ')}`);
-            let re = inputArray[1]? new RegExp(inputArray[1]) : null;
-            Object.keys(that._items)
-                .filter(item => re? re.test(that._items[item].entityId) : true)
-                .sort((l, r) => that._items[l].entityId < that._items[r].entityId? -1 : 1)
-                .forEach((item) => {
-                    sock.write(`Entity Id = ${that._items[item].entityId}\r\n`);
-                    sock.write(`Type = ${that._items[item].__proto__.constructor.name}\r\n`);
-                    sock.write(`State = ${that._items[item].state}\r\n`);
-                    sock.write('Attributes:\r\n');
-                    sock.write(`${JSON.stringify(that._items[item].attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
-                });
+            let items = inputArray[1]
+                ? that.items.getItemByName(inputArray[1], true) 
+                : that.items.getItemByName();
+            items.forEach((item) => {
+                sock.write(`Entity Id = ${item.entityId}\r\n`);
+                sock.write(`Type = ${item.type}\r\n`);
+                sock.write(`State = ${item.state}\r\n`);
+                sock.write('Attributes:\r\n');
+                sock.write(`${JSON.stringify(item.attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
+            });
         }
         catch (err) {
             sock.write(`${err}\r\n`);
