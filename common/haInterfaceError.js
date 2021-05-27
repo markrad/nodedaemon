@@ -1,3 +1,5 @@
+"use strict";
+
 function ErrorFactory(err) {
     if (err.__proto__.constructor.name != 'Error') {
         return err;
