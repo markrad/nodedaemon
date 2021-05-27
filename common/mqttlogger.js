@@ -22,7 +22,6 @@ function config(config, layouts) {
     let mqttClient = config.client || os.hostname() + '_logger';
     let mqttTopic = config.topic || `logger/${os.hostname()}`;
     let client = mqtt.connect(`mqtt://${mqttHost}:${mqttPort}`, { clientid: mqttClient, clean: true });
-    //this._client.once('connect', resolve));
     
     return mqttAppender(layout, config.timezoneOffset, client, mqttTopic);
 }
