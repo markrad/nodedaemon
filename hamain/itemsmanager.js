@@ -1,3 +1,5 @@
+"use strict";
+
 var log4js = require('log4js');
 
 const CATEGORY = 'HaMain';

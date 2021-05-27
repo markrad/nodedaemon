@@ -1,3 +1,5 @@
+"use strict";
+
 const EventEmitter = require('events');
 var path = require('path');
 const fs = require('fs');

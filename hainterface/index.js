@@ -1,3 +1,5 @@
+"use strict";
+
 const EventEmitter = require('events');
 const WebSocket = require('ws');
 var log4js = require('log4js');
