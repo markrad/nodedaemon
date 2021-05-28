@@ -7,8 +7,8 @@ var logger = log4js.getLogger(CATEGORY);
 
 class DynDnsUpdater {
     constructor(controller, config) {
-        this.external_ip = controller.items.external_ip;
-        this.lastUpdate = controller.items.last_dns_update;
+        this.external_ip = controller.items.items['var.external_ip'];
+        this.lastUpdate = controller.items.items['var.last_dns_update'];
         this.user = config.dyndnsupdater.user;
         this.updaterKey = config.dyndnsupdater.updaterKey;
         this.hostname = config.dyndnsupdater.hostname;

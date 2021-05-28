@@ -7,7 +7,7 @@ var logger = log4js.getLogger(CATEGORY);
 
 class UpdateExternalIP {
     constructor(controller, config) {
-        this.external_ip = controller.items.external_ip;
+        this.external_ip = controller.items.items['var.external_ip'];
         this.config = config;
         this.delay = 5;
         this.multiplier = 24;       // Check every two minutes
