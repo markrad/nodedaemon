@@ -44,20 +44,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 }
 
-log4js.configure({
-    appenders: {
-        out: { type: 'stdout' },
-        mqtt: { 
-            type: 'common/mqttlogger', 
-            host: "192.168.1.13" 
-        }
-    },
-    categories: {
-        default: { appenders: ['out', 'mqtt'], level: 'debug' }
-    }
-});
-
-var defaultLogger = log4js.getLogger();
+var defaultLogger; // = log4js.getLogger();
 
 try {
     const program = new Command();
@@ -77,11 +64,11 @@ try {
         .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
         .parse(process.argv);
 
-    defaultLogger.level = 'info';
-
     configFile = program.opts().config || './config.json';
 
     if (!fs.existsSync(configFile)) {
+        defaultLogger = log4js.getLogger();
+        defaultLogger.level = 'info';
         defaultLogger.fatal(`Config file ${configFile} not found`);
         process.exit(4);
     }
@@ -90,9 +77,31 @@ try {
         var config = JSON.parse(fs.readFileSync(configFile));
     }
     catch (err) {
+        defaultLogger = log4js.getLogger();
+        defaultLogger.level = 'info';
         defaultLogger.fatal(`Config file ${program.opts().config} is invalid: ${err}`);
         process.exit(4);
     }
+
+    if (config.main.mqttlogger) {
+        log4js.configure({
+            appenders: {
+                out: { type: 'stdout' },
+                mqtt: { 
+                    type: 'common/mqttlogger', 
+                    host: config.main.mqttlogger.host,
+                    clientid: config.main.mqttlogger.clientid,
+                    username: config.main.mqttlogger.username,
+                    password: config.main.mqttlogger.password
+                }
+            },
+            categories: {
+                default: { appenders: ['out', 'mqtt'], level: 'debug' }
+            }
+        });
+    }
+
+    defaultLogger = log4js.getLogger();
 
     if (!config.main.url) {
         defaultLogger.fatal(`Config file ${program.opts().config} is missing the url value`);
@@ -191,6 +200,10 @@ try {
     defaultLogger.info(`Debug level = ${config.main.debugLevel}`);
 }
 catch (err) {
+    if (!defaultLogger) {
+        defaultLogger = log4js.getLogger();
+        defaultLogger.level = 'info';
+    }
     defaultLogger.fatal(`Unexpected error ${err}`);
     process.exit(4);
 }

@@ -17,11 +17,14 @@ function mqttAppender(layout, timezoneOffset, client, mqttTopic) {
 
 function config(config, layouts) {
     let layout = config.layout? layouts.layout(config.layout.type, config.layout) : layouts.coloredLayout;
-    let mqttHost = config.host || "127.0.0.1";
-    let mqttPort = config.port || "1883";
-    let mqttClient = config.client || os.hostname() + '_logger';
+    let mqttHost = config.host || "mqtt://127.0.0.1:1883";
     let mqttTopic = config.topic || `logger/${os.hostname()}`;
-    let client = mqtt.connect(`mqtt://${mqttHost}:${mqttPort}`, { clientid: mqttClient, clean: true });
+    let mqttOptions = {};
+    mqttOptions.clientid = config.clientid || os.hostname() + '_logger';
+    if (config.username != null) mqttOptions.username = mqttUsername;
+    if (config.password != null) mqttOptions.password = mqttPassword;
+
+    let client = mqtt.connect(`${mqttHost}`, mqttOptions);
     
     return mqttAppender(layout, config.timezoneOffset, client, mqttTopic);
 }
