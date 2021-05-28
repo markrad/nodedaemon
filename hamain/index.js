@@ -66,7 +66,7 @@ class HaMain extends EventEmitter {
                         this.items.getItem(state.entity_id).setReceivedState(state.new_state);
                     }
                     else {
-                        logger.info(`Item ${name} has been dropped`);
+                        logger.info(`Item ${state.entity_id} has been dropped`);
                         delete this.items.deleteItem(state.entityId);
                     }
                 }
