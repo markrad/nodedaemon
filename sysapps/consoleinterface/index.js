@@ -1,3 +1,5 @@
+"use strict";
+
 var log4js = require('log4js');
 
 const CATEGORY = 'ConsoleInterface';
@@ -35,6 +37,7 @@ class ConsoleInterface {
             new (require('./commandstop'))(),
             new (require('./commandlist'))(),
             new (require('./commandapp'))(),
+            new (require('./commandha'))(),
         ];
 
         if (this._config?.transports) {
