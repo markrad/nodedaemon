@@ -166,15 +166,6 @@ class HaMain extends EventEmitter {
             });
     }
 
-    getItemByFriendlyName(name) {
-        let index = Object.keys(this.items).findIndex((item) => { 
-            logger.trace(this.items[item].attributes.friendly_name);
-            return this.items[item].attributes.friendly_name == name
-        });
-
-        return index != -1? Object.values(this.items)[index] : null;
-    }
-
     get items() {
         return this._items
     }
@@ -195,8 +186,22 @@ class HaMain extends EventEmitter {
         return this._starttime;
     }
 
+    get isConnected() {
+        return this.haInterface
+            ? this.haInterface.isConnected 
+            : false;
+    }
+
+    async restartHA() {
+        await this.haInterface.callService('homeassistant', 'restart', {});
+    }
+
+    async stopHA() {
+        await this.haInterface.callService('homeassistant', 'stop', {});
+    }
+
     async _reconnect(err) {
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, _reject) => {
             if (this.stopping || err) {
                 let connected = false;
 
@@ -213,6 +218,8 @@ class HaMain extends EventEmitter {
                     
                     await this._wait(5);
                 }
+
+                resolve();
             }
         });
     }
