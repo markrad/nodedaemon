@@ -1,5 +1,7 @@
+"use strict";
+
 var log4js = require('log4js');
-const { isArguments, isArray } = require('underscore');
+const { isArray } = require('underscore');
 
 const CATEGORY = 'MotionLight';
 var logger = log4js.getLogger(CATEGORY);
@@ -7,7 +9,6 @@ var logger = log4js.getLogger(CATEGORY);
 class MotionLight {
     constructor(controller) {
         this.controller = controller;
-        this.execute = true;
         this.actioners = [];
         this.trips = null;
     }
@@ -46,7 +47,7 @@ class MotionLight {
 
                     return flag;
                 }, true)) {
-                    logger.error(`No valid lights found in target array`);
+                    logger.error(`Invalid lights found in target array`);
                 }
                 else if (typeof(value[2]) != 'number') {
                     logger.error(`Minutes before action is not numeric`);
@@ -63,11 +64,6 @@ class MotionLight {
     }
 
     async run() {
-        if (this.execute == false) {
-            let err = new Error('No config found - run request ignored');
-            logger.info(err.message);
-            throw err;
-        }
         if (this.trips == null || this.trips.length == 0) {
             let err = new Error('No valid device pairs found');
             logger.warn(err.message);
