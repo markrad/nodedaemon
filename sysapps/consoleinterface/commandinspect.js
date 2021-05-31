@@ -1,3 +1,5 @@
+"use strict";
+
 var log4js = require('log4js');
 const CommandBase = require('./commandbase');
 
@@ -41,6 +43,9 @@ class CommandInspect extends CommandBase {
         }
         catch (err) {
             sock.write(`${err}\r\n`);
+            sock.write('Usage:\r\n');
+            sock.write(this.helpText);
+            sock.write('\r\n');
         }
     }
 }
