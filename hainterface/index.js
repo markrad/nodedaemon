@@ -337,7 +337,7 @@ class HaInterface extends EventEmitter {
                     logger.error(`Error calling service ${err}`);
                     reject(err);
                 });
-    });
+        });
 
         return ret;
     }
