@@ -71,7 +71,7 @@ class HaMain extends EventEmitter {
                     }
                 }
                 else {
-                    logger.warn(`Item ${name} not found - refreshing devices`);
+                    logger.warn(`Item ${state.entity_id} not found - refreshing devices`);
                     this._processItems(await this.haInterface.getStates());
                 }
             });
