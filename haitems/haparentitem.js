@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 const { Logger } = require('log4js');
 const { resolve } = require('path');
 const { emit } = require('process');
+const log4js = require('log4js');
 
 // Super slow for debugging
 const RESPONSE_TIMEOUT_DEBUG = 30 * 1000
@@ -19,6 +20,11 @@ class HaParentItem extends EventEmitter {
         this._lastChanged = new Date(item.last_changed);
         this._lastUpdated = new Date(item.last_updated);
         this._state = item.state;
+        this._logger = log4js.getLogger(this.category);
+    }
+
+    get logger() {
+        return this._logger;
     }
 
     get attributes() {
@@ -54,7 +60,7 @@ class HaParentItem extends EventEmitter {
     }
 
     get category() {
-        return `${this.__proto__.constructor.name}:${this.entityId}`;
+        return `${this.__proto__.constructor.name}:${this.name}`;
     }
 
     get isSwitch() {

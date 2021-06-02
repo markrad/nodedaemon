@@ -1,4 +1,3 @@
-const log4js = require('log4js');
 const { resolve } = require('require-reload');
 
 const HaParentItem = require('./haparentitem.js');
@@ -6,7 +5,6 @@ const HaParentItem = require('./haparentitem.js');
 class HaGenericSwitchItem extends HaParentItem {
     constructor(item) {
         super(item);
-        this.logger = log4js.getLogger(this.category);
         this.moment = 0;
         this.timer = null;
         this._SUPPORT_BRIGHTNESS = 1

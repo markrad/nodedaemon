@@ -1,11 +1,8 @@
-const log4js = require('log4js');
-
 const HaGenericSwitchItem = require('./hagenericswitchitem.js');
 
 class HaItemGroup extends HaGenericSwitchItem {
     constructor(item) {
         super(item);
-        this.logger = log4js.getLogger(this.category);
         this.children = item.attributes.entity_id;
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);

@@ -1,11 +1,8 @@
-const log4js = require('log4js');
-
 const HaGenericSwitchItem = require('./hagenericswitchitem.js');
 
 class HaItemLight extends HaGenericSwitchItem {
     constructor(item) {
         super(item);
-        this.logger = log4js.getLogger(this.category);
         this.logger.level = 'debug';
     }
 
