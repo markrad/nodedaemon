@@ -85,17 +85,15 @@ class HaMain extends EventEmitter {
                 process.exit(4);
             });
 
-            logger.info(`Items loaded: ${Object.keys(this._items).length}`);
+            logger.info(`Items loaded: ${Object.keys(this._items.items).length}`);
 
             let itemTypes = {};
             
-            Object.keys(this._items).forEach((value, _index) => {
-                if (this._items[value].__proto__.constructor.name in itemTypes) {
-                    itemTypes[this._items[value].__proto__.constructor.name] += 1;
+            Object.values(this._items.items).forEach((value, _index) => {
+                if (!(value.type in itemTypes)) {
+                    itemTypes[value.type] = 0;
                 }
-                else {
-                    itemTypes[this._items[value].__proto__.constructor.name] = 1;
-                }
+                itemTypes[value.type] += 1;
             });
 
             Object.keys(itemTypes).forEach((value, _index) => {
