@@ -23,7 +23,7 @@ class DeconzHack {
         this._client = null;
         this._ws = null;
 
-        logger.debug('DeconzHack constructed');
+        logger.info('DeconzHack constructed');
     }
 
     async run() {
