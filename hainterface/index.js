@@ -103,7 +103,7 @@ class HaInterface extends EventEmitter {
                 }, this.pingRate);
 
                 while ((await this.getConfig()).state != 'RUNNING') {
-                    logger.debug('Waiting for Home Assistant to signal RUNNING');
+                    logger.info('Waiting for Home Assistant to signal RUNNING');
                     await this._wait(1);
                 }
 
@@ -296,7 +296,7 @@ class HaInterface extends EventEmitter {
             let packet = { id: ++this.id, type: 'get_config' };
             this._sendPacket(packet, null)
                 .then((response) => {
-                    logger.info('Config acquired');
+                    logger.debug('Config acquired');
                     resolve(response.result);
                 })
                 .catch((err) => {
