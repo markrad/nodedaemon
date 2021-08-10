@@ -1,6 +1,7 @@
-const HaParentItem = require('./haparentitem.js');
-
-class HaItemMediaPlayer extends HaParentItem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const haparentitem_js_1 = require("./haparentitem.js");
+class HaItemMediaPlayer extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
         this.logger.level = 'debug';
@@ -9,5 +10,5 @@ class HaItemMediaPlayer extends HaParentItem {
         });
     }
 }
-
 module.exports = HaItemMediaPlayer;
+//# sourceMappingURL=haitemmedia_player.js.map

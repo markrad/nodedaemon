@@ -1,6 +1,7 @@
-const HaParentItem = require('./haparentitem.js');
-
-class HaItemPerson extends HaParentItem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const haparentitem_js_1 = require("./haparentitem.js");
+class HaItemPerson extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
         this.on('new_state', (that, _oldstate) => {
@@ -8,5 +9,5 @@ class HaItemPerson extends HaParentItem {
         });
     }
 }
-
 module.exports = HaItemPerson;
+//# sourceMappingURL=haitemperson.js.map

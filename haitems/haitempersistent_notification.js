@@ -1,6 +1,7 @@
-const HaParentItem = require('./haparentitem.js');
-
-class HaItemPersistentNotification extends HaParentItem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const haparentitem_js_1 = require("./haparentitem.js");
+class HaItemPersistentNotification extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
         this.logger.level = 'debug';
@@ -9,5 +10,5 @@ class HaItemPersistentNotification extends HaParentItem {
         });
     }
 }
-
 module.exports = HaItemPersistentNotification;
+//# sourceMappingURL=haitempersistent_notification.js.map

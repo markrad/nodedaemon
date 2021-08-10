@@ -1,6 +1,7 @@
-const HaParentItem = require('./haparentitem.js');
-
-class HaItemBinarySensor extends HaParentItem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const haparentitem_js_1 = require("./haparentitem.js");
+class HaItemBinarySensor extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
         this.logger.level = 'debug';
@@ -9,5 +10,5 @@ class HaItemBinarySensor extends HaParentItem {
         });
     }
 }
-
 module.exports = HaItemBinarySensor;
+//# sourceMappingURL=haitembinary_sensor.js.map

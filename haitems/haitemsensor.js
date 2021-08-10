@@ -1,6 +1,7 @@
-const HaParentItem = require('./haparentitem.js');
-
-class HaItemSensor extends HaParentItem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const haparentitem_js_1 = require("./haparentitem.js");
+class HaItemSensor extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
         if (this.name.startsWith('rr_router')) {
@@ -11,5 +12,5 @@ class HaItemSensor extends HaParentItem {
         });
     }
 }
-
 module.exports = HaItemSensor;
+//# sourceMappingURL=haitemsensor.js.map

@@ -1,6 +1,7 @@
-const HaParentItem = require('./haparentitem.js');
-
-class HaItemZone extends HaParentItem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const haparentitem_js_1 = require("./haparentitem.js");
+class HaItemZone extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
         let x = this.category;
@@ -8,18 +9,15 @@ class HaItemZone extends HaParentItem {
             this.logger.debug(`Received new state: ${that.state}`);
         });
     }
-
     get longitude() {
         return this.attributes.longitude;
     }
-
     get latitude() {
         return this.attributes.latitude;
     }
-
     get radius() {
         return this.attributes.radius;
     }
 }
-
 module.exports = HaItemZone;
+//# sourceMappingURL=haitemzone.js.map
