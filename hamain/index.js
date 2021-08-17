@@ -38,6 +38,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.HaMain = void 0;
 const events_1 = __importDefault(require("events"));
 const itemsmanager_1 = require("./itemsmanager");
 const path = __importStar(require("path"));
@@ -384,5 +385,5 @@ class HaMain extends events_1.default {
         });
     }
 }
-module.exports = HaMain;
+exports.HaMain = HaMain;
 //# sourceMappingURL=index.js.map

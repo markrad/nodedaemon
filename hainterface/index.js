@@ -13,9 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __importDefault(require("events"));
-const WebSock = require('ws'); //  { WebSocket } from 'ws';
+const WebSocket = require("ws");
 const log4js_1 = require("log4js");
-// var log4js = require('log4js');
 const haInterfaceError_1 = require("../common/haInterfaceError");
 const CATEGORY = 'HaInterface';
 var logger = log4js_1.getLogger(CATEGORY);
@@ -37,7 +36,7 @@ class HaInterface extends events_1.default {
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     this.client = yield this._connect(this.url);
                     logger.info(`Connection complete`);
@@ -111,7 +110,6 @@ class HaInterface extends events_1.default {
                     reject(err);
                 }
             }));
-            return ret;
         });
     }
     _connect(url) {
@@ -158,7 +156,7 @@ class HaInterface extends events_1.default {
     _innerconnect(url) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                var client = new WebSock(url);
+                var client = new WebSocket(url);
                 var connectFailed = (err) => {
                     client.off('connected', connectSucceeded);
                     reject(haInterfaceError_1.ErrorFactory(err));

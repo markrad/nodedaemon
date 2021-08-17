@@ -1,13 +1,12 @@
 "use strict";
 
 import EventEmitter from 'events';
-const WebSock = require('ws'); //  { WebSocket } from 'ws';
+import WebSocket = require('ws');
 import { getLogger } from 'log4js';
-// var log4js = require('log4js');
 
 import { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError, AuthenticationError } from '../common/haInterfaceError';
-import { BlobOptions } from 'buffer';
-import { AnyARecord } from 'dns';
+// import { BlobOptions } from 'buffer';
+// import { AnyARecord } from 'dns';
 import { ServiceTarget } from '../haitems/haparentitem';
 
 type ServiceAuthRequired = {
@@ -68,7 +67,7 @@ class HaInterface extends EventEmitter {
     }
 
     async start(): Promise<void> {
-        let ret = new Promise<void>(async (resolve, reject): Promise<any> => {        // TODO?
+        return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
                 this.client = await this._connect(this.url);
                 logger.info(`Connection complete`);
@@ -153,8 +152,6 @@ class HaInterface extends EventEmitter {
                 reject(err);
             }
         });
-
-        return ret;
     }
 
     async _connect(url) {
@@ -202,7 +199,7 @@ class HaInterface extends EventEmitter {
 
     async _innerconnect(url) {
         return new Promise((resolve, reject) => {
-            var client = new WebSock(url);
+            var client = new WebSocket(url);
             var connectFailed = (err) => {
                 client.off('connected', connectSucceeded);
                 reject(ErrorFactory(err));

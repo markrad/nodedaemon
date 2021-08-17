@@ -2,8 +2,7 @@ import fs from 'fs';
 import { getLogger, configure, Logger } from 'log4js';
 import { Command } from 'commander';
 import path from 'path';
-
-var HaMain = require('./hamain');
+import { HaMain } from './hamain';
 
 const CATEGORY: string = 'main';
 
@@ -20,7 +19,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     logger.info(`${LOGO}`);
 
     try {
-        var haMain: typeof HaMain = new HaMain(config);
+        var haMain: HaMain = new HaMain(config);
 
         process.stdin.resume();
         ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {

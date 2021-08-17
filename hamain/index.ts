@@ -32,7 +32,7 @@ if (process.env.HAMAIN_LOGGING) {
     logger.level = process.env.HAMAIN_LOGGING;
 }
 
-class HaMain extends EventEmitter {
+export class HaMain extends EventEmitter {
     haInterface: any;               // TODO
     _items: ItemsManager;
     config: any;
@@ -379,4 +379,4 @@ class HaMain extends EventEmitter {
     }
 }
 
-module.exports = HaMain;
+// module.exports = HaMain;

@@ -16,7 +16,7 @@ const fs_1 = __importDefault(require("fs"));
 const log4js_1 = require("log4js");
 const commander_1 = require("commander");
 const path_1 = __importDefault(require("path"));
-var HaMain = require('./hamain');
+const hamain_1 = require("./hamain");
 const CATEGORY = 'main';
 function main(version, config) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -31,7 +31,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
         var logger = log4js_1.getLogger(CATEGORY);
         logger.info(`${LOGO}`);
         try {
-            var haMain = new HaMain(config);
+            var haMain = new hamain_1.HaMain(config);
             process.stdin.resume();
             ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
                 process.on(eventType, (signal) => __awaiter(this, void 0, void 0, function* () {
