@@ -34,15 +34,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const Crypto = __importStar(require("crypto"));
 const path_1 = __importDefault(require("path"));
-//var ssh2 = require('ssh2');
 const ssh2_1 = require("ssh2");
-// import { Connection } from 'aedes';
-//var utils = ssh2.utils;
-var log4js = require('log4js');
-// import { intersection } from 'underscore';
-// import { command } from 'commander';
+const log4js_1 = require("log4js");
 const CATEGORY = 'TransportSSH';
-var logger = log4js.getLogger(CATEGORY);
+var logger = log4js_1.getLogger(CATEGORY);
 class TransportSSH {
     constructor(name, parent, commands, config) {
         this._name = name;

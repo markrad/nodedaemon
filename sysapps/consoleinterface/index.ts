@@ -3,13 +3,16 @@
 import { IApplication } from "../../common/IApplication";
 import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
-
-var log4js = require('log4js');
+import { getLogger } from "log4js";
 
 const CATEGORY = 'ConsoleInterface';
-var logger = log4js.getLogger(CATEGORY);
+var logger = getLogger(CATEGORY);
 
-class ConsoleInterface implements IApplication {
+export interface IChannel {
+    write: (data: string) => void;
+}
+
+export class ConsoleInterface implements IApplication {
     _config: any;
     _controller: HaMain;
     _items: ItemsManager;
@@ -51,7 +54,7 @@ class ConsoleInterface implements IApplication {
 
         if (this._config?.transports) {
             try {
-                this._config.transports.forEach(transport => {
+                this._config.transports.forEach((transport: string) => {
                     try {
                         this._transports.push(new (require(transport))(name, this, cmds, this._config));
                     }

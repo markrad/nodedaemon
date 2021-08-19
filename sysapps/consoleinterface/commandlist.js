@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandList = void 0;
-var log4js = require('log4js');
+const log4js_1 = require("log4js");
 const commandbase_1 = require("./commandbase");
 const CATEGORY = 'CommandList';
-var logger = log4js.getLogger(CATEGORY);
+var logger = log4js_1.getLogger(CATEGORY);
 class CommandList extends commandbase_1.CommandBase {
     constructor() {
         super('list', ['apps', 'items', 'types', 'names']);
@@ -20,14 +20,17 @@ class CommandList extends commandbase_1.CommandBase {
                 return [];
             case 'items':
                 possibles = [...items]
-                    .filter((item) => item[1].entityId.startsWith(parameters[2]))
-                    .map((item) => item[1].entityId)
+                    .filter((item) => item[1].name.startsWith(parameters[2]))
+                    .map((item) => item[1].name)
                     .sort((l, r) => l < r ? -1 : 1);
                 break;
             case 'types':
-                possibles = Object.keys(that.items)
-                    .filter(item => that.items[item].__proto__.constructor.name.startsWith(parameters[2]))
-                    .map((item) => that.items[item].__proto__.constructor.name)
+                possibles = [...items]
+                    .filter(item => item[1].type.startsWith(parameters[2]))
+                    .filter((item, index, self) => {
+                    return index == self.findIndex((innerItem) => innerItem[1].type == item[1].type);
+                })
+                    .map((item) => item[1].type)
                     .sort((l, r) => l < r ? -1 : 1);
                 break;
             case 'names':
@@ -42,7 +45,6 @@ class CommandList extends commandbase_1.CommandBase {
         }
         return (possibles.length == 1 || tabCount > 1) ? possibles : [];
     }
-    // TODO Can we have a more specific transport type here?
     execute(inputArray, that, sock) {
         try {
             this.validateParameters(inputArray);
@@ -97,13 +99,16 @@ class CommandList extends commandbase_1.CommandBase {
         }
     }
     _printItems(sock, items) {
+        const TYPE = 'Type';
+        const NAME = 'Name';
+        const FRIENDLY = 'Friendly Name';
         if (items.length == 0) {
             sock.write('No matching items found\r\n');
         }
         else {
-            let maxType = 1 + items.reduce((max, item) => max = Math.max(max, item.type.length), 0);
-            let maxName = 1 + items.reduce((max, item) => max = Math.max(max, item.name.length), 0);
-            sock.write(`${'Type'.padEnd(maxType)}${'Name'.padEnd(maxName)}Friendly Name\r\n`);
+            let maxType = 1 + Math.max(items.reduce((max, item) => max = Math.max(max, item.type.length), 0), TYPE.length);
+            let maxName = 1 + Math.max(items.reduce((max, item) => max = Math.max(max, item.name.length), 0), NAME.length);
+            sock.write(`${TYPE.padEnd(maxType)}${NAME.padEnd(maxName)}${FRIENDLY}\r\n`);
             items.forEach((item) => sock.write(`${item.type.padEnd(maxType)}${item.name.padEnd(maxName)}${item.attributes.friendly_name}\r\n`));
         }
     }

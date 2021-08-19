@@ -1,6 +1,7 @@
 import { getLogger } from 'log4js';
 // TODO fix imports
-import ConsoleInterface = require('.');
+//import ConsoleInterface = require('.');
+import { ConsoleInterface } from '.';
 
 const CATEGORY = 'CommandBase';
 var logger = getLogger(CATEGORY);
@@ -39,12 +40,12 @@ export abstract class CommandBase implements ICommand {
         }
     }
 
-    tabTargets(_that: typeof ConsoleInterface, _tabCount: number, _parameters: string[]): string[] {
+    tabTargets(_that: ConsoleInterface, _tabCount: number, _parameters: string[]): string[] {
         // If the command accepts a target then this needs to be overriden in the child
         return [];
     }
 
-    tabParameters(that: typeof ConsoleInterface, tabCount: number, parameters: string[]): string[] {
+    tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         if (parameters.length == 2) {
             if (this.parameters == null) {
                 return [];

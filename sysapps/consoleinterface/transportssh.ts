@@ -1,17 +1,12 @@
 import fs from 'fs';
 import * as Crypto from 'crypto';
 import path from 'path';
-//var ssh2 = require('ssh2');
 import { Server, utils, Connection, AuthContext, Session, PseudoTtyInfo }  from 'ssh2';
-import Users from 'node-os-utils/lib/users';
-// import { Connection } from 'aedes';
-//var utils = ssh2.utils;
-var log4js = require('log4js');
-// import { intersection } from 'underscore';
-// import { command } from 'commander';
+import { ConsoleInterface } from './';
+import { getLogger } from "log4js";
 
 const CATEGORY = 'TransportSSH';
-var logger = log4js.getLogger(CATEGORY);
+var logger = getLogger(CATEGORY);
 
 type User = {
     userid: Buffer;
@@ -34,7 +29,7 @@ class TransportSSH {
     _server: Server;
     _hostKey: any;
     _allowdPubKey: any;
-    constructor(name, parent, commands, config) {
+    constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
         this._name = name;
         this._parent = parent;
         this._host = config?.ssh.host || '0.0.0.0';

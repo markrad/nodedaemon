@@ -1,23 +1,24 @@
 import { Channel } from "node:diagnostics_channel";
-import { IHaItem } from "../../haitems/haparentitem";
+import { HaParentItem, IHaItem } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
+import { getLogger } from "log4js";
 
-var log4js = require('log4js');
 import { CommandBase } from './commandbase'; 
+import { ConsoleInterface, IChannel } from './';
 
 const CATEGORY = 'CommandList';
-var logger = log4js.getLogger(CATEGORY);
+var logger = getLogger(CATEGORY);
 
 export class CommandList extends CommandBase {
     constructor() {
         super('list', ['apps', 'items', 'types', 'names']);
     }
 
-    get helpText() {
+    get helpText(): string {
         return `${this.commandName} \tapps\r\n\titems <optional regex>\r\n\ttypes <optional regex>\r\n\tnames <optional regex>\tList the selected type with optional regex filter`;
     }
 
-    tabTargets(that, tabCount, parameters) {
+    tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let items: Map<string, IHaItem> = that.items.items;
         let possibles;
         switch (parameters[1]) {
@@ -25,14 +26,17 @@ export class CommandList extends CommandBase {
                 return [];
             case 'items':
                 possibles = [ ...items ]
-                    .filter((item) => item[1].entityId.startsWith(parameters[2]))
-                    .map((item) => item[1].entityId)
+                    .filter((item) => item[1].name.startsWith(parameters[2]))
+                    .map((item) => item[1].name)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             case 'types':
-                possibles = Object.keys(that.items)
-                    .filter(item => that.items[item].__proto__.constructor.name.startsWith(parameters[2]))
-                    .map((item) => that.items[item].__proto__.constructor.name)
+                possibles = [ ...items ]
+                    .filter(item => item[1].type.startsWith(parameters[2]))
+                    .filter((item, index, self) => { 
+                        return index == self.findIndex((innerItem) => innerItem[1].type == item[1].type)
+                    })
+                    .map((item) => item[1].type)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             case 'names':
@@ -48,12 +52,11 @@ export class CommandList extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    // TODO Can we have a more specific transport type here?
-    execute(inputArray: string[], that: HaMain, sock: any): void {
+    execute(inputArray: string[], that: HaMain, sock: IChannel): void {
         try {
             this.validateParameters(inputArray);
-            let re;
-            let items;
+            let re: RegExp;
+            let items: IHaItem[];
             switch (inputArray[1]) {
                 case 'apps':
                     if (inputArray.length != 2) {
@@ -104,13 +107,16 @@ export class CommandList extends CommandBase {
     }
 
     _printItems(sock, items) {
+        const TYPE: string = 'Type';
+        const NAME: string = 'Name';
+        const FRIENDLY: string ='Friendly Name';
         if (items.length == 0) {
             sock.write('No matching items found\r\n');
         }
         else {
-            let maxType = 1 + items.reduce((max, item) => max = Math.max(max, item.type.length), 0);
-            let maxName = 1 + items.reduce((max, item) => max = Math.max(max, item.name.length), 0);
-            sock.write(`${'Type'.padEnd(maxType)}${'Name'.padEnd(maxName)}Friendly Name\r\n`);
+            let maxType = 1 + Math.max(items.reduce((max, item) => max = Math.max(max, item.type.length), 0), TYPE.length);
+            let maxName = 1 + Math.max(items.reduce((max, item) => max = Math.max(max, item.name.length), 0), NAME.length);
+            sock.write(`${TYPE.padEnd(maxType)}${NAME.padEnd(maxName)}${FRIENDLY}\r\n`);
             items.forEach((item) => sock.write(`${item.type.padEnd(maxType)}${item.name.padEnd(maxName)}${item.attributes.friendly_name}\r\n`));
         }
     }

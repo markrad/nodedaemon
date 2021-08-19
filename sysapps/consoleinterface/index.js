@@ -9,9 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var log4js = require('log4js');
+exports.ConsoleInterface = void 0;
+const log4js_1 = require("log4js");
 const CATEGORY = 'ConsoleInterface';
-var logger = log4js.getLogger(CATEGORY);
+var logger = log4js_1.getLogger(CATEGORY);
 class ConsoleInterface {
     constructor(controller) {
         this._config;
@@ -47,7 +48,7 @@ class ConsoleInterface {
             ];
             if ((_a = this._config) === null || _a === void 0 ? void 0 : _a.transports) {
                 try {
-                    this._config.transports.forEach(transport => {
+                    this._config.transports.forEach((transport) => {
                         try {
                             this._transports.push(new (require(transport))(name, this, cmds, this._config));
                         }
@@ -79,5 +80,6 @@ class ConsoleInterface {
         });
     }
 }
+exports.ConsoleInterface = ConsoleInterface;
 module.exports = ConsoleInterface;
 //# sourceMappingURL=index.js.map
