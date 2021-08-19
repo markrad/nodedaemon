@@ -9,7 +9,7 @@ class HaItemInputBoolean extends HaGenericSwitchItem {
         });
     }
 
-    async updateState(newState): Promise<void> {
+    async updateState(newState: string | number | boolean): Promise<void> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });

@@ -1,6 +1,5 @@
 import EventEmitter from 'events';
-import { Logger } from 'log4js';
-import { getLogger } from 'log4js';
+import { Logger, getLogger } from 'log4js';
 import { resolve } from 'path';
 import { emit } from 'process';
 // import { AnyAaaaRecord, AnyARecord } from 'dns';
@@ -14,7 +13,22 @@ export type ServiceTarget = {
     [key: string]: number | string;
 }
 
-export class HaParentItem extends EventEmitter {
+export interface IHaItem {
+    get logger(): Logger;
+    get attributes(): any;
+    get name(): string;
+    get friendlyName(): string;
+    get type(): string;
+    get lastChanged(): Date;
+    get lastUpdated(): Date;
+    get state(): any;           // TODO probably a string
+    get entityId(): string;
+    get category(): string;
+    get isSwitch(): boolean;
+    // TODO finish this interface
+}
+
+export class HaParentItem extends EventEmitter implements IHaItem {
         _attributes: any;
         _name: string;
         _type: string;

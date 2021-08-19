@@ -88,7 +88,7 @@ class CommandApp extends CommandBase {
         }
     }
 
-    async execute(inputArray, that, sock) {
+    execute(inputArray, that, sock) {
         try {
             this.validateParameters(inputArray);
             switch (inputArray[1]) {

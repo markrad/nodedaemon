@@ -18,31 +18,25 @@ const log4js_1 = require("log4js");
 const CATEGORY = 'DeconzHack';
 var logger = log4js_1.getLogger(CATEGORY);
 class DeconzHack {
-    constructor(_controller, configIn) {
+    constructor(_controller) {
+        this._client = null;
+        this._ws = null;
+        logger.info('DeconzHack constructed');
+    }
+    validate(configIn) {
         var _a, _b;
-        let config = configIn.deconzhack;
+        let config = configIn;
         if (!config.devices || config.devices.length == 0) {
             logger.error('Missing deconzhack.devices section in config - this is required');
-            throw new Error('Missing deconzhack.devices section in config');
+            return false;
         }
         this._mqttConfig = Object.assign({ host: '127.0.0.1', port: 1883, topicTemplate: 'deconzhack/switch/device_%deviceid%' }, ((_a = config.mqtt) !== null && _a !== void 0 ? _a : {}));
         if (this._mqttConfig.topicTemplate.search('%deviceid%') == -1)
             this._mqttConfig.topicTemplate += '%deviceid%';
         this._deconzConfig = Object.assign({ host: '127.0.0.1', port: 8443 }, ((_b = config.deconz) !== null && _b !== void 0 ? _b : {}));
-        this._deviceIds = new Array();
-        this._deviceTargets = new Array();
         this._devices = config.devices;
-        config.devices.forEach((value) => {
-            this._deviceIds.push(value.uniqueId);
-            this._deviceTargets.push(value.target);
-        });
-        // this._deviceIds = config.devices.map(item => Object.keys(item));
-        // this._deviceTargets = config.devices.map(item => Object.values(item));
-        if (!this._mqttConfig.topicTemplate)
-            this._mqttConfig.topicTemplate = 'deconzhack/switch/device_';
-        this._client = null;
-        this._ws = null;
-        logger.info('DeconzHack constructed');
+        logger.info('Validation successful');
+        return true;
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -65,15 +59,10 @@ class DeconzHack {
                             this._client.publish(this._mqttConfig.topicTemplate.replace('%deviceid%', index.target), msgData.state.buttonevent.toString());
                         }
                     }
-                    // let index = this._deviceIds.findIndex(item => item == msgData.uniqueid);
-                    // if (index != -1 && msgData.state?.buttonevent) {
-                    //     logger.debug(`Device ${this._deviceTargets[index]} state changed to ${msgData.state.buttonevent}`)
-                    //     this._client.publish(this._mqttConfig.topicTemplate.replace('%deviceid%', this._deviceTargets[index]), msgData.state.buttonevent.toString());
-                    // }
                 });
                 yield this._ws.open();
                 logger.info('Connected to deCONZ server');
-                resolve();
+                resolve(true);
             }));
         });
     }

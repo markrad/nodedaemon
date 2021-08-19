@@ -2,6 +2,7 @@ import { WSWrapper } from '../../common/wswrapper';
 import mqtt from 'mqtt';
 import { getLogger } from 'log4js';
 import { HaMain } from '../../hamain';
+import { IApplication } from '../../common/IApplication';
 
 const CATEGORY = 'DeconzHack';
 var logger = getLogger(CATEGORY);
@@ -28,43 +29,36 @@ type Config = {
     devices: Device[];
 }
 
-class DeconzHack {
+class DeconzHack implements IApplication {
     private _mqttOptions: mqtt.IClientOptions;
     private _mqttConfig: MqttConfig;
     private _deconzConfig: DeconzConfig;
-    private _deviceIds: string[];
-    private _deviceTargets: string[];
     private _devices: Device[];
     private _ws: WSWrapper;
     private _client: mqtt.MqttClient;
-    constructor(_controller: HaMain, configIn: any) {
-        let config: Config = configIn.deconzhack;
+    constructor(_controller: HaMain) {
+        this._client = null;
+        this._ws = null;
+        logger.info('DeconzHack constructed');
+    }
+
+    validate(configIn: any): boolean {
+        let config: Config = configIn;
         if (!config.devices || config.devices.length == 0) {
             logger.error('Missing deconzhack.devices section in config - this is required');
-            throw new Error('Missing deconzhack.devices section in config');
+            return false;
         }
 
         this._mqttConfig = { ...{ host: '127.0.0.1', port: 1883, topicTemplate: 'deconzhack/switch/device_%deviceid%' }, ...(config.mqtt ?? {}) };
         if (this._mqttConfig.topicTemplate.search('%deviceid%') == -1) this._mqttConfig.topicTemplate += '%deviceid%'
         this._deconzConfig = { ...{ host: '127.0.0.1', port: 8443}, ...(config.deconz ?? {}) };
-        this._deviceIds = new Array();
-        this._deviceTargets = new Array();
         this._devices = config.devices;
-        config.devices.forEach((value: Device) => {
-            this._deviceIds.push(value.uniqueId);
-            this._deviceTargets.push(value.target);
-        });
-        // this._deviceIds = config.devices.map(item => Object.keys(item));
-        // this._deviceTargets = config.devices.map(item => Object.values(item));
-        
-        if (!this._mqttConfig.topicTemplate) this._mqttConfig.topicTemplate = 'deconzhack/switch/device_';
-        this._client = null;
-        this._ws = null;
+        logger.info('Validation successful');
 
-        logger.info('DeconzHack constructed');
+        return true;
     }
 
-    async run(): Promise<void> {
+    async run(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
             let client = 'deCONZHack'; 
             this._client = mqtt.connect(`mqtt://${this._mqttConfig.host}:${this._mqttConfig.port}`, { clientId: client, clean: true });
@@ -86,16 +80,11 @@ class DeconzHack {
                         this._client.publish(this._mqttConfig.topicTemplate.replace('%deviceid%', index.target), msgData.state.buttonevent.toString());
                     }
                 }
-                // let index = this._deviceIds.findIndex(item => item == msgData.uniqueid);
-                // if (index != -1 && msgData.state?.buttonevent) {
-                //     logger.debug(`Device ${this._deviceTargets[index]} state changed to ${msgData.state.buttonevent}`)
-                //     this._client.publish(this._mqttConfig.topicTemplate.replace('%deviceid%', this._deviceTargets[index]), msgData.state.buttonevent.toString());
-                // }
             });
             await this._ws.open();
             logger.info('Connected to deCONZ server');
 
-            resolve();
+            resolve(true);
         });
     }
 

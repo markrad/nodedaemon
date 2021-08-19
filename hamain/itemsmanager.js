@@ -26,8 +26,8 @@ class ItemsManager {
     }
     getItemsAsArray(sortFunction) {
         return typeof (sortFunction) == 'function'
-            ? Array.from(this.items.values()).sort(sortFunction)
-            : Object.values(this.items);
+            ? [...this.items.values()].sort(sortFunction)
+            : [...this.items.values()];
     }
     getItemByName(name, useRegEx) {
         let re = !name
@@ -36,8 +36,9 @@ class ItemsManager {
                 ? new RegExp(name)
                 : new RegExp(`^${name}$`);
         return this.getItemsAsArray()
-            .filter(item => re ? re.test(item.name) : true)
-            .sort((l, r) => l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
+            .filter(item => re ? re.test(item.entityId) : true)
+            .sort((l, r) => l.entityId.localeCompare(r.entityId));
+        // .sort((l, r) => l.entityId < r.entityId ? -1 : l.entityId > r.entityId ? 1 : 0);
     }
     getItemByType(type, useRegEx) {
         let re = !type

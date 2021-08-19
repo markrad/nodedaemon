@@ -160,8 +160,9 @@ export class HaGenericSwitchItem extends HaParentItem {
         });
     }
 
-    _getActionAndExpectedSNewtate(newState) {
-        let action = '';
+    // TODO Possible create a type for the return value
+    _getActionAndExpectedSNewtate(newState: boolean | number | string): { action: string, expectedNewState: string } {
+        let action: string = '';
         switch (typeof newState) {
             case 'boolean':
                 action = newState? 'turn_on' : 'turn_off';
@@ -170,7 +171,7 @@ export class HaGenericSwitchItem extends HaParentItem {
                 action = newState == 0? 'turn_off' : 'turn_on';
                 break;
             case 'string':
-                let work = newState.toLowerCase();
+                let work: string = newState.toLowerCase();
                 action = work == 'toggle'
                     ? 'toggle'
                     : work == 'on'
@@ -187,7 +188,7 @@ export class HaGenericSwitchItem extends HaParentItem {
                 action = 'error';
         }
 
-        let expectedNewState = action == 'turn_on'
+        let expectedNewState: string = action == 'turn_on'
             ? 'on'
             : action == 'turn_off'
             ? 'off'
@@ -197,5 +198,3 @@ export class HaGenericSwitchItem extends HaParentItem {
         return { action: action, expectedNewState: expectedNewState };
     }
 }
-
-// module.exports = HaGenericSwitchItem;

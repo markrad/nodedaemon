@@ -5,6 +5,7 @@ const logger = require('log4js').getLogger(CATEGORY);
 
 class MqttServer extends EventEmitter {
     constructor(_controller, _config) {
+        logger.error("This module has been deprecated and will be removed");
         super();
         this._aedes = require('aedes')();
         this._port = 1883;

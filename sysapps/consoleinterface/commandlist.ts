@@ -1,49 +1,55 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CommandList = void 0;
+import { Channel } from "node:diagnostics_channel";
+import { IHaItem } from "../../haitems/haparentitem";
+import { HaMain } from "../../hamain";
+
 var log4js = require('log4js');
-const commandbase_1 = require("./commandbase");
+import { CommandBase } from './commandbase'; 
+
 const CATEGORY = 'CommandList';
 var logger = log4js.getLogger(CATEGORY);
-class CommandList extends commandbase_1.CommandBase {
+
+export class CommandList extends CommandBase {
     constructor() {
         super('list', ['apps', 'items', 'types', 'names']);
     }
+
     get helpText() {
         return `${this.commandName} \tapps\r\n\titems <optional regex>\r\n\ttypes <optional regex>\r\n\tnames <optional regex>\tList the selected type with optional regex filter`;
     }
+
     tabTargets(that, tabCount, parameters) {
-        let items = that.items.items;
+        let items: Map<string, IHaItem> = that.items.items;
         let possibles;
         switch (parameters[1]) {
             case 'apps':
                 return [];
             case 'items':
-                possibles = [...items]
+                possibles = [ ...items ]
                     .filter((item) => item[1].entityId.startsWith(parameters[2]))
                     .map((item) => item[1].entityId)
-                    .sort((l, r) => l < r ? -1 : 1);
-                break;
+                    .sort((l, r) => l < r? -1 : 1);
+            break;
             case 'types':
                 possibles = Object.keys(that.items)
                     .filter(item => that.items[item].__proto__.constructor.name.startsWith(parameters[2]))
                     .map((item) => that.items[item].__proto__.constructor.name)
-                    .sort((l, r) => l < r ? -1 : 1);
-                break;
+                    .sort((l, r) => l < r? -1 : 1);
+            break;
             case 'names':
                 possibles = Object.keys(that.items)
                     .filter(item => that.items[item].attributes.friendly_name != undefined && that.items[item].attributes.friendly_name.startsWith(parameters[2]))
                     .map((item) => that.items[item].attributes.friendly_name)
-                    .sort((l, r) => l < r ? -1 : 1);
-                break;
+                    .sort((l, r) => l < r? -1 : 1);
+            break;
             default:
                 possibles = [];
-                break;
+            break;
         }
-        return (possibles.length == 1 || tabCount > 1) ? possibles : [];
+        return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
+
     // TODO Can we have a more specific transport type here?
-    execute(inputArray, that, sock) {
+    execute(inputArray: string[], that: HaMain, sock: any): void {
         try {
             this.validateParameters(inputArray);
             let re;
@@ -56,37 +62,37 @@ class CommandList extends commandbase_1.CommandBase {
                     else {
                         this._listapps(that, sock);
                     }
-                    break;
+                break;
                 case 'items':
                     logger.debug(`listitems called with ${inputArray.join(' ')}`);
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
                     items = inputArray[2]
-                        ? that.items.getItemByName(inputArray[2], true)
+                        ? that.items.getItemByName(inputArray[2], true) 
                         : that.items.getItemByName();
                     this._printItems(sock, items);
-                    break;
+                break;
                 case 'types':
                     logger.debug(`listtypes called with ${inputArray.join(' ')}`);
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
                     items = inputArray[2]
-                        ? that.items.getItemByType(inputArray[2], true)
+                        ? that.items.getItemByType(inputArray[2], true) 
                         : that.items.getItemByType();
                     this._printItems(sock, items);
-                    break;
+                break;
                 case 'names':
                     logger.debug(`listnames called with ${inputArray.join(' ')}`);
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
                     items = inputArray[2]
-                        ? that.items.getItemByFriendly(inputArray[2], true)
+                        ? that.items.getItemByFriendly(inputArray[2], true) 
                         : that.items.getItemByFriendly();
                     this._printItems(sock, items);
-                    break;
+                break;
             }
         }
         catch (err) {
@@ -96,6 +102,7 @@ class CommandList extends commandbase_1.CommandBase {
             sock.write('\r\n');
         }
     }
+
     _printItems(sock, items) {
         if (items.length == 0) {
             sock.write('No matching items found\r\n');
@@ -107,6 +114,7 @@ class CommandList extends commandbase_1.CommandBase {
             items.forEach((item) => sock.write(`${item.type.padEnd(maxType)}${item.name.padEnd(maxName)}${item.attributes.friendly_name}\r\n`));
         }
     }
+
     _listapps(that, sock) {
         logger.debug('listapps called');
         that.controller.apps.forEach((app) => {
@@ -114,6 +122,5 @@ class CommandList extends commandbase_1.CommandBase {
         });
     }
 }
-exports.CommandList = CommandList;
+
 // module.exports = CommandList;
-//# sourceMappingURL=commandlist.js.map
