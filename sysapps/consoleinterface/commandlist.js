@@ -34,9 +34,9 @@ class CommandList extends commandbase_1.CommandBase {
                     .sort((l, r) => l < r ? -1 : 1);
                 break;
             case 'names':
-                possibles = Object.keys(that.items)
-                    .filter(item => that.items[item].attributes.friendly_name != undefined && that.items[item].attributes.friendly_name.startsWith(parameters[2]))
-                    .map((item) => that.items[item].attributes.friendly_name)
+                possibles = [...items]
+                    .filter(item => { var _a; return (_a = item[1].attributes) === null || _a === void 0 ? void 0 : _a.friendly_name.startsWith(parameters[2]); })
+                    .map((item) => item[1].attributes.friendly_name)
                     .sort((l, r) => l < r ? -1 : 1);
                 break;
             default:

@@ -40,9 +40,9 @@ export class CommandList extends CommandBase {
                     .sort((l, r) => l < r? -1 : 1);
             break;
             case 'names':
-                possibles = Object.keys(that.items)
-                    .filter(item => that.items[item].attributes.friendly_name != undefined && that.items[item].attributes.friendly_name.startsWith(parameters[2]))
-                    .map((item) => that.items[item].attributes.friendly_name)
+                possibles = [ ...items ]
+                    .filter(item => item[1].attributes?.friendly_name.startsWith(parameters[2]))
+                    .map((item) => item[1].attributes.friendly_name)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             default:
@@ -52,7 +52,7 @@ export class CommandList extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    execute(inputArray: string[], that: HaMain, sock: IChannel): void {
+    execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
         try {
             this.validateParameters(inputArray);
             let re: RegExp;
@@ -106,7 +106,7 @@ export class CommandList extends CommandBase {
         }
     }
 
-    _printItems(sock, items) {
+    _printItems(sock: IChannel, items: IHaItem[]) {
         const TYPE: string = 'Type';
         const NAME: string = 'Name';
         const FRIENDLY: string ='Friendly Name';
@@ -121,7 +121,7 @@ export class CommandList extends CommandBase {
         }
     }
 
-    _listapps(that, sock) {
+    _listapps(that: ConsoleInterface, sock: IChannel) {
         logger.debug('listapps called');
         that.controller.apps.forEach((app) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);

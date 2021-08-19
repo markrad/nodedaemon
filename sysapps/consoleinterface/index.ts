@@ -12,11 +12,16 @@ export interface IChannel {
     write: (data: string) => void;
 }
 
+export interface ITransport {
+    start(): Promise<void>;
+    stop(): Promise<void>;
+}
+
 export class ConsoleInterface implements IApplication {
     _config: any;
     _controller: HaMain;
     _items: ItemsManager;
-    _transports: any[];
+    _transports: ITransport[];
     constructor(controller: HaMain) {
         this._config;
         this._controller = controller;

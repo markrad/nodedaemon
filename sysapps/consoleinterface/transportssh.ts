@@ -2,7 +2,7 @@ import fs from 'fs';
 import * as Crypto from 'crypto';
 import path from 'path';
 import { Server, utils, Connection, AuthContext, Session, PseudoTtyInfo }  from 'ssh2';
-import { ConsoleInterface } from './';
+import { ConsoleInterface, IChannel, ITransport } from './';
 import { getLogger } from "log4js";
 
 const CATEGORY = 'TransportSSH';
@@ -19,7 +19,7 @@ type Keys = {
     action: (data?: Buffer) => void;
 }
 
-class TransportSSH {
+class TransportSSH implements ITransport {
     _name: string;
     _parent: any;
     _host: string;
@@ -46,7 +46,7 @@ class TransportSSH {
             throw new Error('No userids were provided');
         }
 
-        config.ssh.users.forEach(user => {
+        config.ssh.users.forEach((user: User) => {
             if (!user.userid || !user.password) {
                 throw new Error('Incorrect format for userids');
             }
@@ -68,7 +68,7 @@ class TransportSSH {
         this._hostKey = fs.readFileSync(key);
     }
 
-    async _parseAndSend(stream, cmd, interactive: boolean = false) {
+    async _parseAndSend(stream: IChannel, cmd: string, interactive: boolean = false) {
 
         if (interactive) {
             stream.write('\r\n');
@@ -130,7 +130,7 @@ class TransportSSH {
             .on('end', () => {
                 logger.info('Client disconnected');
             })
-            .on('error', (err) => {
+            .on('error', (err: Error) => {
                 if ((err as any).errno != -104) {
                     logger.error(`Connection error: ${err}`);
                 }
@@ -150,7 +150,7 @@ class TransportSSH {
                             let ending: boolean = false;
                             logger.debug(`Executing ${info.command}`);
                             let stream = accept();
-                            stream.on('error', (err) => {
+                            stream.on('error', (err: Error) => {
                                 if (!ending) {
                                     logger.warn(`Stream failed: ${err}`)
                                 }
@@ -302,7 +302,6 @@ class TransportSSH {
                                     if (cmdWords.length == 1) {
                                         allCmds = this._commands.filter((cmd) => cmd.commandName.startsWith(cmdWords[0])).map((cmd) => cmd.commandName);
                                         if (allCmds.length == 1) {
-                                            // stream.write(allCmds[0].substring(cmdWords[0].length));
                                             let cursorAdjust: number = line.slice(cursor, len).toString().length;
                                             line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].substring(cmdWords[0].length)), line.slice(cursor)]);
                                             len += allCmds[0].length - cmdWords[0].length;
@@ -331,7 +330,6 @@ class TransportSSH {
                                                     }
                                                 break;
                                                 default:
-                                                    // ----- TEST
                                                     let resultLen = possibles[0].length;
                                                     let curr: number;
                                                     for (let i: number = 1; i < possibles.length; i++) {
@@ -341,15 +339,12 @@ class TransportSSH {
                                                         }
                                                         resultLen = curr;
                                                     }
-                                                    // ----- END TEST
                                                     stream.write('\r\n');
                                                     stream.write(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
                                                     let lastLen: number = cmdWords[cmdWords.length - 1].length;
-                                                    // line = Buffer.concat([line.slice(0, cursor), Buffer.from(possibles[0].substring(lastLen), line.slice(cursor)]);
                                                     line = Buffer.concat([line.slice(0, len), Buffer.from(possibles[0].substr(lastLen, resultLen - lastLen)), line.slice(len)]);
                                                     len += resultLen - lastLen;
                                                     cursor += resultLen - lastLen;
-                                                    // line = line.slice(0, len - cmdWords[cmdWords.length - 1].length) + possibles[0].slice(0, resultLen);
                                                     stream.write(`$ ${line.slice(0, len).toString()}`);
                                                     
                                                 break;
@@ -378,7 +373,6 @@ class TransportSSH {
                                     stream.write('\r\n');
                                 }
                                 stream.write('$ ');
-                                // stream.write('\n\r$ ');
                                 len = 0;
                                 cursor = 0;
                                 sig = false;
@@ -391,10 +385,8 @@ class TransportSSH {
                             if (Buffer.compare(tab, data) != 0) {
                                 tabCount = 0;
                             }
-                            // console.log(`->cursor=${cursor};len=${len}`);
                             let handled = keys.find(key => Buffer.compare(key.value, data) == 0);
                             if (handled) {
-                                // console.log(handled.name);
                                 handled.action(data);
                             }
                             else if (data.length > 1) {

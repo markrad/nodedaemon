@@ -1,4 +1,4 @@
-import { ConsoleInterface } from ".";
+import { ConsoleInterface, ITransport } from ".";
 
 import net from 'net';
 var log4js = require('log4js');
@@ -6,7 +6,7 @@ var log4js = require('log4js');
 const CATEGORY = 'TransportTelnet';
 var logger = log4js.getLogger(CATEGORY);
 
-class TransportTelnet {
+class TransportTelnet implements ITransport {
     _name: string;
     _parent: ConsoleInterface;
     _host: string;
@@ -22,7 +22,7 @@ class TransportTelnet {
         this._server = null;
     }
 
-    async _parseAndSend(stream: net.Socket, cmd: string) {
+    async _parseAndSend(stream: net.Socket, cmd: string): Promise<void> {
 
         let words: string[] = cmd.trim().split(' ');
 
@@ -36,7 +36,7 @@ class TransportTelnet {
         }
     }
 
-    async start() {
+    async start(): Promise<void> {
         this._server = net.createServer();
         this._server.on('connection', async (sock: net.Socket) => {
             sock.write(`\nConnected to ${this._name} - enter help for a list of commands\n\n`);

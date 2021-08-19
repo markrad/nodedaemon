@@ -53,7 +53,7 @@ class TransportSSH {
         if (!(config === null || config === void 0 ? void 0 : config.ssh.users) || typeof (config.ssh.users) != 'object' || Array.isArray(config.ssh.users) == false) {
             throw new Error('No userids were provided');
         }
-        config.ssh.users.forEach(user => {
+        config.ssh.users.forEach((user) => {
             if (!user.userid || !user.password) {
                 throw new Error('Incorrect format for userids');
             }
@@ -298,7 +298,6 @@ class TransportSSH {
                                             if (cmdWords.length == 1) {
                                                 allCmds = this._commands.filter((cmd) => cmd.commandName.startsWith(cmdWords[0])).map((cmd) => cmd.commandName);
                                                 if (allCmds.length == 1) {
-                                                    // stream.write(allCmds[0].substring(cmdWords[0].length));
                                                     let cursorAdjust = line.slice(cursor, len).toString().length;
                                                     line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].substring(cmdWords[0].length)), line.slice(cursor)]);
                                                     len += allCmds[0].length - cmdWords[0].length;
@@ -327,7 +326,6 @@ class TransportSSH {
                                                             }
                                                             break;
                                                         default:
-                                                            // ----- TEST
                                                             let resultLen = possibles[0].length;
                                                             let curr;
                                                             for (let i = 1; i < possibles.length; i++) {
@@ -337,15 +335,12 @@ class TransportSSH {
                                                                 }
                                                                 resultLen = curr;
                                                             }
-                                                            // ----- END TEST
                                                             stream.write('\r\n');
                                                             stream.write(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
                                                             let lastLen = cmdWords[cmdWords.length - 1].length;
-                                                            // line = Buffer.concat([line.slice(0, cursor), Buffer.from(possibles[0].substring(lastLen), line.slice(cursor)]);
                                                             line = Buffer.concat([line.slice(0, len), Buffer.from(possibles[0].substr(lastLen, resultLen - lastLen)), line.slice(len)]);
                                                             len += resultLen - lastLen;
                                                             cursor += resultLen - lastLen;
-                                                            // line = line.slice(0, len - cmdWords[cmdWords.length - 1].length) + possibles[0].slice(0, resultLen);
                                                             stream.write(`$ ${line.slice(0, len).toString()}`);
                                                             break;
                                                     }
@@ -373,7 +368,6 @@ class TransportSSH {
                                             stream.write('\r\n');
                                         }
                                         stream.write('$ ');
-                                        // stream.write('\n\r$ ');
                                         len = 0;
                                         cursor = 0;
                                         sig = false;
@@ -386,10 +380,8 @@ class TransportSSH {
                                 if (Buffer.compare(tab, data) != 0) {
                                     tabCount = 0;
                                 }
-                                // console.log(`->cursor=${cursor};len=${len}`);
                                 let handled = keys.find(key => Buffer.compare(key.value, data) == 0);
                                 if (handled) {
-                                    // console.log(handled.name);
                                     handled.action(data);
                                 }
                                 else if (data.length > 1) {
