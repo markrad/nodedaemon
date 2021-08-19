@@ -203,25 +203,25 @@ export class HaMain extends EventEmitter {
         return this._haConfig;
     }
 
-    get startTime() {
+    get startTime(): Date {
         return this._starttime;
     }
 
-    get isConnected() {
+    get isConnected(): boolean {
         return this.haInterface
             ? this.haInterface.isConnected 
             : false;
     }
 
-    async restartHA() {
+    async restartHA(): Promise<void> {
         await this.haInterface.callService('homeassistant', 'restart', {});
     }
 
-    async stopHA() {
+    async stopHA(): Promise<void> {
         await this.haInterface.callService('homeassistant', 'stop', {});
     }
 
-    async _reconnect(err): Promise<void> {
+    async _reconnect(err: Error): Promise<void> {
         return new Promise(async (resolve, _reject) => {
             if (this.stopping || err) {
                 let connected = false;
@@ -245,7 +245,7 @@ export class HaMain extends EventEmitter {
         });
     }
 
-    async _wait(seconds) {
+    async _wait(seconds: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
 
@@ -311,7 +311,7 @@ export class HaMain extends EventEmitter {
 */
     }
 
-    _isApp(appsDir: [string], file: string, stats?: any) {
+    _isApp(appsDir: string[], file: string, stats?: any) {
         stats = stats ?? { isFile: () => { return true; } }
         return stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length;
         // if (stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length) {

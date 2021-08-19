@@ -38,11 +38,10 @@ class ConsoleInterface {
             let cmds = [
                 // new (require('./commandhelp'))(),
                 // new (require('./commandgetconfig'))(),
-                // new (require('./commanduptime'))(),
+                new (require('./commanduptime')).CommandUptime(),
                 // new (require('./commandinspect'))(),
                 // new (require('./commandstop'))(),
                 new (require('./commandlist')).CommandList(),
-                // new (require('./commandlist'))(),
                 // new (require('./commandapp'))(),
                 // new (require('./commandha'))(),
             ];

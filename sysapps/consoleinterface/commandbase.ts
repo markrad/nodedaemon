@@ -1,7 +1,6 @@
 import { getLogger } from 'log4js';
-// TODO fix imports
-//import ConsoleInterface = require('.');
-import { ConsoleInterface } from '.';
+import { ConsoleInterface, IChannel } from '.';
+import { ICommand } from './ICommand';
 
 const CATEGORY = 'CommandBase';
 var logger = getLogger(CATEGORY);
@@ -15,7 +14,7 @@ export abstract class CommandBase implements ICommand {
     }
 
     abstract get helpText(): string;
-    abstract execute(inputArray: string[], that: any, sock: any): void;
+    abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): void;
 
     get commandName(): string {
         return this._commandName;

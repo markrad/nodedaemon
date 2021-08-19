@@ -4,6 +4,7 @@ import { IApplication } from "../../common/IApplication";
 import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
 import { getLogger } from "log4js";
+import { ICommand } from "./ICommand";
 
 const CATEGORY = 'ConsoleInterface';
 var logger = getLogger(CATEGORY);
@@ -48,11 +49,10 @@ export class ConsoleInterface implements IApplication {
         let cmds: ICommand[] = [
             // new (require('./commandhelp'))(),
             // new (require('./commandgetconfig'))(),
-            // new (require('./commanduptime'))(),
+            new (require('./commanduptime')).CommandUptime(),
             // new (require('./commandinspect'))(),
             // new (require('./commandstop'))(),
             new (require('./commandlist')).CommandList(),
-            // new (require('./commandlist'))(),
             // new (require('./commandapp'))(),
             // new (require('./commandha'))(),
         ];

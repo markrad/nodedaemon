@@ -4,6 +4,7 @@ import path from 'path';
 import { Server, utils, Connection, AuthContext, Session, PseudoTtyInfo }  from 'ssh2';
 import { ConsoleInterface, IChannel, ITransport } from './';
 import { getLogger } from "log4js";
+import { ICommand } from './ICommand';
 
 const CATEGORY = 'TransportSSH';
 var logger = getLogger(CATEGORY);

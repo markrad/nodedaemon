@@ -1,6 +1,7 @@
 import { ConsoleInterface, ITransport } from ".";
 
 import net from 'net';
+import { ICommand } from "./ICommand";
 var log4js = require('log4js');
 
 const CATEGORY = 'TransportTelnet';
