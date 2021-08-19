@@ -35,15 +35,16 @@ class ConsoleInterface {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let name = this.controller.haConfig.location_name;
+            // TODO Expose this to simplify the help command?
             let cmds = [
-                // new (require('./commandhelp'))(),
-                // new (require('./commandgetconfig'))(),
+                new (require('./commandhelp')).CommandHelp(),
+                new (require('./commandgetconfig')).CommandGetConfig(),
                 new (require('./commanduptime')).CommandUptime(),
-                // new (require('./commandinspect'))(),
+                new (require('./commandinspect')).CommandInspect(),
                 new (require('./commandstop')).CommandStop(),
                 new (require('./commandlist')).CommandList(),
-                // new (require('./commandapp'))(),
-                // new (require('./commandha'))(),
+                new (require('./commandapp')).CommandApp(),
+                new (require('./commandha')).CommandHa(),
             ];
             if ((_a = this._config) === null || _a === void 0 ? void 0 : _a.transports) {
                 try {

@@ -81,7 +81,7 @@ class TransportSSH {
                 stream.write(`Unknown command: ${words[0]}\r\n`);
             }
             else {
-                command.execute(words, this._parent, stream);
+                command.execute(words, this._parent, stream, this._commands);
             }
         });
     }

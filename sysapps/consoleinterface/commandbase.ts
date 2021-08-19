@@ -14,7 +14,7 @@ export abstract class CommandBase implements ICommand {
     }
 
     abstract get helpText(): string;
-    abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): void;
+    abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<void>;
 
     get commandName(): string {
         return this._commandName;

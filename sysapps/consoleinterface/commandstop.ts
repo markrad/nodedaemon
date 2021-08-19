@@ -6,7 +6,7 @@ import { CommandBase } from './commandbase';
 const CATEGORY: string = 'CommandStop';
 var logger = getLogger(CATEGORY);
 
-class CommandStop extends CommandBase {
+export class CommandStop extends CommandBase {
     constructor() {
         super('stop');
     }
@@ -15,7 +15,7 @@ class CommandStop extends CommandBase {
         return `${this.commandName}\t\t\t\tStops the service`;
     }
 
-    execute(inputArray: string[], that: ConsoleInterface, sock: IChannel) {
+    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
             this.validateParameters(inputArray);
             logger.debug('Stop called');
@@ -30,5 +30,3 @@ class CommandStop extends CommandBase {
         }
     }
 }
-
-module.exports = CommandStop;

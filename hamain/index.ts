@@ -13,8 +13,8 @@ import { Dir } from 'node:fs';
 var reload = require('require-reload');
 var hound = require('hound');
 
-
-type AppInfo = {
+// TODO - put in own file
+export type AppInfo = {
     name: string;
     path: string;
     instance: any;

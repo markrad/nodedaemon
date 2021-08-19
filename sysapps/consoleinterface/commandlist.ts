@@ -1,4 +1,4 @@
-import { IHaItem } from "../../haitems/haparentitem";
+import { HaParentItem, IHaItem } from "../../haitems/haparentitem";
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase'; 
 import { ConsoleInterface, IChannel } from './';
@@ -17,7 +17,7 @@ export class CommandList extends CommandBase {
 
     tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let items: Map<string, IHaItem> = that.items.items;
-        let possibles;
+        let possibles: string[];
         switch (parameters[1]) {
             case 'apps':
                 return [];
@@ -49,7 +49,7 @@ export class CommandList extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
+    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
             this.validateParameters(inputArray);
             let re: RegExp;

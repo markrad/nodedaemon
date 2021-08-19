@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandList = void 0;
 const log4js_1 = require("log4js");
@@ -46,57 +55,59 @@ class CommandList extends commandbase_1.CommandBase {
         return (possibles.length == 1 || tabCount > 1) ? possibles : [];
     }
     execute(inputArray, that, sock) {
-        try {
-            this.validateParameters(inputArray);
-            let re;
-            let items;
-            switch (inputArray[1]) {
-                case 'apps':
-                    if (inputArray.length != 2) {
-                        throw new Error(`Too many parameters passed`);
-                    }
-                    else {
-                        this._listapps(that, sock);
-                    }
-                    break;
-                case 'items':
-                    logger.debug(`listitems called with ${inputArray.join(' ')}`);
-                    if (inputArray.length > 3) {
-                        throw new Error(`Too many parameters passed`);
-                    }
-                    items = inputArray[2]
-                        ? that.items.getItemByName(inputArray[2], true)
-                        : that.items.getItemByName();
-                    this._printItems(sock, items);
-                    break;
-                case 'types':
-                    logger.debug(`listtypes called with ${inputArray.join(' ')}`);
-                    if (inputArray.length > 3) {
-                        throw new Error(`Too many parameters passed`);
-                    }
-                    items = inputArray[2]
-                        ? that.items.getItemByType(inputArray[2], true)
-                        : that.items.getItemByType();
-                    this._printItems(sock, items);
-                    break;
-                case 'names':
-                    logger.debug(`listnames called with ${inputArray.join(' ')}`);
-                    if (inputArray.length > 3) {
-                        throw new Error(`Too many parameters passed`);
-                    }
-                    items = inputArray[2]
-                        ? that.items.getItemByFriendly(inputArray[2], true)
-                        : that.items.getItemByFriendly();
-                    this._printItems(sock, items);
-                    break;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                this.validateParameters(inputArray);
+                let re;
+                let items;
+                switch (inputArray[1]) {
+                    case 'apps':
+                        if (inputArray.length != 2) {
+                            throw new Error(`Too many parameters passed`);
+                        }
+                        else {
+                            this._listapps(that, sock);
+                        }
+                        break;
+                    case 'items':
+                        logger.debug(`listitems called with ${inputArray.join(' ')}`);
+                        if (inputArray.length > 3) {
+                            throw new Error(`Too many parameters passed`);
+                        }
+                        items = inputArray[2]
+                            ? that.items.getItemByName(inputArray[2], true)
+                            : that.items.getItemByName();
+                        this._printItems(sock, items);
+                        break;
+                    case 'types':
+                        logger.debug(`listtypes called with ${inputArray.join(' ')}`);
+                        if (inputArray.length > 3) {
+                            throw new Error(`Too many parameters passed`);
+                        }
+                        items = inputArray[2]
+                            ? that.items.getItemByType(inputArray[2], true)
+                            : that.items.getItemByType();
+                        this._printItems(sock, items);
+                        break;
+                    case 'names':
+                        logger.debug(`listnames called with ${inputArray.join(' ')}`);
+                        if (inputArray.length > 3) {
+                            throw new Error(`Too many parameters passed`);
+                        }
+                        items = inputArray[2]
+                            ? that.items.getItemByFriendly(inputArray[2], true)
+                            : that.items.getItemByFriendly();
+                        this._printItems(sock, items);
+                        break;
+                }
             }
-        }
-        catch (err) {
-            sock.write(`${err}\r\n`);
-            sock.write('Usage:\r\n');
-            sock.write(this.helpText);
-            sock.write('\r\n');
-        }
+            catch (err) {
+                sock.write(`${err}\r\n`);
+                sock.write('Usage:\r\n');
+                sock.write(this.helpText);
+                sock.write('\r\n');
+            }
+        });
     }
     _printItems(sock, items) {
         const TYPE = 'Type';

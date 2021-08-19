@@ -46,15 +46,16 @@ export class ConsoleInterface implements IApplication {
 
     async run(): Promise<boolean> {
         let name: string = this.controller.haConfig.location_name;
+        // TODO Expose this to simplify the help command?
         let cmds: ICommand[] = [
-            // new (require('./commandhelp'))(),
-            // new (require('./commandgetconfig'))(),
+            new (require('./commandhelp')).CommandHelp(),
+            new (require('./commandgetconfig')).CommandGetConfig(),
             new (require('./commanduptime')).CommandUptime(),
-            // new (require('./commandinspect'))(),
+            new (require('./commandinspect')).CommandInspect(),
             new (require('./commandstop')).CommandStop(),
             new (require('./commandlist')).CommandList(),
-            // new (require('./commandapp'))(),
-            // new (require('./commandha'))(),
+            new (require('./commandapp')).CommandApp(),
+            new (require('./commandha')).CommandHa(),
         ];
 
         if (this._config?.transports) {

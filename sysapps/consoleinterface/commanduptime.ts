@@ -12,7 +12,7 @@ export class CommandUptime extends CommandBase {
         return `${this.commandName}\t\t\t\tTime since last restart`;
     }
 
-    execute(inputArray: string[], that: ConsoleInterface, sock: IChannel) {
+    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
             this.validateParameters(inputArray);
             let millis: number = (new Date().getTime() - that.controller.startTime.getTime());

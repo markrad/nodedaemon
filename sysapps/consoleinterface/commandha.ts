@@ -17,7 +17,7 @@ export class CommandHa extends CommandBase {
         return `${this.commandName} \tstatus\t\t\tGet Home Assistant Status\r\n\trestart\t\t\tRestart Home Assistant\r\n\tstop\t\t\tStop Home Assistant`;
     }
 
-    execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
+    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
             this.validateParameters(inputArray);
 
