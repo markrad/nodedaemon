@@ -13,9 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const net_1 = __importDefault(require("net"));
-var log4js = require('log4js');
+const log4js_1 = require("log4js");
 const CATEGORY = 'TransportTelnet';
-var logger = log4js.getLogger(CATEGORY);
+var logger = log4js_1.getLogger(CATEGORY);
 class TransportTelnet {
     constructor(name, parent, commands, config) {
         var _a, _b;

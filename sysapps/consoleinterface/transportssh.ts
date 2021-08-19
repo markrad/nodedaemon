@@ -6,7 +6,7 @@ import { ConsoleInterface, IChannel, ITransport } from './';
 import { getLogger } from "log4js";
 import { ICommand } from './ICommand';
 
-const CATEGORY = 'TransportSSH';
+const CATEGORY: string = 'TransportSSH';
 var logger = getLogger(CATEGORY);
 
 type User = {

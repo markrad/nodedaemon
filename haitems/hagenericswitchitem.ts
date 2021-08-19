@@ -160,7 +160,6 @@ export class HaGenericSwitchItem extends HaParentItem {
         });
     }
 
-    // TODO Possible create a type for the return value
     _getActionAndExpectedSNewtate(newState: boolean | number | string): { action: string, expectedNewState: string } {
         let action: string = '';
         switch (typeof newState) {

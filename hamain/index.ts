@@ -3,19 +3,15 @@
 import EventEmitter from 'events';
 import { ItemsManager } from './itemsmanager';
 import * as path from 'path';
-// var path = require('path');
 import fs from 'fs';
 import { Logger, getLogger } from 'log4js';
-//var log4js = require('log4js');
-var HaInterface = require('../hainterface');
+import { HaInterface } from '../hainterface';
 import { HaItemFactory } from '../haitems'
-//var HaItemFactory = require('../haitems');
-//const { ItemsManager } = require('./itemsmanager');
-var reload = require('require-reload');
-var hound = require('hound');
 import { HaParentItem, ServiceTarget } from '../haitems/haparentitem';
 import { Dir } from 'node:fs';
 //import * as hound  from 'hound';
+var reload = require('require-reload');
+var hound = require('hound');
 
 
 type AppInfo = {
@@ -33,10 +29,10 @@ if (process.env.HAMAIN_LOGGING) {
 }
 
 export class HaMain extends EventEmitter {
-    haInterface: any;               // TODO
+    haInterface: HaInterface;
     _items: ItemsManager;
     config: any;
-    _apps: Array<AppInfo>;                    // TODO
+    _apps: Array<AppInfo>;
     haItemFactory: HaItemFactory;
     stopping: boolean;
     _haConfig: any;

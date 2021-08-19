@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.HaInterface = void 0;
 const events_1 = __importDefault(require("events"));
 const WebSocket = require("ws");
 const log4js_1 = require("log4js");
@@ -22,14 +23,14 @@ if (process.env.HAINTERFACE_LOGGING) {
     logger.level = process.env.HAINTERFACE_LOGGING;
 }
 class HaInterface extends events_1.default {
-    constructor(url, accessToken, pingRate) {
+    constructor(url, accessToken, pingRate = 60000) {
         super();
         this.accessToken = accessToken;
         this.client = null;
         this.url = url;
         this.id = 0;
         this.tracker = {};
-        this.pingRate = pingRate || 60000;
+        this.pingRate = pingRate;
         this.pingInterval = null;
         this.closing = false;
         this.connected = false;
@@ -358,5 +359,5 @@ class HaInterface extends events_1.default {
         });
     }
 }
-module.exports = HaInterface;
+exports.HaInterface = HaInterface;
 //# sourceMappingURL=index.js.map

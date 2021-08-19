@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandUptime = void 0;
-var log4js = require('log4js');
-const CommandBase = require('./commandbase');
+const commandbase_1 = require("./commandbase");
 const CATEGORY = 'CommandUptime';
-var logger = log4js.getLogger(CATEGORY);
-class CommandUptime extends CommandBase {
+class CommandUptime extends commandbase_1.CommandBase {
     constructor() {
         super('uptime');
     }

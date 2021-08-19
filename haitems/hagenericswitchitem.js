@@ -161,7 +161,6 @@ class HaGenericSwitchItem extends haparentitem_js_1.HaParentItem {
             });
         });
     }
-    // TODO Possible create a type for the return value
     _getActionAndExpectedSNewtate(newState) {
         let action = '';
         switch (typeof newState) {

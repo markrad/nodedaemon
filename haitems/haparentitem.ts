@@ -9,7 +9,7 @@ const RESPONSE_TIMEOUT_DEBUG: number = 30 * 1000
 const RESPONSE_TIMEOUT: number = 3 * 1000
 
 export type ServiceTarget = {
-    entity_id: string;
+    entity_id?: string;
     [key: string]: number | string;
 }
 

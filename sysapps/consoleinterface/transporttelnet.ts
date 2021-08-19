@@ -1,11 +1,10 @@
 import { ConsoleInterface, ITransport } from ".";
-
 import net from 'net';
 import { ICommand } from "./ICommand";
-var log4js = require('log4js');
+import { getLogger } from 'log4js';
 
-const CATEGORY = 'TransportTelnet';
-var logger = log4js.getLogger(CATEGORY);
+const CATEGORY: string = 'TransportTelnet';
+var logger = getLogger(CATEGORY);
 
 class TransportTelnet implements ITransport {
     _name: string;

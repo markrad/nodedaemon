@@ -43,24 +43,24 @@ if (process.env.HAINTERFACE_LOGGING) {
     logger.level = process.env.HAINTERFACE_LOGGING;
 }
 
-class HaInterface extends EventEmitter {
+export class HaInterface extends EventEmitter {
     accessToken: string;
     client: any;
     url: string;
     id: number;
-    tracker: any;           // TODO
+    tracker: any;           // TODO What the heck is this?
     pingRate: number;
     pingInterval: NodeJS.Timer;
     closing: boolean;
     connected: boolean;
-    constructor(url: string, accessToken: string, pingRate: number) {
+    constructor(url: string, accessToken: string, pingRate: number = 60000) {
         super();
         this.accessToken = accessToken;
         this.client = null;
         this.url = url;
         this.id = 0;
         this.tracker = {};
-        this.pingRate = pingRate || 60000;
+        this.pingRate = pingRate;
         this.pingInterval = null;
         this.closing = false;
         this.connected = false;
@@ -411,4 +411,4 @@ class HaInterface extends EventEmitter {
     }
 }
 
-module.exports = HaInterface;
+// module.exports = HaInterface;

@@ -1,12 +1,9 @@
-import { Channel } from "node:diagnostics_channel";
-import { HaParentItem, IHaItem } from "../../haitems/haparentitem";
-import { HaMain } from "../../hamain";
+import { IHaItem } from "../../haitems/haparentitem";
 import { getLogger } from "log4js";
-
 import { CommandBase } from './commandbase'; 
 import { ConsoleInterface, IChannel } from './';
 
-const CATEGORY = 'CommandList';
+const CATEGORY: string = 'CommandList';
 var logger = getLogger(CATEGORY);
 
 export class CommandList extends CommandBase {

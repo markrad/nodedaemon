@@ -1,11 +1,7 @@
 import { ConsoleInterface, IChannel } from ".";
-import { ICommand } from "./ICommand";
+import { CommandBase } from "./commandbase";
 
-var log4js = require('log4js');
-const CommandBase = require('./commandbase');
-
-const CATEGORY = 'CommandUptime';
-var logger = log4js.getLogger(CATEGORY);
+const CATEGORY: string = 'CommandUptime';
 
 export class CommandUptime extends CommandBase {
     constructor() {

@@ -42,14 +42,11 @@ exports.HaMain = void 0;
 const events_1 = __importDefault(require("events"));
 const itemsmanager_1 = require("./itemsmanager");
 const path = __importStar(require("path"));
-// var path = require('path');
 const fs_1 = __importDefault(require("fs"));
 const log4js_1 = require("log4js");
-//var log4js = require('log4js');
-var HaInterface = require('../hainterface');
+const hainterface_1 = require("../hainterface");
 const haitems_1 = require("../haitems");
-//var HaItemFactory = require('../haitems');
-//const { ItemsManager } = require('./itemsmanager');
+//import * as hound  from 'hound';
 var reload = require('require-reload');
 var hound = require('hound');
 const CATEGORY = 'HaMain';
@@ -89,7 +86,7 @@ class HaMain extends events_1.default {
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.haInterface = new HaInterface(this.config.main.url, this.config.main.accessToken);
+                this.haInterface = new hainterface_1.HaInterface(this.config.main.url, this.config.main.accessToken);
                 this.haItemFactory = new haitems_1.HaItemFactory();
                 yield this.haInterface.start();
                 this._haConfig = yield this.haInterface.getConfig();
