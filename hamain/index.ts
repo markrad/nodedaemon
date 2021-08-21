@@ -38,7 +38,7 @@ export type State = {
     context: any;
 }
 
-type StateChange = {
+export type StateChange = {
     entity_id: string;
     old_state: State;
     new_state: State;
@@ -92,7 +92,7 @@ export class HaMain extends EventEmitter {
             this._processItems(await this.haInterface.getStates());
 
             await this.haInterface.subscribe();
-            this.haInterface.on('state_changed', async (state: StateChange) => {         // TODO define state type
+            this.haInterface.on('state_changed', async (state: StateChange) => {
                 if (this._items.getItem(state.entity_id)) {
                     if (state.new_state != null) {
                         logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
