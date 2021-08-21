@@ -26,14 +26,14 @@ export interface IHaItem {
     get type(): string;
     get lastChanged(): Date;
     get lastUpdated(): Date;
-    get state(): any;           // TODO probably a string
+    get state(): string;
     get entityId(): string;
     get category(): string;
     get isSwitch(): boolean;
     get isEditable(): boolean;
     setReceivedState(newState: State): void;
     on(eventName: string, cback: any): void;
-    // TODO finish this interface
+    // TODO Finished maybe?
 }
 
 export interface IHaItemEditable extends IHaItem {
