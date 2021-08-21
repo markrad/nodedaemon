@@ -40,7 +40,6 @@ class HaItemFactory {
         let itemType = item.entity_id.split('.')[0];
         if (itemType in this._itemClasses) {
             return new this._itemClasses[itemType](item, transport);
-            // return this._itemClasses[itemType].getInstance(item, transport);
         }
         else {
             return new this._itemClasses['unknown'](item, transport);
@@ -48,7 +47,7 @@ class HaItemFactory {
     }
     _getItemObjects() {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 var e_1, _a;
                 try {
                     const dir = yield fs_1.default.promises.opendir(__dirname);
@@ -68,13 +67,12 @@ class HaItemFactory {
                         }
                         finally { if (e_1) throw e_1.error; }
                     }
-                    resolve(0);
+                    resolve();
                 }
                 catch (err) {
                     reject(err);
                 }
             }));
-            return ret;
         });
     }
 }

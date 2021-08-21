@@ -10,8 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaGenericSwitchItem = void 0;
-const require_reload_1 = require("require-reload");
-const haparentitem_js_1 = require("./haparentitem.js");
+const posix_1 = require("path/posix");
+const hagenericupdatableitem_js_1 = require("./hagenericupdatableitem.js");
 var SUPPORT;
 (function (SUPPORT) {
     SUPPORT[SUPPORT["SUPPORT_BRIGHTNESS"] = 1] = "SUPPORT_BRIGHTNESS";
@@ -22,18 +22,11 @@ var SUPPORT;
     SUPPORT[SUPPORT["SUPPORT_TRANSITION"] = 32] = "SUPPORT_TRANSITION";
     SUPPORT[SUPPORT["SUPPORT_WHITE_VALUE"] = 128] = "SUPPORT_WHITE_VALUE";
 })(SUPPORT || (SUPPORT = {}));
-class HaGenericSwitchItem extends haparentitem_js_1.HaParentItem {
+class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
     constructor(item) {
         super(item);
         this._moment = 0;
         this._timer = null;
-        // this._SUPPORT_BRIGHTNESS = 1
-        // this._SUPPORT_COLOR_TEMP = 2
-        // this._SUPPORT_EFFECT = 4
-        // this._SUPPORT_FLASH = 8
-        // this._SUPPORT_COLOR = 16
-        // this._SUPPORT_TRANSITION = 32
-        // this._SUPPORT_WHITE_VALUE = 128
         if (this.isBrightnessSupported)
             this.updateBrightness = this._updateBrightness;
         this.on('new_state', (that, _oldstate) => {
@@ -49,10 +42,22 @@ class HaGenericSwitchItem extends haparentitem_js_1.HaParentItem {
         });
     }
     turnOn() {
-        return this.updateState('on');
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
+                let ret = null;
+                ret = yield this.updateState('on');
+                resolve(ret);
+            }));
+        });
     }
     turnOff() {
-        return this.updateState('off');
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
+                let ret = null;
+                ret = yield this.updateState('off');
+                resolve(ret);
+            }));
+        });
     }
     turnOffAt(moment) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -75,10 +80,17 @@ class HaGenericSwitchItem extends haparentitem_js_1.HaParentItem {
             else {
                 this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this._moment};requested=${moment}`);
             }
+            posix_1.resolve();
         });
     }
     toggle() {
-        return this.updateState('toggle');
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
+                let ret = null;
+                ret = yield this.updateState('toggle');
+                resolve(ret);
+            }));
+        });
     }
     get isOn() {
         return this.state == 'on';
@@ -138,19 +150,21 @@ class HaGenericSwitchItem extends haparentitem_js_1.HaParentItem {
         });
     }
     _updateTemperature(newValue) {
-        return new Promise((reaolve, _reject) => {
-            var temp = Number(newValue);
-            if (temp == NaN) {
-                require_reload_1.resolve('error', new Error('Color temperature must be numeric'));
-            }
-            else {
-                if (temp < this.attributes.min_mireds)
-                    temp = this.attributes.min_mireds;
-                else if (temp > this.attributes.max_mireds)
-                    temp = this.attributes.max_mireds;
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
-                this._callServicePromise(require_reload_1.resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, color_temp: temp });
-            }
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => {
+                var temp = Number(newValue);
+                if (temp == NaN) {
+                    resolve(new Error('Color temperature must be numeric'));
+                }
+                else {
+                    if (temp < this.attributes.min_mireds)
+                        temp = this.attributes.min_mireds;
+                    else if (temp > this.attributes.max_mireds)
+                        temp = this.attributes.max_mireds;
+                    var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
+                    this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, color_temp: temp });
+                }
+            });
         });
     }
     updateState(newState) {
@@ -161,6 +175,7 @@ class HaGenericSwitchItem extends haparentitem_js_1.HaParentItem {
             });
         });
     }
+    // TODO make a type of this
     _getActionAndExpectedSNewtate(newState) {
         let action = '';
         switch (typeof newState) {

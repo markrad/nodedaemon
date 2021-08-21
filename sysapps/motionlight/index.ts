@@ -1,24 +1,35 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const log4js_1 = require("log4js");
+
+import { HaParentItem, IHaItem, IHaItemSwitch } from "../../haitems/haparentitem";
+import { HaMain, State } from "../../hamain";
+import { getLogger } from 'log4js'
+
+// TODO Minimum conversion
+
+type TripTarget = {
+    Targets: IHaItemSwitch[];
+    Timeout: number;
+}
+
+type Trip = {
+    Sensor: IHaItem;
+    TripTargets: TripTarget[];
+}
+
 const CATEGORY = 'MotionLight';
-var logger = log4js_1.getLogger(CATEGORY);
+var logger = getLogger(CATEGORY);
+
 class MotionLight {
-    constructor(controller) {
+    controller: HaMain;
+    actioners: actioner[]
+    trips: Trip[];
+    constructor(controller: HaMain) {
         this.controller = controller;
         this.actioners = [];
         this.trips = null;
     }
-    validate(config) {
+
+    validate(config: any) {
         if (!config.devices) {
             logger.error('No devices specified');
         }
@@ -27,18 +38,18 @@ class MotionLight {
                 logger.error('Invalid device specification');
                 return false;
             }
-            this.trips = config.devices.map((value) => {
+            this.trips = config.devices.map((value: any[]) => {
                 if (!Array.isArray(value)) {
                     logger.error(`Specified value is not an array: ${value}`);
                 }
                 if (!Array.isArray(value[1])) {
-                    value[1] = [value[1]];
+                    value[1] = [ value[1] ];
                 }
                 if (!this.controller.items.getItem(value[0])) {
                     logger.error(`Specified motion sensor does not exist: ${value[0]}`);
                 }
                 else if (this.controller.items.getItem(value[0]).type != 'binary_sensor') {
-                    logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`);
+                    logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`)
                 }
                 else if (false == value[1].reduce((flag, value) => {
                     if (!this.controller.items.getItem(value)) {
@@ -49,51 +60,58 @@ class MotionLight {
                         logger.error(`Specified target light is not a switch or a light: ${value[1]}`);
                         flag = false;
                     }
+
                     return flag;
                 }, true)) {
                     logger.error(`Invalid lights found in target array`);
                 }
-                else if (typeof (value[2]) != 'number') {
+                else if (typeof(value[2]) != 'number') {
                     logger.error(`Minutes before action is not numeric`);
                 }
                 else {
-                    let lights = value[1].map((value) => this.controller.items.getItem(value));
-                    return [this.controller.items.getItem(value[0]), lights, value[2]];
+                    let lights: HaParentItem[] = value[1].map((value) => this.controller.items.getItem(value));
+                    return [ this.controller.items.getItem(value[0]), lights, value[2]];
                 }
             }).filter(item => item != undefined);
             logger.info('Constructed');
+
             return true;
         }
     }
-    run() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.trips == null || this.trips.length == 0) {
-                let err = new Error('No valid device pairs found');
-                logger.warn(err.message);
-                throw err;
-            }
-            this.trips.forEach((trip) => this.actioners.push(new actioner(trip)));
-        });
+
+    async run() {
+        if (this.trips == null || this.trips.length == 0) {
+            let err = new Error('No valid device pairs found');
+            logger.warn(err.message);
+            throw err;
+        }
+
+        this.trips.forEach((trip) => this.actioners.push(new actioner(trip)));
     }
-    stop() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.actioners.forEach(actioner => {
-                actioner.stop();
-            });
+
+    async stop() {
+        this.actioners.forEach(actioner => {
+            actioner.stop();
         });
     }
 }
+
 class actioner {
-    constructor(trip) {
+    trip: Trip;
+    timer: NodeJS.Timer;
+    eventHandler: (that: IHaItem, oldState: State) => void;
+    constructor(trip: Trip) {
         this.trip = trip;
         this.timer = null;
-        this.eventHandler = (that, _oldState) => {
+
+        this.eventHandler = (that: IHaItem, _oldState: State) => {
             logger.debug(`State ${that.state} triggered on ${this.trip[0].entityId} for ${this.trip[1].map(item => item.entityId).join(' ')}`);
             if (that.state == 'on') {
-                this.trip[1].forEach((light) => {
+                this.trip[1].forEach((light: IHaItemSwitch) => {
                     light.turnOffAt(Date.now() + this.trip[2] * 60 * 1000);
                 });
-                this.timer = setInterval(() => {
+                this.timer = setInterval(() => 
+                { 
                     if (!this.trip[1][0].isTimerRunning) {
                         clearInterval(this.timer);
                         this.timer = null;
@@ -111,14 +129,15 @@ class actioner {
                 clearInterval(this.timer);
                 this.timer = null;
             }
-        };
+        }
         // this.eventHandler.trip = this.trip;
         // this.eventHandler.timer = null;
-        this.trip[0].on('new_state', this.eventHandler);
+        this.trip[0].on('new_state', this.eventHandler); 
     }
+
     stop() {
         this.trip[0].off('new_state', this.eventHandler);
     }
 }
+
 module.exports = MotionLight;
-//# sourceMappingURL=index.js.map

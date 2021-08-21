@@ -261,7 +261,7 @@ class HaInterface extends events_1.default {
     }
     getStates() {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 let packet = { id: ++this.id, type: 'get_states' };
                 this._sendPacket(packet, null)
                     .then((response) => {
@@ -273,12 +273,11 @@ class HaInterface extends events_1.default {
                     reject(err);
                 });
             });
-            return ret;
         });
     }
     getConfig() {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 let packet = { id: ++this.id, type: 'get_config' };
                 this._sendPacket(packet, null)
                     .then((response) => {
@@ -290,12 +289,11 @@ class HaInterface extends events_1.default {
                     reject(err);
                 });
             });
-            return ret;
         });
     }
     getPanels() {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 let packet = { id: ++this.id, type: 'get_panels' };
                 this._sendPacket(packet, null)
                     .then((response) => {
@@ -307,12 +305,11 @@ class HaInterface extends events_1.default {
                     reject(err);
                 });
             });
-            return ret;
         });
     }
     callService(domain, service, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 let packet = { id: ++this.id, type: 'call_service', domain: domain, service: service, service_data: data };
                 this._sendPacket(packet, null)
                     .then((response) => {
@@ -324,12 +321,11 @@ class HaInterface extends events_1.default {
                     reject(err);
                 });
             });
-            return ret;
         });
     }
     _sendPacket(packet, handler) {
         return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 if (this.connected == false) {
                     reject(new Error('Connection to server has failed'));
                 }
@@ -355,7 +351,6 @@ class HaInterface extends events_1.default {
                 };
                 this.client.send(JSON.stringify(packet));
             });
-            return ret;
         });
     }
 }

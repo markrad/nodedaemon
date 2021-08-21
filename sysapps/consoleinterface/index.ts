@@ -3,12 +3,13 @@
 import { IApplication } from "../../common/IApplication";
 import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
-import { getLogger } from "log4js";
+import { getLogger, Logger } from "log4js";
 import { ICommand } from "./ICommand";
 
-const CATEGORY = 'ConsoleInterface';
-var logger = getLogger(CATEGORY);
+const CATEGORY: string = 'ConsoleInterface';
+var logger: Logger = getLogger(CATEGORY);
 
+// TODO put exported interfaces into their own files
 export interface IChannel {
     write: (data: string) => void;
 }
@@ -84,7 +85,7 @@ export class ConsoleInterface implements IApplication {
 
     async stop(): Promise<void> {
         return new Promise((resolve, reject) => {
-            let rets = [];
+            let rets: Promise<void>[] = [];
             this._transports.forEach(async (transport) => rets.push(transport.stop()));
             Promise.all(rets)
                 .then(() => resolve())

@@ -131,5 +131,4 @@ class CommandList extends commandbase_1.CommandBase {
     }
 }
 exports.CommandList = CommandList;
-// module.exports = CommandList;
 //# sourceMappingURL=commandlist.js.map

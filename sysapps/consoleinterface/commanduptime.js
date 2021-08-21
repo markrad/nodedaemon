@@ -45,5 +45,4 @@ class CommandUptime extends commandbase_1.CommandBase {
     }
 }
 exports.CommandUptime = CommandUptime;
-// module.exports = CommandUptime;
 //# sourceMappingURL=commanduptime.js.map

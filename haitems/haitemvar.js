@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const haparentitem_js_1 = require("./haparentitem.js");
-class HaItemVar extends haparentitem_js_1.HaParentItem {
+const hagenericupdatableitem_js_1 = require("./hagenericupdatableitem.js");
+class HaItemVar extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
     constructor(item) {
         super(item);
         this.on('new_state', (that, _oldstate) => {
@@ -21,12 +21,12 @@ class HaItemVar extends haparentitem_js_1.HaParentItem {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
                 var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
-                var myResolve = (msg, err) => {
-                    if (msg == 'success') {
+                var myResolve = (ret) => {
+                    if (ret.message == 'success') {
                         // Call var.update to update icons etc.
                         this.callService(this.type, 'update', { entity_id: this.entityId });
                     }
-                    resolve({ message: msg, error: err });
+                    resolve({ message: ret.message, err: ret.err });
                 };
                 this._callServicePromise(myResolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId, value: expectedNewState });
             });

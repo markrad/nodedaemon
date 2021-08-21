@@ -1,7 +1,6 @@
 import EventEmitter from 'events';
 import { Logger, getLogger } from 'log4js';
-import { resolve } from 'path';
-import { emit } from 'process';
+import { State } from '../hamain';
 // import { AnyAaaaRecord, AnyARecord } from 'dns';
 
 // Super slow for debugging
@@ -13,6 +12,12 @@ export type ServiceTarget = {
     [key: string]: number | string;
 }
 
+export type ServicePromise = {
+    message: string;
+    err: Error;
+}
+
+// TODO Needs own file
 export interface IHaItem {
     get logger(): Logger;
     get attributes(): any;
@@ -25,17 +30,49 @@ export interface IHaItem {
     get entityId(): string;
     get category(): string;
     get isSwitch(): boolean;
+    get isEditable(): boolean;
+    setReceivedState(newState: State): void;
+    on(eventName: string, cback: any): void;
     // TODO finish this interface
 }
 
-export class HaParentItem extends EventEmitter implements IHaItem {
+export interface IHaItemEditable extends IHaItem {
+    get isEditable(): boolean;
+    updateState(newState: string | boolean | number): Promise<ServicePromise>;
+}
+
+export interface IHaItemSwitch extends IHaItemEditable {
+    turnOn(): Promise<ServicePromise>;
+    turnOff(): Promise<ServicePromise>;
+    toggle(): Promise<ServicePromise>;
+    turnOffAt(moment: number): Promise<void>;
+    get isOn(): boolean;
+    get isOff(): boolean;
+    get timeBeforeOff(): number;
+    get isTimerRunning(): boolean;
+}
+
+export function SafeItemAssign(item: IHaItem, throwOnFailure: boolean = false): IHaItemEditable {
+    let ret = (item.isEditable)
+        ? item as IHaItemEditable
+        : null;
+
+    if (ret == null && throwOnFailure) {
+        let msg: string = `Unable to convert ${item.entityId} to IHaItemEditable`;
+        throw new Error(msg);
+    }
+
+    return ret;
+}
+
+export abstract class HaParentItem extends EventEmitter implements IHaItem {
         _attributes: any;
         _name: string;
         _type: string;
         _friendlyName: string;
         _lastChanged: Date;
         _lastUpdated: Date;
-        _state: any;
+        _state: string;
         _logger: Logger;
     constructor(item: any, _transport?: any) {
         super();
@@ -95,12 +132,18 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         return false;
     }
 
-    setReceivedState(newState: any) {
-        let oldState: any = {
+    get isEditable(): boolean {
+        return false;
+    }
+
+    setReceivedState(newState: State): void {
+        let oldState: State = {
+            entity_id: newState.entity_id,
+            context: newState.context,
             attributes: this.attributes,
             state: this.state,
-            lastUpdated: this.lastUpdated,
-            lastChanged: this.lastChanged,
+            last_updated: this.lastUpdated.toISOString().substr(0, 23) + '+00:00',
+            last_changed: this.lastChanged.toISOString().substr(0, 23) + '+00:00',
         };
 
         this._attributes = newState.attributes;
@@ -110,24 +153,16 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('new_state', this, oldState);
     }
 
-    async updateState(_newState: any): Promise<void> {
-        let ret = new Promise<void>((_resolve, reject) => {
-            reject(new Error('Descendent class is required to implement updateState'));
-        });
-
-        return ret;
-    }
-
     callService(domain: string, service: string, state: ServiceTarget): void {
         this.emit('callservice', domain, service, state);
     }
 
-    _callServicePromise(resolve: Function, newState: any, expectedState: string, domain: string, service: string, state: ServiceTarget): void {
+    _callServicePromise(resolve: (ret: ServicePromise) => void, newState: string | boolean | number, expectedState: string, domain: string, service: string, state: ServiceTarget): void {
         
         if (service == 'error') {
             let err: Error = new Error(`Bad value passed to updateState - ${newState}`);
             this.logger.error(`${err.message}`);
-            resolve('error', err);
+            resolve({ message: 'error', err: err });
             return;
         }
 
@@ -135,19 +170,19 @@ export class HaParentItem extends EventEmitter implements IHaItem {
             var timer = setTimeout(() => {
                 var err = new Error('Timeout waiting for state change');
                 this.logger.warn(`${err.message}`);
-                resolve('error', err);
+                resolve({ message: 'error', err: err });
             }, RESPONSE_TIMEOUT);
 
             this.once('new_state', (that, _oldState) => {
                 clearTimeout(timer);
                 
                 if (that.state == expectedState) {
-                    resolve('success');
+                    resolve({ message: 'success', err: null });
                 }
                 else {
                     var err = new Error('New state did not match expected state');
                     this.logger.info(`${err.message}`);
-                    resolve('warn', err);
+                    resolve({ message: 'warn', err: err });
                 }
             });
 
@@ -155,7 +190,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         }
         else {
             this.logger.debug(`Already in state ${this.state}`);
-            resolve('nochange');
+            resolve({ message: 'nochange', err: null });
         }
     }
 

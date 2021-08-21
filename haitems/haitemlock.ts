@@ -1,4 +1,4 @@
-import { HaParentItem } from './haparentitem.js';
+import { HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemLock extends HaParentItem {
     constructor(item) {
@@ -25,7 +25,7 @@ class HaItemLock extends HaParentItem {
         return this.state == 'unlocked';
     }
 
-    async updateState(newState): Promise<void> {
+    async updateState(newState): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });

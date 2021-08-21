@@ -1,10 +1,10 @@
-import { HaParentItem, IHaItem } from "../../haitems/haparentitem";
-import { getLogger } from "log4js";
+import { getLogger, Logger } from "log4js";
 import { CommandBase } from './commandbase'; 
 import { ConsoleInterface, IChannel } from './';
+import { IHaItem } from "../../haitems/haparentitem";
 
 const CATEGORY: string = 'CommandList';
-var logger = getLogger(CATEGORY);
+var logger: Logger = getLogger(CATEGORY);
 
 export class CommandList extends CommandBase {
     constructor() {
@@ -103,7 +103,7 @@ export class CommandList extends CommandBase {
         }
     }
 
-    _printItems(sock: IChannel, items: IHaItem[]) {
+    _printItems(sock: IChannel, items: IHaItem[]): void {
         const TYPE: string = 'Type';
         const NAME: string = 'Name';
         const FRIENDLY: string ='Friendly Name';
@@ -118,12 +118,10 @@ export class CommandList extends CommandBase {
         }
     }
 
-    _listapps(that: ConsoleInterface, sock: IChannel) {
+    _listapps(that: ConsoleInterface, sock: IChannel): void {
         logger.debug('listapps called');
         that.controller.apps.forEach((app) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
         });
     }
 }
-
-// module.exports = CommandList;

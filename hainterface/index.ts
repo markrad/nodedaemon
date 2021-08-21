@@ -197,10 +197,10 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    async _innerconnect(url) {
+    async _innerconnect(url: string) {
         return new Promise((resolve, reject) => {
             var client = new WebSocket(url);
-            var connectFailed = (err) => {
+            var connectFailed = (err: Error) => {
                 client.off('connected', connectSucceeded);
                 reject(ErrorFactory(err));
             };
@@ -310,8 +310,8 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    async getStates() {
-        let ret = new Promise((resolve, reject) => {
+    async getStates(): Promise<any []> {
+        return new Promise<any []>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_states' };
             this._sendPacket(packet, null)
                 .then((response: any) => {
@@ -323,12 +323,10 @@ export class HaInterface extends EventEmitter {
                     reject(err);
                 });
         });
-
-        return ret;
     }
 
     async getConfig(): Promise<any> {
-        let ret = new Promise((resolve, reject) => {
+        return new Promise<any>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_config' };
             this._sendPacket(packet, null)
                 .then((response: any) => {
@@ -340,12 +338,10 @@ export class HaInterface extends EventEmitter {
                     reject(err);
                 });
         });
-
-        return ret;
     }
 
-    async getPanels() {
-        let ret = new Promise((resolve, reject) => {
+    async getPanels(): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_panels' };
             this._sendPacket(packet, null)
                 .then((response: any) => {
@@ -357,12 +353,10 @@ export class HaInterface extends EventEmitter {
                     reject(err);
                 });
         });
-
-        return ret;
     }
 
-    async callService(domain: string, service: string, data: ServiceTarget): Promise<any> {
-        let ret = new Promise((resolve, reject) => {
+    async callService(domain: string, service: string, data: ServiceTarget): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'call_service', domain: domain, service: service, service_data: data };
             this._sendPacket(packet, null)
                 .then((response: any) => {
@@ -374,12 +368,10 @@ export class HaInterface extends EventEmitter {
                     reject(err);
                 });
         });
-
-        return ret;
     }
 
-    async _sendPacket(packet, handler) {
-        let ret = new Promise((resolve, reject) => {
+    async _sendPacket(packet, handler): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
             if (this.connected == false) {
                 reject(new Error('Connection to server has failed'));
             }
@@ -390,7 +382,7 @@ export class HaInterface extends EventEmitter {
             }, 10000, packet);
             this.tracker[packet.id] = {
                 packet: packet,
-                handler: (response) => {
+                handler: (response: any) => {
                     clearTimeout(timer);
                     if (handler) {
                         handler(response);
@@ -406,9 +398,5 @@ export class HaInterface extends EventEmitter {
             };
             this.client.send(JSON.stringify(packet));
         });
-
-        return ret;
     }
 }
-
-// module.exports = HaInterface;

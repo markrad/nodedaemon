@@ -71,7 +71,7 @@ export class CommandApp extends CommandBase {
         });
     }
 
-    _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannel) {
+    _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
         logger.debug('app list called');
         that.controller.apps.forEach((app: AppInfo) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);

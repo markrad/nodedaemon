@@ -1,6 +1,7 @@
 import fs from 'fs';
 import log4js from 'log4js';
-import { HaParentItem } from './haparentitem';
+import { HaInterface } from '../hainterface';
+import { HaParentItem, IHaItem } from './haparentitem';
 //var config = require('../config.json').main;
 
 const CATEGORY: string = 'HaItemFactory';
@@ -20,19 +21,18 @@ export class HaItemFactory {
             });
     }
 
-    getItemObject(item: any, transport): HaParentItem {
+    getItemObject(item: any, transport: HaInterface): IHaItem {
         let itemType: string = item.entity_id.split('.')[0];
         if (itemType in this._itemClasses) {
             return new this._itemClasses[itemType](item, transport);
-            // return this._itemClasses[itemType].getInstance(item, transport);
         }
         else {
             return new this._itemClasses['unknown'](item, transport);
         }
     }
 
-    async _getItemObjects(): Promise<number> {
-        let ret: Promise<number> = new Promise(async (resolve, reject) => {
+    async _getItemObjects(): Promise<void> {
+        return new Promise<void>(async (resolve, reject) => {
             try {
                 const dir = await fs.promises.opendir(__dirname);
 
@@ -43,13 +43,11 @@ export class HaItemFactory {
                     }
                 }
 
-                resolve(0);
+                resolve();
             }
             catch(err) {
                 reject(err);
             }
         });
-
-        return ret;
     }
 }

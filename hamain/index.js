@@ -69,7 +69,7 @@ class HaMain extends events_1.default {
     _processItems(states) {
         states.forEach((item) => {
             logger.trace(`Item name: ${item.entity_id}`);
-            if (!this.items.getItem(item.entityId)) {
+            if (!this.items.getItem(item.entity_id)) {
                 let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
                 itemInstance.on('callservice', (domain, service, data) => __awaiter(this, void 0, void 0, function* () {
                     try {
@@ -93,7 +93,6 @@ class HaMain extends events_1.default {
                 this._processItems(yield this.haInterface.getStates());
                 yield this.haInterface.subscribe();
                 this.haInterface.on('state_changed', (state) => __awaiter(this, void 0, void 0, function* () {
-                    // let name = state.entity_id.split('.')[1];
                     if (this._items.getItem(state.entity_id)) {
                         if (state.new_state != null) {
                             logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
@@ -101,7 +100,7 @@ class HaMain extends events_1.default {
                         }
                         else {
                             logger.info(`Item ${state.entity_id} has been dropped`);
-                            this.items.deleteItem(state.entityId);
+                            this.items.deleteItem(state.entity_id);
                         }
                     }
                     else {

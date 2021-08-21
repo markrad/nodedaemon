@@ -23,7 +23,7 @@ function mqttAppender(layout: any, otherOptions: any, client: mqtt.MqttClient, m
         client.publish(mqttTopic, `${layout(loggingEvent, otherOptions)}`);
     };
 
-    appender.shutdown = (_done) => {
+    appender.shutdown = (_done: any) => {
         client.end();
     };
 

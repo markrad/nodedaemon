@@ -1,7 +1,8 @@
+import { State } from '../hamain/index.js';
 import { HaGenericSwitchItem } from './hagenericswitchitem.js';
-
+// TODO Is this even used?
 class HaItemAutomation extends HaGenericSwitchItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
     }
 }

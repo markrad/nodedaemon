@@ -1,7 +1,7 @@
 "use strict";
 
 import { getLogger, Logger } from 'log4js';
-import { HaParentItem } from '../haitems/haparentitem';
+import { HaParentItem, IHaItem, IHaItemSwitch } from '../haitems/haparentitem';
 
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);
@@ -11,13 +11,13 @@ if (process.env.HAMAIN_LOGGING) {
 }
 
 export class ItemsManager {
-    private _items: Map<string, HaParentItem>;
+    private _items: Map<string, IHaItem>;
     // private _items: any;
     constructor() {
         this._items = new Map();
     }
 
-    addItem(item: HaParentItem): void {
+    addItem(item: IHaItem): void {
         this.items.set(item.entityId, item);
     }
 
@@ -25,21 +25,21 @@ export class ItemsManager {
         this.items.delete(entityId);
     }
 
-    get items(): Map<string, HaParentItem> {
+    get items(): Map<string, IHaItem> {
         return this._items;
     }
 
-    getItem(entityId: string): HaParentItem {
+    getItem(entityId: string): IHaItem {
         return this.items.get(entityId);
     }
 
-    getItemsAsArray(sortFunction?: { (l: any, r: any): number }): Array<HaParentItem> {
+    getItemsAsArray(sortFunction?: { (l: any, r: any): number }): Array<IHaItem> {
             return typeof(sortFunction) == 'function'
                 ? [ ...this.items.values() ].sort(sortFunction)
                 : [ ...this.items.values() ];
     }
 
-    getItemByName(name?: string, useRegEx?: boolean): Array<HaParentItem> {
+    getItemByName(name?: string, useRegEx?: boolean): Array<IHaItem> {
         let re: RegExp = !name
             ? null
             : useRegEx
@@ -51,7 +51,7 @@ export class ItemsManager {
             // .sort((l, r) => l.entityId < r.entityId ? -1 : l.entityId > r.entityId ? 1 : 0);
     }
 
-    getItemByType(type?: string, useRegEx?: boolean): Array<HaParentItem> {
+    getItemByType(type?: string, useRegEx?: boolean): Array<IHaItem> {
         let re: RegExp = !type
             ? null
             : useRegEx
@@ -62,7 +62,7 @@ export class ItemsManager {
             .sort((l, r) => l.type < r.type ? -1 : l.type > r.type ? 1 : l.name < r.name ? -1 : l.name > r.name ? 1 : 0);
     }
 
-    getItemByFriendly(friendly?: string, useRegEx?: boolean): Array<HaParentItem> {
+    getItemByFriendly(friendly?: string, useRegEx?: boolean): Array<IHaItem> {
         let re: RegExp = !friendly
             ? null
             : useRegEx

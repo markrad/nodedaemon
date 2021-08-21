@@ -1,5 +1,7 @@
-import { resolve } from 'require-reload';
-import { HaParentItem } from './haparentitem.js';
+import { resolve } from 'path/posix';
+import { State } from '../hamain/index.js';
+import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
+import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem.js';
 
 enum SUPPORT {
     SUPPORT_BRIGHTNESS = 1,
@@ -11,21 +13,14 @@ enum SUPPORT {
     SUPPORT_WHITE_VALUE = 128,
 }
 
-export class HaGenericSwitchItem extends HaParentItem {
+export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemEditable {
     _moment: number;
     _support: SUPPORT;
     _timer: any;
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this._moment = 0;
         this._timer = null;
-        // this._SUPPORT_BRIGHTNESS = 1
-        // this._SUPPORT_COLOR_TEMP = 2
-        // this._SUPPORT_EFFECT = 4
-        // this._SUPPORT_FLASH = 8
-        // this._SUPPORT_COLOR = 16
-        // this._SUPPORT_TRANSITION = 32
-        // this._SUPPORT_WHITE_VALUE = 128
 
         if (this.isBrightnessSupported) this.updateBrightness = this._updateBrightness;
 
@@ -42,15 +37,23 @@ export class HaGenericSwitchItem extends HaParentItem {
         });
     }
 
-    turnOn() {
-        return this.updateState('on');
+    async turnOn(): Promise<ServicePromise> {
+        return new Promise<ServicePromise>(async (resolve, _reject) => {
+            let ret: ServicePromise = null;
+            ret = await this.updateState('on');
+            resolve(ret);
+        });
     }
 
-    turnOff() {
-        return this.updateState('off');
+    async turnOff(): Promise<ServicePromise> {
+        return new Promise<ServicePromise>(async (resolve, _reject) => {
+            let ret: ServicePromise = null;
+            ret = await this.updateState('off');
+            resolve(ret);
+        });
     }
 
-    async turnOffAt(moment) {
+    async turnOffAt(moment: number): Promise<void> {
         if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
             if (this.isOff) {
                 await this.turnOn();
@@ -70,48 +73,53 @@ export class HaGenericSwitchItem extends HaParentItem {
         else {
             this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this._moment};requested=${moment}`);
         }
+
+        resolve();
     }
 
-
-    toggle() {
-        return this.updateState('toggle');
+    async toggle(): Promise<ServicePromise> {
+        return new Promise<ServicePromise>(async (resolve, _reject) => {
+            let ret: ServicePromise = null;
+            ret = await this.updateState('toggle');
+            resolve(ret);
+        });
     }
 
-    get isOn() {
+    get isOn(): boolean {
         return this.state == 'on';
     }
 
-    get isOff() {
+    get isOff(): boolean {
         return this.state == 'off';
     }
 
-    get isTimerRunning() {
+    get isTimerRunning(): boolean {
         return this._moment != 0;
     }
 
-    get timeBeforeOff() {
+    get timeBeforeOff(): number {
         return this._moment == 0
                 ? 0
                 : this._moment - Date.now();
     }
 
-    get isBrightnessSupported() {
+    get isBrightnessSupported(): boolean {
         return !!((this.attributes?.supported_features ?? 0) & SUPPORT.SUPPORT_BRIGHTNESS);
     }
 
-    get isTemperatureSupported() {
+    get isTemperatureSupported(): boolean {
         return !!((this.attributes?.supported_features ?? 0) & SUPPORT.SUPPORT_COLOR_TEMP);
     }
 
-    get brightness() {
+    get brightness(): number {
         return this.isBrightnessSupported? this.attributes.brightness : NaN
     }
 
-    get temperature() {
+    get temperature(): number {
         return this.isTemperatureSupported? this.attributes.color_temp : NaN
     }
 
-    get isSwitch() {
+    get isSwitch(): boolean {
         return true;
     }
 
@@ -138,11 +146,11 @@ export class HaGenericSwitchItem extends HaParentItem {
         });
     }
 
-    _updateTemperature(newValue) {
-        return new Promise((reaolve, _reject) => {
+    async _updateTemperature(newValue): Promise<any> {
+        return new Promise<any>((resolve, _reject) => {
             var temp = Number(newValue);
             if (temp == NaN) {
-                resolve('error', new Error('Color temperature must be numeric'));
+                resolve(new Error('Color temperature must be numeric'));
             }
             else {
                 if (temp < this.attributes.min_mireds) temp = this.attributes.min_mireds;
@@ -153,13 +161,14 @@ export class HaGenericSwitchItem extends HaParentItem {
         });
     }
 
-    async updateState(newState): Promise<void> {
+    async updateState(newState: string | boolean | number): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
         });
     }
 
+    // TODO make a type of this
     _getActionAndExpectedSNewtate(newState: boolean | number | string): { action: string, expectedNewState: string } {
         let action: string = '';
         switch (typeof newState) {

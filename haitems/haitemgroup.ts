@@ -1,4 +1,5 @@
 import { HaGenericSwitchItem } from './hagenericswitchitem.js';
+import { ServicePromise } from './haparentitem.js';
 
 class HaItemGroup extends HaGenericSwitchItem {
     children: any;
@@ -10,7 +11,7 @@ class HaItemGroup extends HaGenericSwitchItem {
         });
     }
 
-    async updateState(newState: string | number | boolean): Promise<void> {
+    async updateState(newState: string | number | boolean): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             this._callServicePromise(resolve, newState, expectedNewState, 'homeassistant', action, { entity_id: this.entityId, value: expectedNewState });

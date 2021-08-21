@@ -7,7 +7,7 @@ import fs from 'fs';
 import { Logger, getLogger } from 'log4js';
 import { HaInterface } from '../hainterface';
 import { HaItemFactory } from '../haitems'
-import { HaParentItem, ServiceTarget } from '../haitems/haparentitem';
+import { IHaItem, ServiceTarget } from '../haitems/haparentitem';
 import { Dir } from 'node:fs';
 //import * as hound  from 'hound';
 var reload = require('require-reload');
@@ -26,6 +26,22 @@ var logger: Logger = getLogger(CATEGORY);
 
 if (process.env.HAMAIN_LOGGING) {
     logger.level = process.env.HAMAIN_LOGGING;
+}
+
+//TODO Own file?
+export type State = {
+    entity_id: string;
+    last_changed: string;
+    last_updated: string;
+    state: string;
+    attributes: any;
+    context: any;
+}
+
+type StateChange = {
+    entity_id: string;
+    old_state: State;
+    new_state: State;
 }
 
 export class HaMain extends EventEmitter {
@@ -49,11 +65,11 @@ export class HaMain extends EventEmitter {
         this._starttime = new Date();
     }
 
-    _processItems(states) {
+    _processItems(states: State[]) {
         states.forEach((item) => {
             logger.trace(`Item name: ${item.entity_id}`);
-            if (!this.items.getItem(item.entityId)) {
-                let itemInstance: HaParentItem = this.haItemFactory.getItemObject(item, this.haInterface);
+            if (!this.items.getItem(item.entity_id)) {
+                let itemInstance: IHaItem = this.haItemFactory.getItemObject(item, this.haInterface);
                 itemInstance.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
                     try {
                         await this.haInterface.callService(domain, service, data)
@@ -67,7 +83,7 @@ export class HaMain extends EventEmitter {
         });
     }
 
-    async start() {
+    async start(): Promise<void> {
         try {
             this.haInterface = new HaInterface(this.config.main.url, this.config.main.accessToken);
             this.haItemFactory = new HaItemFactory();
@@ -76,9 +92,7 @@ export class HaMain extends EventEmitter {
             this._processItems(await this.haInterface.getStates());
 
             await this.haInterface.subscribe();
-            this.haInterface.on('state_changed', async (state) => {         // TODO define state type
-                // let name = state.entity_id.split('.')[1];
-
+            this.haInterface.on('state_changed', async (state: StateChange) => {         // TODO define state type
                 if (this._items.getItem(state.entity_id)) {
                     if (state.new_state != null) {
                         logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
@@ -86,7 +100,7 @@ export class HaMain extends EventEmitter {
                     }
                     else {
                         logger.info(`Item ${state.entity_id} has been dropped`);
-                        this.items.deleteItem(state.entityId);
+                        this.items.deleteItem(state.entity_id);
                     }
                 }
                 else {
@@ -183,7 +197,7 @@ export class HaMain extends EventEmitter {
             });
     }
 
-    get items() {
+    get items(): ItemsManager {
         return this._items
     }
 

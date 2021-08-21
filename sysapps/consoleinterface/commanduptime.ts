@@ -31,5 +31,3 @@ export class CommandUptime extends CommandBase {
         }
     }
 }
-
-// module.exports = CommandUptime;

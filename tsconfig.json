@@ -1,9 +1,13 @@
 {
     "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "sourceMap": true,
-      "alwaysStrict": true,
-      "esModuleInterop": true
-    }
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "alwaysStrict": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": false,
+    "checkJs": false,
   }
+}
