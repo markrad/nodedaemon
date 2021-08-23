@@ -1,6 +1,6 @@
 import { IApplication } from "../../common/IApplication";
 import { HaParentItem, IHaItem, IHaItemEditable, IHaItemSwitch, SafeItemAssign } from "../../haitems/haparentitem";
-import { HaMain } from "../../hamain";
+import { HaMain, State } from "../../hamain";
 import { getLogger, Logger } from "log4js";
 import * as https from 'https';
 // TODO Minimum conversion
@@ -45,7 +45,7 @@ class DynDnsUpdater implements IApplication {
 
     async run(): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
-            this.external_ip.on('new_state', (item, oldState) => {
+            this.external_ip.on('new_state', (item: IHaItem, oldState: State) => {
                 let now: Date = new Date();
                 let then: Date = new Date(this.lastUpdate.state);
 

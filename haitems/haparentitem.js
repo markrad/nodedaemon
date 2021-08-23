@@ -22,7 +22,7 @@ function SafeItemAssign(item, throwOnFailure = false) {
 }
 exports.SafeItemAssign = SafeItemAssign;
 class HaParentItem extends events_1.default {
-    constructor(item, _transport) {
+    constructor(item) {
         super();
         this._attributes = item.attributes;
         this._name = '';

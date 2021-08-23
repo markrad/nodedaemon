@@ -6,14 +6,15 @@ import { getLogger } from 'log4js'
 
 // TODO Minimum conversion
 
-type TripTarget = {
-    Targets: IHaItemSwitch[];
-    Timeout: number;
-}
+// type TripTarget = {
+//     Targets: IHaItemSwitch[];
+//     Timeout: number;
+// }
 
-type Trip = {
-    Sensor: IHaItem;
-    TripTargets: TripTarget[];
+interface Trip {
+    sensor: IHaItem;
+    lights: IHaItemSwitch[]
+    timeout: number;
 }
 
 const CATEGORY = 'MotionLight';
@@ -51,7 +52,7 @@ class MotionLight {
                 else if (this.controller.items.getItem(value[0]).type != 'binary_sensor') {
                     logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`)
                 }
-                else if (false == value[1].reduce((flag, value) => {
+                else if (false == value[1].reduce((flag: boolean, value: string) => {
                     if (!this.controller.items.getItem(value)) {
                         logger.error(`Specified target light does not exist: ${value}`);
                         flag = false;
@@ -69,10 +70,15 @@ class MotionLight {
                     logger.error(`Minutes before action is not numeric`);
                 }
                 else {
-                    let lights: HaParentItem[] = value[1].map((value) => this.controller.items.getItem(value));
-                    return [ this.controller.items.getItem(value[0]), lights, value[2]];
+                    let lights: IHaItemSwitch[] = value[1].map((value: string) => this.controller.items.getItem(value));
+                    let trip: Trip = { 
+                        sensor: this.controller.items.getItem(value[0]),
+                        lights: lights,
+                        timeout: value[2]
+                    };
+                    return trip;
                 }
-            }).filter(item => item != undefined);
+            }).filter((item: Trip) => item != undefined);
             logger.info('Constructed');
 
             return true;
@@ -105,22 +111,22 @@ class actioner {
         this.timer = null;
 
         this.eventHandler = (that: IHaItem, _oldState: State) => {
-            logger.debug(`State ${that.state} triggered on ${this.trip[0].entityId} for ${this.trip[1].map(item => item.entityId).join(' ')}`);
+            logger.debug(`State ${that.state} triggered on ${this.trip.sensor.entityId} for ${this.trip.lights.map(item => item.entityId).join(' ')}`);
             if (that.state == 'on') {
-                this.trip[1].forEach((light: IHaItemSwitch) => {
-                    light.turnOffAt(Date.now() + this.trip[2] * 60 * 1000);
+                this.trip.lights.forEach((light: IHaItemSwitch) => {
+                    light.turnOffAt(Date.now() + this.trip.timeout * 60 * 1000);
                 });
                 this.timer = setInterval(() => 
                 { 
-                    if (!this.trip[1][0].isTimerRunning) {
+                    if (!this.trip.lights[0].isTimerRunning) {
                         clearInterval(this.timer);
                         this.timer = null;
                     }
-                    else if (this.trip[0].state == 'on') {
-                        logger.trace(`Checking motion sensor status: ${this.trip[0].state}`);
-                        this.trip[1].forEach((light) => {
+                    else if (this.trip.sensor.state == 'on') {
+                        logger.trace(`Checking motion sensor status: ${this.trip.sensor.state}`);
+                        this.trip.lights.forEach((light) => {
                             logger.debug('Extenting turn off time');
-                            light.turnOffAt(Date.now() + this.trip[2] * 60 * 1000);
+                            light.turnOffAt(Date.now() + this.trip.timeout * 60 * 1000);
                         });
                     }
                 }, 30000);
@@ -132,11 +138,11 @@ class actioner {
         }
         // this.eventHandler.trip = this.trip;
         // this.eventHandler.timer = null;
-        this.trip[0].on('new_state', this.eventHandler); 
+        this.trip.sensor.on('new_state', this.eventHandler); 
     }
 
     stop() {
-        this.trip[0].off('new_state', this.eventHandler);
+        this.trip.sensor.off('new_state', this.eventHandler);
     }
 }
 

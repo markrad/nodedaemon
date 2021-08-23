@@ -1,17 +1,18 @@
 "use strict";
 // TODO Minimum conversion
 
-var sunCalc = require('suncalc');
+import { getMoonIllumination, GetMoonIlluminationResult, getTimes, GetTimesResult } from 'suncalc';
 var schedule = require('node-schedule');
-import { config } from 'process';
 import { HaMain } from '../../hamain';
-var EventEmitter = require('events').EventEmitter;
+import { EventEmitter } from 'events';
+import { getLogger } from 'log4js';
+import { IApplication } from '../../common/IApplication';
 
 const CATEGORY: string = 'Astro'
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
 
-const logger = require('log4js').getLogger(CATEGORY);
-class Astro extends EventEmitter
+const logger = getLogger(CATEGORY);
+class Astro extends EventEmitter implements IApplication
 {
     times: any;
     events: string[];
@@ -21,7 +22,9 @@ class Astro extends EventEmitter
     latitude: number;
     midnight: any;
     moon: any;
-    config: any;
+    //config: any;
+    private _dayStart: string;
+    private _dayEnd: string;
 constructor(controller: HaMain, config: any)
     {
         super();
@@ -48,15 +51,41 @@ constructor(controller: HaMain, config: any)
         this.latitude = controller.haConfig.latitude;
         this.midnight = null;
         this.moon = null;
-        this.config = config.astro;
+        //this.config = config.astro;
+        this._dayStart = null;
+        this._dayEnd = null;
         this._midnight();
         this._updateMoon();
         logger.info('Constructed')
     }
+
+    validate(config: any): boolean {
+        if (!this.longitude || !this.latitude) {
+            logger.error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
+            return false;
+        }
+
+        if (!config.daystart) {
+            logger.error('daystart missing from config');
+            return false;
+        }
+
+        if (!config.dayend) {
+            logger.error('dayend missing from config');
+            return false;
+        }
+
+        this._dayStart = config.daystart;
+        this._dayEnd = config.dayend;
+
+        return true;
+    }
     
-    run() {
+    async run(): Promise<boolean> {
         this.midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
         this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
+
+        return true;
     }
 
     stop() {
@@ -64,7 +93,7 @@ constructor(controller: HaMain, config: any)
         this.moon.cancel();
     }
 
-    _setupTimes(times1, times2)
+    _setupTimes(times1: GetTimesResult, times2: GetTimesResult)
     {
         logger.debug('In setupTimes');
         var now = new Date();
@@ -73,20 +102,20 @@ constructor(controller: HaMain, config: any)
 
         for (var event of this.events)
         {
-            this.times[event] = (this._isAfter(times1[event], now))?
-                times1[event] :
-                times2[event];
+            this.times[event] = (this._isAfter((times1 as any)[event], now))
+                ? (times1 as any)[event]
+                : (times2 as any)[event];
 
             logger.debug(`Firing event ${event} at ${this.times[event].toString()}`);
             setTimeout((myEvent, that) =>
             {
                 logger.debug(`Firing event ${myEvent}`);
                 that.emit('astroevent', myEvent);
-                if (myEvent == that.config.daystart) {
+                if (myEvent == that._dayStart) {
                     logger.debug('Firing event isLight');
                     that.emit('isLight');
                 }
-                else if (myEvent == that.config.dayend) {
+                else if (myEvent == that._dayEnd) {
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }
@@ -106,11 +135,11 @@ constructor(controller: HaMain, config: any)
     }
 
     _midnight(): void {
-        var today = new Date();
-        var tomorrow = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
+        var today: Date = new Date();
+        var tomorrow: Date = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
         this._setupTimes(
-            sunCalc.getTimes(today, this.latitude, this.longitude),
-            sunCalc.getTimes(tomorrow, this.latitude, this.longitude));
+            getTimes(today, this.latitude, this.longitude),
+            getTimes(tomorrow, this.latitude, this.longitude));
     }
 
     _updateMoon(): void
@@ -125,8 +154,8 @@ constructor(controller: HaMain, config: any)
         let d2 = new Date(Number(d1) + SECONDS_IN_A_DAY * 1000);
         d1.setHours(12, 0, 0, 0);
         d2.setHours(12, 0, 0, 0);
-        var moon1 = sunCalc.getMoonIllumination(d1);
-        var moon2 = sunCalc.getMoonIllumination(d2);
+        var moon1: GetMoonIlluminationResult = getMoonIllumination(d1);
+        var moon2: GetMoonIlluminationResult = getMoonIllumination(d2);
         var phase = 'Not Set';
 
         logger.trace(`d1=${d1.toISOString()};d2=${d2.toISOString()};moon1.phase=${moon1.phase};moon2.phase=${moon2.phase}`);
@@ -177,7 +206,7 @@ constructor(controller: HaMain, config: any)
         return this.lastEventSave;
     }
 
-    getEvent(eventName): string
+    getEvent(eventName: string): string
     {
         if (this.times.hasOwnProperty(eventName))
             return this.times[eventName];
@@ -194,10 +223,10 @@ constructor(controller: HaMain, config: any)
         var temp = new Date();
         var result;
 
-        if (this._isBefore(this.times[this.config.daystart], this.times[this.config.dayend])) {
-            result = (this._isBetween(temp, this.times[this.config.daystart], this.times[this.config.dayend]))? false : true;
+        if (this._isBefore(this.times[this._dayStart], this.times[this._dayEnd])) {
+            result = (this._isBetween(temp, this.times[this._dayStart], this.times[this._dayEnd]))? false : true;
         } else {
-            result = (this._isBetween(temp, this.times[this.config.dayend], this.times[this.config.daystart]))? true : false;
+            result = (this._isBetween(temp, this.times[this._dayEnd], this.times[this._dayStart]))? true : false;
         }
 
         return result;

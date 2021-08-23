@@ -1,7 +1,8 @@
-import { HaParentItem } from './haparentitem.js';
+import { State } from '../hamain/index.js';
+import { HaParentItem, IHaItem } from './haparentitem.js';
 
 class HaItemBinarySensor extends HaParentItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {

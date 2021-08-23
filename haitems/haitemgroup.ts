@@ -1,9 +1,10 @@
+import { State } from '../hamain/index.js';
 import { HaGenericSwitchItem } from './hagenericswitchitem.js';
-import { ServicePromise } from './haparentitem.js';
+import { IHaItemSwitch, ServicePromise } from './haparentitem.js';
 
 class HaItemGroup extends HaGenericSwitchItem {
     children: any;
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.children = item.attributes.entity_id;
         this.on('new_state', (that, _oldstate) => {

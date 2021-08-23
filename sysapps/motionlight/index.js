@@ -58,9 +58,14 @@ class MotionLight {
                 }
                 else {
                     let lights = value[1].map((value) => this.controller.items.getItem(value));
-                    return [this.controller.items.getItem(value[0]), lights, value[2]];
+                    let trip = {
+                        sensor: this.controller.items.getItem(value[0]),
+                        lights: lights,
+                        timeout: value[2]
+                    };
+                    return trip;
                 }
-            }).filter(item => item != undefined);
+            }).filter((item) => item != undefined);
             logger.info('Constructed');
             return true;
         }
@@ -88,21 +93,21 @@ class actioner {
         this.trip = trip;
         this.timer = null;
         this.eventHandler = (that, _oldState) => {
-            logger.debug(`State ${that.state} triggered on ${this.trip[0].entityId} for ${this.trip[1].map(item => item.entityId).join(' ')}`);
+            logger.debug(`State ${that.state} triggered on ${this.trip.sensor.entityId} for ${this.trip.lights.map(item => item.entityId).join(' ')}`);
             if (that.state == 'on') {
-                this.trip[1].forEach((light) => {
-                    light.turnOffAt(Date.now() + this.trip[2] * 60 * 1000);
+                this.trip.lights.forEach((light) => {
+                    light.turnOffAt(Date.now() + this.trip.timeout * 60 * 1000);
                 });
                 this.timer = setInterval(() => {
-                    if (!this.trip[1][0].isTimerRunning) {
+                    if (!this.trip.lights[0].isTimerRunning) {
                         clearInterval(this.timer);
                         this.timer = null;
                     }
-                    else if (this.trip[0].state == 'on') {
-                        logger.trace(`Checking motion sensor status: ${this.trip[0].state}`);
-                        this.trip[1].forEach((light) => {
+                    else if (this.trip.sensor.state == 'on') {
+                        logger.trace(`Checking motion sensor status: ${this.trip.sensor.state}`);
+                        this.trip.lights.forEach((light) => {
                             logger.debug('Extenting turn off time');
-                            light.turnOffAt(Date.now() + this.trip[2] * 60 * 1000);
+                            light.turnOffAt(Date.now() + this.trip.timeout * 60 * 1000);
                         });
                     }
                 }, 30000);
@@ -114,10 +119,10 @@ class actioner {
         };
         // this.eventHandler.trip = this.trip;
         // this.eventHandler.timer = null;
-        this.trip[0].on('new_state', this.eventHandler);
+        this.trip.sensor.on('new_state', this.eventHandler);
     }
     stop() {
-        this.trip[0].off('new_state', this.eventHandler);
+        this.trip.sensor.off('new_state', this.eventHandler);
     }
 }
 module.exports = MotionLight;

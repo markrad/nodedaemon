@@ -42,7 +42,7 @@ class HaItemInputNumber extends haparentitem_js_1.HaParentItem {
     _getActionAndExpectedSNewtate(newState) {
         let action = 'set_value';
         let expectedNewState = null;
-        if (isNaN(newState)) {
+        if (typeof newState == 'number' && isNaN(newState)) {
             action = 'error';
         }
         else {
@@ -54,6 +54,7 @@ class HaItemInputNumber extends haparentitem_js_1.HaParentItem {
                 expectedNewState = this.attributes.min;
             }
         }
+        // TODO Thought I had a type for this
         return { action: action, expectedNewState: expectedNewState };
     }
 }

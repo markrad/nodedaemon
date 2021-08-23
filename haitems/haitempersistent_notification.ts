@@ -1,7 +1,8 @@
+import { State } from '../hamain/index.js';
 import { HaParentItem } from './haparentitem.js';
 
 class HaItemPersistentNotification extends HaParentItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {

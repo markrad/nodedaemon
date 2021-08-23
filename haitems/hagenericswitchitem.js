@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaGenericSwitchItem = void 0;
-const posix_1 = require("path/posix");
 const hagenericupdatableitem_js_1 = require("./hagenericupdatableitem.js");
 var SUPPORT;
 (function (SUPPORT) {
@@ -61,26 +60,28 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
     }
     turnOffAt(moment) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
-                if (this.isOff) {
-                    yield this.turnOn();
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
+                    if (this.isOff) {
+                        yield this.turnOn();
+                    }
+                    if (this._moment > 0) {
+                        clearTimeout(this._timer);
+                        this._timer = null;
+                    }
+                    this._moment = moment;
+                    this._timer = setTimeout(() => {
+                        this.turnOff();
+                        this._moment = 0;
+                        this._timer = null;
+                    }, this._moment - Date.now());
+                    this.logger.debug(`Turning off at ${new Date(this._moment)}`);
                 }
-                if (this._moment > 0) {
-                    clearTimeout(this._timer);
-                    this._timer = null;
+                else {
+                    this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this._moment};requested=${moment}`);
                 }
-                this._moment = moment;
-                this._timer = setTimeout(() => {
-                    this.turnOff();
-                    this._moment = 0;
-                    this._timer = null;
-                }, this._moment - Date.now());
-                this.logger.debug(`Turning off at ${new Date(this._moment)}`);
-            }
-            else {
-                this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this._moment};requested=${moment}`);
-            }
-            posix_1.resolve();
+                resolve();
+            }));
         });
     }
     toggle() {

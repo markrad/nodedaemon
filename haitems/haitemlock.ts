@@ -1,7 +1,8 @@
+import { State } from '../hamain/index.js';
 import { HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemLock extends HaParentItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {
@@ -25,14 +26,14 @@ class HaItemLock extends HaParentItem {
         return this.state == 'unlocked';
     }
 
-    async updateState(newState): Promise<ServicePromise> {
+    async updateState(newState: string | number | boolean): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
         });
     }
 
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedSNewtate(newState: string | number | boolean) {
         let action = '';
         switch (typeof newState) {
             case 'boolean':

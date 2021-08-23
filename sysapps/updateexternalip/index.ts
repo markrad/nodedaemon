@@ -66,7 +66,7 @@ class UpdateExternalIP {
                 res.setEncoding('utf8');
                 res.on('data', (chunk: string) => allchunks += chunk);
                 res.on('end', () => resolve(allchunks));
-            }).on('error', (err) => {
+            }).on('error', (err: Error) => {
                 logger.error(`Failed to connect to ${IP_HOST}: ${err}`);
                 reject(err);
             });

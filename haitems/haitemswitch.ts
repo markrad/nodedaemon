@@ -1,8 +1,8 @@
-import { Logger } from 'log4js';
+import { State } from '../hamain/index.js';
 import { HaGenericSwitchItem } from './hagenericswitchitem.js';
 
 class HaItemSwitch extends HaGenericSwitchItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
     }

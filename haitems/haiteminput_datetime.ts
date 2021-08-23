@@ -1,14 +1,15 @@
+import { State } from '../hamain/index.js';
 import { HaParentItem } from './haparentitem.js';
 
 class HaItemInputDateTime extends HaParentItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });
     }
 
-    async updateState(newState): Promise<any> {
+    async updateState(newState: string): Promise<any> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
 
@@ -23,7 +24,7 @@ class HaItemInputDateTime extends HaParentItem {
         });
     }
 
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedSNewtate(newState: string) {
         let action: string = 'set';
         let m: Date = new Date(newState);
         let expectedNewState: string;

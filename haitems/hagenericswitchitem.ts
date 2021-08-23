@@ -1,4 +1,4 @@
-import { resolve } from 'path/posix';
+// import { resolve } from 'path/posix';
 import { State } from '../hamain/index.js';
 import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
 import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem.js';
@@ -11,6 +11,11 @@ enum SUPPORT {
     SUPPORT_COLOR = 16,
     SUPPORT_TRANSITION = 32,
     SUPPORT_WHITE_VALUE = 128,
+}
+
+type ActionAndNewState = {
+    action: string,
+    expectedNewState: string
 }
 
 export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemEditable {
@@ -54,27 +59,29 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
     }
 
     async turnOffAt(moment: number): Promise<void> {
-        if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
-            if (this.isOff) {
-                await this.turnOn();
+        return new Promise<void>(async (resolve, reject) => {
+            if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
+                if (this.isOff) {
+                    await this.turnOn();
+                }
+                if (this._moment > 0) {
+                    clearTimeout(this._timer);
+                    this._timer = null;
+                }
+                this._moment = moment;
+                this._timer = setTimeout(() => {
+                    this.turnOff();
+                    this._moment = 0;
+                    this._timer = null;
+                }, this._moment - Date.now());
+                this.logger.debug(`Turning off at ${new Date(this._moment)}`);
             }
-            if (this._moment > 0) {
-                clearTimeout(this._timer);
-                this._timer = null;
+            else {
+                this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this._moment};requested=${moment}`);
             }
-            this._moment = moment;
-            this._timer = setTimeout(() => {
-                this.turnOff();
-                this._moment = 0;
-                this._timer = null;
-            }, this._moment - Date.now());
-            this.logger.debug(`Turning off at ${new Date(this._moment)}`);
-        }
-        else {
-            this.logger.debug(`turnOffAt ignored: state=${this.state};moment=${this._moment};requested=${moment}`);
-        }
-
-        resolve();
+    
+            resolve();
+        });
     }
 
     async toggle(): Promise<ServicePromise> {
@@ -123,15 +130,15 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         return true;
     }
 
-    async updateBrightness(_newValue) { 
+    async updateBrightness(_newValue: number | string) { 
         return new Promise(resolve => resolve(new Error('Brightness is not supported')));
     }
 
-    async updateTemperature(_newValue) {
+    async updateTemperature(_newValue: number | string) {
         return new Promise(resolve => resolve(new Error('Temperature is not supported')));
     }
 
-    _updateBrightness(newValue) {
+    _updateBrightness(newValue: number | string) {
         return new Promise((resolve, _reject) => {
             var level = Number(newValue);
             if (level == NaN) {
@@ -146,7 +153,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    async _updateTemperature(newValue): Promise<any> {
+    async _updateTemperature(newValue: number | string): Promise<any> {
         return new Promise<any>((resolve, _reject) => {
             var temp = Number(newValue);
             if (temp == NaN) {
@@ -169,7 +176,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
     }
 
     // TODO make a type of this
-    _getActionAndExpectedSNewtate(newState: boolean | number | string): { action: string, expectedNewState: string } {
+    _getActionAndExpectedSNewtate(newState: boolean | number | string): ActionAndNewState {
         let action: string = '';
         switch (typeof newState) {
             case 'boolean':

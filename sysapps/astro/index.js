@@ -1,13 +1,23 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // TODO Minimum conversion
-var sunCalc = require('suncalc');
+const suncalc_1 = require("suncalc");
 var schedule = require('node-schedule');
-var EventEmitter = require('events').EventEmitter;
+const events_1 = require("events");
+const log4js_1 = require("log4js");
 const CATEGORY = 'Astro';
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
-const logger = require('log4js').getLogger(CATEGORY);
-class Astro extends EventEmitter {
+const logger = log4js_1.getLogger(CATEGORY);
+class Astro extends events_1.EventEmitter {
     constructor(controller, config) {
         super();
         this.times = {};
@@ -33,14 +43,36 @@ class Astro extends EventEmitter {
         this.latitude = controller.haConfig.latitude;
         this.midnight = null;
         this.moon = null;
-        this.config = config.astro;
+        //this.config = config.astro;
+        this._dayStart = null;
+        this._dayEnd = null;
         this._midnight();
         this._updateMoon();
         logger.info('Constructed');
     }
+    validate(config) {
+        if (!this.longitude || !this.latitude) {
+            logger.error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
+            return false;
+        }
+        if (!config.daystart) {
+            logger.error('daystart missing from config');
+            return false;
+        }
+        if (!config.dayend) {
+            logger.error('dayend missing from config');
+            return false;
+        }
+        this._dayStart = config.daystart;
+        this._dayEnd = config.dayend;
+        return true;
+    }
     run() {
-        this.midnight = schedule.scheduleJob({ hour: 0, minute: 0, second: 0 }, () => this._midnight());
-        this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
+        return __awaiter(this, void 0, void 0, function* () {
+            this.midnight = schedule.scheduleJob({ hour: 0, minute: 0, second: 0 }, () => this._midnight());
+            this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
+            return true;
+        });
     }
     stop() {
         this.midnight.cancel();
@@ -52,18 +84,18 @@ class Astro extends EventEmitter {
         var latest = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2);
         var latestIndex = -1;
         for (var event of this.events) {
-            this.times[event] = (this._isAfter(times1[event], now)) ?
-                times1[event] :
-                times2[event];
+            this.times[event] = (this._isAfter(times1[event], now))
+                ? times1[event]
+                : times2[event];
             logger.debug(`Firing event ${event} at ${this.times[event].toString()}`);
             setTimeout((myEvent, that) => {
                 logger.debug(`Firing event ${myEvent}`);
                 that.emit('astroevent', myEvent);
-                if (myEvent == that.config.daystart) {
+                if (myEvent == that._dayStart) {
                     logger.debug('Firing event isLight');
                     that.emit('isLight');
                 }
-                else if (myEvent == that.config.dayend) {
+                else if (myEvent == that._dayEnd) {
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }
@@ -81,7 +113,7 @@ class Astro extends EventEmitter {
     _midnight() {
         var today = new Date();
         var tomorrow = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
-        this._setupTimes(sunCalc.getTimes(today, this.latitude, this.longitude), sunCalc.getTimes(tomorrow, this.latitude, this.longitude));
+        this._setupTimes(suncalc_1.getTimes(today, this.latitude, this.longitude), suncalc_1.getTimes(tomorrow, this.latitude, this.longitude));
     }
     _updateMoon() {
         this.lastMoonPhaseSave = this._moonPhase();
@@ -92,8 +124,8 @@ class Astro extends EventEmitter {
         let d2 = new Date(Number(d1) + SECONDS_IN_A_DAY * 1000);
         d1.setHours(12, 0, 0, 0);
         d2.setHours(12, 0, 0, 0);
-        var moon1 = sunCalc.getMoonIllumination(d1);
-        var moon2 = sunCalc.getMoonIllumination(d2);
+        var moon1 = suncalc_1.getMoonIllumination(d1);
+        var moon2 = suncalc_1.getMoonIllumination(d2);
         var phase = 'Not Set';
         logger.trace(`d1=${d1.toISOString()};d2=${d2.toISOString()};moon1.phase=${moon1.phase};moon2.phase=${moon2.phase}`);
         if (moon1.phase > moon2.phase) {
@@ -141,11 +173,11 @@ class Astro extends EventEmitter {
     get isDark() {
         var temp = new Date();
         var result;
-        if (this._isBefore(this.times[this.config.daystart], this.times[this.config.dayend])) {
-            result = (this._isBetween(temp, this.times[this.config.daystart], this.times[this.config.dayend])) ? false : true;
+        if (this._isBefore(this.times[this._dayStart], this.times[this._dayEnd])) {
+            result = (this._isBetween(temp, this.times[this._dayStart], this.times[this._dayEnd])) ? false : true;
         }
         else {
-            result = (this._isBetween(temp, this.times[this.config.dayend], this.times[this.config.daystart])) ? true : false;
+            result = (this._isBetween(temp, this.times[this._dayEnd], this.times[this._dayStart])) ? true : false;
         }
         return result;
     }

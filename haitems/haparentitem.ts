@@ -32,7 +32,8 @@ export interface IHaItem {
     get isSwitch(): boolean;
     get isEditable(): boolean;
     setReceivedState(newState: State): void;
-    on(eventName: string, cback: any): void;
+    on(eventName: string | symbol, listener: (...args: any[]) => void): void;
+    off(eventName: String | symbol, listener: (...args: any[]) => void): void;
     // TODO Finished maybe?
 }
 
@@ -74,7 +75,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         _lastUpdated: Date;
         _state: string;
         _logger: Logger;
-    constructor(item: any, _transport?: any) {
+    constructor(item: State) {
         super();
         this._attributes = item.attributes;
         this._name = '';

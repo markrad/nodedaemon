@@ -117,7 +117,8 @@ class HaMain extends events_1.default {
                 });
                 logger.info(`Items loaded: ${Object.keys(this._items.items).length}`);
                 let itemTypes = {};
-                Object.values(this._items.items).forEach((value, _index) => {
+                var test = Array.from(this.items.items.values());
+                Array.from(this._items.items.values()).forEach((value) => {
                     if (!(value.type in itemTypes)) {
                         itemTypes[value.type] = 0;
                     }
@@ -344,15 +345,15 @@ class HaMain extends events_1.default {
                                                 else {
                                                     appobject = new app(this, this.config);
                                                     if (appobject.validate == undefined || appobject.validate(this.config[dirent.name])) {
-                                                        apps.push({ name: appobject.__proto__.constructor.name, path: loc, instance: appobject, status: 'constructed' });
+                                                        apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'constructed' });
                                                     }
                                                     else {
-                                                        apps.push({ name: appobject.__proto__.constructor.name, path: loc, instance: appobject, status: 'bad_config' });
+                                                        apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'bad_config' });
                                                     }
                                                 }
                                             }
                                             catch (err) {
-                                                apps.push({ name: appobject === null || appobject === void 0 ? void 0 : appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
+                                                apps.push({ name: appobject === null || appobject === void 0 ? void 0 : appobject.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
                                                 logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                                             }
                                         }

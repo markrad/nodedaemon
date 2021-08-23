@@ -1,7 +1,8 @@
+import { State } from '../hamain/index.js';
 import { HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemInputNumber extends HaParentItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {
@@ -9,7 +10,7 @@ class HaItemInputNumber extends HaParentItem {
         });
     }
 
-    async updateState(newState): Promise<ServicePromise> {
+    async updateState(newState: string | number | boolean): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId, value: expectedNewState });
@@ -28,11 +29,11 @@ class HaItemInputNumber extends HaParentItem {
         return Number(super.state);
     }
 
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedSNewtate(newState: string | number | boolean): { action: string, expectedNewState: string } {
         let action = 'set_value';
         let expectedNewState = null;
 
-        if (isNaN(newState)) {
+        if (typeof newState == 'number' && isNaN(newState)) {
             action = 'error';
         }
         else {
@@ -45,7 +46,7 @@ class HaItemInputNumber extends HaParentItem {
                 expectedNewState = this.attributes.min;
             }
         }
-
+        // TODO Thought I had a type for this
         return { action: action, expectedNewState: expectedNewState };
     }
 }

@@ -157,7 +157,7 @@ try {
             defaultLogger.error(`Specified appsdir ${item} does not exist`);
         }
     });
-    config.main.appsDir = config.main.appsDir.filter(item => item != null);
+    config.main.appsDir = config.main.appsDir.filter((item) => item != null);
     if (config.main.appsDir.length == 0) {
         defaultLogger.fatal('No valid apps directories were found');
         process.exit(4);

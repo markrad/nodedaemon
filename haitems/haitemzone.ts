@@ -1,7 +1,8 @@
+import { State } from '../hamain/index.js';
 import { HaParentItem } from './haparentitem.js';
 
 class HaItemZone extends HaParentItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         let x = this.category;
         this.on('new_state', (that, _oldstate) => {

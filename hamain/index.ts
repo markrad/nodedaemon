@@ -9,6 +9,7 @@ import { HaInterface } from '../hainterface';
 import { HaItemFactory } from '../haitems'
 import { IHaItem, ServiceTarget } from '../haitems/haparentitem';
 import { Dir } from 'node:fs';
+import { IApplication } from '../common/IApplication';
 //import * as hound  from 'hound';
 var reload = require('require-reload');
 var hound = require('hound');
@@ -53,7 +54,7 @@ export class HaMain extends EventEmitter {
     stopping: boolean;
     _haConfig: any;
     _starttime: Date;
-    constructor(config) {
+    constructor(config: any) {
         super();
         this.haInterface = null;
         this._items = new ItemsManager();
@@ -120,9 +121,10 @@ export class HaMain extends EventEmitter {
 
             logger.info(`Items loaded: ${Object.keys(this._items.items).length}`);
 
-            let itemTypes = {};
+            let itemTypes: any = {};
             
-            Object.values(this._items.items).forEach((value, _index) => {
+            var test = Array.from(this.items.items.values());
+            Array.from(this._items.items.values()).forEach((value: IHaItem) => {
                 if (!(value.type in itemTypes)) {
                     itemTypes[value.type] = 0;
                 }
@@ -205,7 +207,7 @@ export class HaMain extends EventEmitter {
         return this._apps;
     }
 
-    getApp(name) {
+    getApp(name: string) {
         return this.apps.find(item => item.name == name);
     }
 
@@ -259,7 +261,7 @@ export class HaMain extends EventEmitter {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
 
-    _setWatcher(item) {
+    _setWatcher(item: unknown) {
 /*        
         hound.watch(item)
             .on('create', (file, stats) => {
@@ -332,12 +334,12 @@ export class HaMain extends EventEmitter {
         // }
     }
     
-    async _getApps(ignoreApps, appsDirectory): Promise<AppInfo[]> {
+    async _getApps(ignoreApps: string[], appsDirectory: string): Promise<AppInfo[]> {
         let ret = new Promise<AppInfo[]>(async (resolve, reject) => {
             try {
                 let apps: AppInfo[] = new Array<AppInfo>();
                 const dir: Dir = await fs.promises.opendir(appsDirectory);
-                let appobject;
+                let appobject: IApplication;
 
                 for await (const dirent of dir) {
                     if (dirent.isDirectory()) {
@@ -358,15 +360,15 @@ export class HaMain extends EventEmitter {
                                         else {
                                             appobject = new app(this, this.config);
                                             if (appobject.validate == undefined || appobject.validate(this.config[dirent.name])) {
-                                                apps.push({ name: appobject.__proto__.constructor.name, path: loc, instance: appobject, status: 'constructed' });
+                                                apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'constructed' });
                                             }
                                             else {
-                                                apps.push({ name: appobject.__proto__.constructor.name, path: loc, instance: appobject, status: 'bad_config' });
+                                                apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'bad_config' });
                                             }
                                         }
                                     }
                                     catch (err) {
-                                        apps.push({ name: appobject?.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
+                                        apps.push({ name: appobject?.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
                                         logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                                     }
                                 }

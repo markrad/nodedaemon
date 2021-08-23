@@ -1,8 +1,9 @@
+import { State } from '../hamain/index.js';
 import { HaGenericSwitchItem } from './hagenericswitchitem.js';
 import { ServicePromise } from './haparentitem.js';
 
 class HaItemInputBoolean extends HaGenericSwitchItem {
-    constructor(item) {
+    constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {

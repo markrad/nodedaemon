@@ -6,7 +6,7 @@ import { HaMain } from './hamain';
 
 const CATEGORY: string = 'main';
 
-async function main(version: string, config) {
+async function main(version: string, config: any) {
     const LOGO: string = `
                                                   
              |         |                         
@@ -154,7 +154,7 @@ try {
         config.main.appsDir.push('./apps');
     }
 
-    config.main.appsDir = config.main.appsDir.map((item) => {
+    config.main.appsDir = config.main.appsDir.map((item: string) => {
         if (typeof item != 'string') {
             defaultLogger.fatal(`appsDir ${item} is invalid`);
             process.exit(4);
@@ -164,14 +164,14 @@ try {
 
     config.main.appsDir = Array.from(new Set(config.main.appsDir));
 
-    config.main.appsDir.forEach((item, index) => {
+    config.main.appsDir.forEach((item: string, index: number) => {
         if (!fs.existsSync(item)) {
             config.main.appsDir[index] = null;
             defaultLogger.error(`Specified appsdir ${item} does not exist`);
         }
     });
 
-    config.main.appsDir = config.main.appsDir.filter(item => item != null);
+    config.main.appsDir = config.main.appsDir.filter((item: string) => item != null);
 
     if (config.main.appsDir.length == 0) {
         defaultLogger.fatal('No valid apps directories were found');
@@ -185,7 +185,7 @@ try {
         config.main.ignoreApps = [ config.main.ignoreApps ];
     }
 
-    config.main.ignoreApps = config.main.ignoreApps.map((item) => {
+    config.main.ignoreApps = config.main.ignoreApps.map((item: string) => {
         if (typeof item != 'string') {
             defaultLogger.fatal(`ignoreApps ${item} is invalid`);
             process.exit(4);

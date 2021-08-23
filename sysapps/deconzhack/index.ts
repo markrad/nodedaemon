@@ -88,7 +88,7 @@ class DeconzHack implements IApplication {
         });
     }
 
-    send(data) {
+    send(data: string | Buffer) {
         this._ws.send(data);
     }
 
