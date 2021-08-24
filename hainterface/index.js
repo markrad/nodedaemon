@@ -14,19 +14,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaInterface = void 0;
 const events_1 = __importDefault(require("events"));
-const WebSocket = require("ws");
 const log4js_1 = require("log4js");
 const haInterfaceError_1 = require("../common/haInterfaceError");
-var PacketTypes;
-(function (PacketTypes) {
-    PacketTypes[PacketTypes["ServiceAuthRequired"] = 0] = "ServiceAuthRequired";
-    PacketTypes[PacketTypes["ServiceAuthOk"] = 1] = "ServiceAuthOk";
-    PacketTypes[PacketTypes["ServiceAuthInvalid"] = 2] = "ServiceAuthInvalid";
-    PacketTypes[PacketTypes["ServiceError"] = 3] = "ServiceError";
-    PacketTypes[PacketTypes["ServiceSuccess"] = 4] = "ServiceSuccess";
-    PacketTypes[PacketTypes["ServicePong"] = 5] = "ServicePong";
-    PacketTypes[PacketTypes["ServiceEvent"] = 6] = "ServiceEvent";
-})(PacketTypes || (PacketTypes = {}));
+const WebSocket = require("ws");
+var PacketTypesIn;
+(function (PacketTypesIn) {
+    PacketTypesIn[PacketTypesIn["ServiceAuthRequired"] = 0] = "ServiceAuthRequired";
+    PacketTypesIn[PacketTypesIn["ServiceAuthOk"] = 1] = "ServiceAuthOk";
+    PacketTypesIn[PacketTypesIn["ServiceAuthInvalid"] = 2] = "ServiceAuthInvalid";
+    PacketTypesIn[PacketTypesIn["ServiceError"] = 3] = "ServiceError";
+    PacketTypesIn[PacketTypesIn["ServiceSuccess"] = 4] = "ServiceSuccess";
+    PacketTypesIn[PacketTypesIn["ServicePong"] = 5] = "ServicePong";
+    PacketTypesIn[PacketTypesIn["ServiceEvent"] = 6] = "ServiceEvent";
+})(PacketTypesIn || (PacketTypesIn = {}));
 const CATEGORY = 'HaInterface';
 var logger = log4js_1.getLogger(CATEGORY);
 if (process.env.HAINTERFACE_LOGGING) {
@@ -35,52 +35,31 @@ if (process.env.HAINTERFACE_LOGGING) {
 class HaInterface extends events_1.default {
     constructor(url, accessToken, pingRate = 60000) {
         super();
-        this.accessToken = accessToken;
-        this.client = null;
-        this.url = url;
-        this.id = 0;
-        this.tracker = new Map();
-        this.pingRate = pingRate;
-        this.pingInterval = null;
-        this.closing = false;
-        this.connected = false;
-    }
-    _messageFactory(msgJSON) {
-        let msg = JSON.parse(msgJSON);
-        switch (msg.type) {
-            case "result":
-                return msg.success == true
-                    ? { name: PacketTypes.ServiceSuccess, id: msg.id, type: "result", success: true, result: msg.result }
-                    : { name: PacketTypes.ServiceError, id: msg.id, type: "result", success: false, error: msg.error };
-            case "event":
-                return { name: PacketTypes.ServiceEvent, type: msg.type, event: msg.event };
-            case "pong":
-                return { name: PacketTypes.ServicePong, id: msg.id, type: "pong" };
-            case "auth_ok":
-                return { name: PacketTypes.ServiceAuthOk, type: msg.type, ha_version: msg.ha_version };
-            case "auth_invalid":
-                return { name: PacketTypes.ServiceAuthInvalid, type: msg.type, message: msg.message };
-            default:
-                let errMsg = `Unrecognized server response: ${msgJSON}`;
-                logger.error(errMsg);
-                throw new Error(errMsg);
-        }
+        this._accessToken = accessToken;
+        this._client = null;
+        this._url = url;
+        this._id = 0;
+        this._tracker = new Map();
+        this._pingRate = pingRate;
+        this._pingInterval = null;
+        this._closing = false;
+        this._connected = false;
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    this.client = yield this._connect(this.url);
+                    this._client = yield this._connect(this._url);
                     logger.info(`Connection complete`);
-                    this.connected = true;
-                    this.client.on('message', (message) => {
+                    this._connected = true;
+                    this._client.on('message', (message) => {
                         if (typeof message != 'string') {
                             logger.warn(`Unrecognized message type: ${typeof message}`);
                         }
                         else {
                             // let msg = JSON.parse(message);
                             let msg = this._messageFactory(message);
-                            if (msg.name == PacketTypes.ServiceEvent) {
+                            if (msg.name == PacketTypesIn.ServiceEvent) {
                                 let msgEvent = msg;
                                 logger.trace(`msg.event.event_type=${msgEvent.event.event_type}`);
                                 this.emit(msgEvent.event.event_type, msgEvent.event.data);
@@ -88,21 +67,21 @@ class HaInterface extends events_1.default {
                             }
                             let msgResponse;
                             switch (msg.name) {
-                                case PacketTypes.ServiceSuccess:
+                                case PacketTypesIn.ServiceSuccess:
                                     msgResponse = msg;
                                     break;
-                                case PacketTypes.ServiceError:
+                                case PacketTypesIn.ServiceError:
                                     msgResponse = msg;
                                     break;
-                                case PacketTypes.ServicePong:
+                                case PacketTypesIn.ServicePong:
                                     msgResponse = msg;
                                     break;
                             }
                             try {
-                                this.tracker.get(msgResponse.id).handler(msgResponse);
-                                this.tracker.delete(msgResponse.id);
+                                this._tracker.get(msgResponse.id).handler(msgResponse);
+                                this._tracker.delete(msgResponse.id);
                             }
-                            catch (_a) {
+                            catch (err) {
                                 logger.fatal('This should never happen. Send packets should always have a response handler');
                             }
                         }
@@ -111,7 +90,7 @@ class HaInterface extends events_1.default {
                         that._kill();
                         try {
                             yield that.start();
-                            that.connected = true;
+                            that._connected = true;
                             logger.info(`Reconnection complete`);
                             that.emit('reconnected');
                         }
@@ -119,28 +98,28 @@ class HaInterface extends events_1.default {
                             that.emit('fatal_error', err);
                         }
                     });
-                    this.client.on('error', (err) => __awaiter(this, void 0, void 0, function* () {
+                    this._client.on('error', (err) => __awaiter(this, void 0, void 0, function* () {
                         logger.debug(`Connection errored: ${err} - reconnecting`);
                         restart(this);
                     }));
-                    this.client.on('close', (reasonCode) => __awaiter(this, void 0, void 0, function* () {
+                    this._client.on('close', (reasonCode) => __awaiter(this, void 0, void 0, function* () {
                         logger.info(`Connection closed: ${reasonCode}`);
-                        if (!this.closing) {
+                        if (!this._closing) {
                             logger.debug('Assuming service was restarted - reconnecting');
                             restart(this);
                         }
                         else {
-                            this.closing = false;
+                            this._closing = false;
                         }
                     }));
-                    this.pingInterval = setInterval(() => {
-                        let ping = { id: ++this.id, type: 'ping' };
+                    this._pingInterval = setInterval(() => {
+                        let ping = { id: ++this._id, type: 'ping' };
                         this._sendPacket(ping)
                             .then((_response) => { })
                             .catch((err) => {
                             logger.error(`Ping failed ${err}`);
                         });
-                    }, this.pingRate);
+                    }, this._pingRate);
                     while ((yield this.getConfig()).state != 'RUNNING') {
                         logger.info('Waiting for Home Assistant to signal RUNNING');
                         yield this._wait(1);
@@ -153,6 +132,130 @@ class HaInterface extends events_1.default {
                 }
             }));
         });
+    }
+    stop() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let ret = new Promise((resolve, reject) => {
+                this._closing = true;
+                logger.info('Closing');
+                let timer = setTimeout(() => {
+                    logger.warn('Failed to close before timeout');
+                    reject(new Error('Failed to close connection'));
+                }, 5000);
+                this._client.once('close', (_reason, _description) => {
+                    logger.info('Closed');
+                    clearTimeout(timer);
+                    resolve();
+                });
+                this._kill();
+                this._client.close(1000);
+            });
+            return ret;
+        });
+    }
+    get isConnected() {
+        return this._connected;
+    }
+    subscribe() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let packet = { id: ++this._id, type: 'subscribe_events' };
+                this._sendPacket(packet)
+                    .then((response) => {
+                    logger.info('Subscribed to events');
+                    resolve(response.result);
+                })
+                    .catch((err) => {
+                    logger.error(`Error subscribing to events: ${err}`);
+                    reject(err);
+                });
+            });
+        });
+    }
+    getStates() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let packet = { id: ++this._id, type: 'get_states' };
+                this._sendPacket(packet)
+                    .then((response) => {
+                    logger.info('States acquired');
+                    resolve(response.result);
+                })
+                    .catch((err) => {
+                    logger.error(`Error getting states: ${err}`);
+                    reject(err);
+                });
+            });
+        });
+    }
+    getConfig() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let packet = { id: ++this._id, type: 'get_config' };
+                this._sendPacket(packet)
+                    .then((response) => {
+                    logger.debug('Config acquired');
+                    resolve(response.result);
+                })
+                    .catch((err) => {
+                    logger.error(`Error getting config: ${err}`);
+                    reject(err);
+                });
+            });
+        });
+    }
+    getPanels() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let packet = { id: ++this._id, type: 'get_panels' };
+                this._sendPacket(packet)
+                    .then((response) => {
+                    logger.info('Panels acquired');
+                    resolve(response.result);
+                })
+                    .catch((err) => {
+                    logger.error(`Error getting panels: ${err}`);
+                    reject(err);
+                });
+            });
+        });
+    }
+    callService(domain, service, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let packet = { id: ++this._id, type: 'call_service', domain: domain, service: service, service_data: data };
+                this._sendPacket(packet)
+                    .then((response) => {
+                    logger.debug('Service call successful');
+                    resolve(response.result);
+                })
+                    .catch((err) => {
+                    logger.error(`Error calling service ${err}`);
+                    reject(err);
+                });
+            });
+        });
+    }
+    _messageFactory(msgJSON) {
+        let msg = JSON.parse(msgJSON);
+        switch (msg.type) {
+            case "result":
+                return msg.success == true
+                    ? { name: PacketTypesIn.ServiceSuccess, id: msg.id, type: "result", success: true, result: msg.result }
+                    : { name: PacketTypesIn.ServiceError, id: msg.id, type: "result", success: false, error: msg.error };
+            case "event":
+                return { name: PacketTypesIn.ServiceEvent, type: msg.type, event: msg.event };
+            case "pong":
+                return { name: PacketTypesIn.ServicePong, id: msg.id, type: "pong" };
+            case "auth_ok":
+                return { name: PacketTypesIn.ServiceAuthOk, type: msg.type, ha_version: msg.ha_version };
+            case "auth_invalid":
+                return { name: PacketTypesIn.ServiceAuthInvalid, type: msg.type, message: msg.message };
+            default:
+                let errMsg = `Unrecognized server response: ${msgJSON}`;
+                logger.error(errMsg);
+                throw new Error(errMsg);
+        }
     }
     _connect(url) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -244,7 +347,7 @@ class HaInterface extends events_1.default {
                             resolve();
                         }
                     });
-                    let auth = { type: 'auth', access_token: this.accessToken };
+                    let auth = { type: 'auth', access_token: this._accessToken };
                     client.send(JSON.stringify(auth));
                 });
             });
@@ -256,125 +359,22 @@ class HaInterface extends events_1.default {
             return new Promise(resolve => setTimeout(resolve, seconds * 1000));
         });
     }
-    stop() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let ret = new Promise((resolve, reject) => {
-                this.closing = true;
-                logger.info('Closing');
-                let timer = setTimeout(() => {
-                    logger.warn('Failed to close before timeout');
-                    reject(new Error('Failed to close connection'));
-                }, 5000);
-                this.client.once('close', (_reason, _description) => {
-                    logger.info('Closed');
-                    clearTimeout(timer);
-                    resolve();
-                });
-                this._kill();
-                this.client.close(1000);
-            });
-            return ret;
-        });
-    }
-    get isConnected() {
-        return this.connected;
-    }
     _kill() {
-        this.connected = false;
-        clearTimeout(this.pingInterval);
-    }
-    subscribe() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                let packet = { id: ++this.id, type: 'subscribe_events' };
-                this._sendPacket(packet)
-                    .then((response) => {
-                    logger.info('Subscribed to events');
-                    resolve(response.result);
-                })
-                    .catch((err) => {
-                    logger.error(`Error subscribing to events: ${err}`);
-                    reject(err);
-                });
-            });
-        });
-    }
-    getStates() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                let packet = { id: ++this.id, type: 'get_states' };
-                this._sendPacket(packet)
-                    .then((response) => {
-                    logger.info('States acquired');
-                    resolve(response.result);
-                })
-                    .catch((err) => {
-                    logger.error(`Error getting states: ${err}`);
-                    reject(err);
-                });
-            });
-        });
-    }
-    getConfig() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                let packet = { id: ++this.id, type: 'get_config' };
-                this._sendPacket(packet)
-                    .then((response) => {
-                    logger.debug('Config acquired');
-                    resolve(response.result);
-                })
-                    .catch((err) => {
-                    logger.error(`Error getting config: ${err}`);
-                    reject(err);
-                });
-            });
-        });
-    }
-    getPanels() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                let packet = { id: ++this.id, type: 'get_panels' };
-                this._sendPacket(packet)
-                    .then((response) => {
-                    logger.info('Panels acquired');
-                    resolve(response.result);
-                })
-                    .catch((err) => {
-                    logger.error(`Error getting panels: ${err}`);
-                    reject(err);
-                });
-            });
-        });
-    }
-    callService(domain, service, data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                let packet = { id: ++this.id, type: 'call_service', domain: domain, service: service, service_data: data };
-                this._sendPacket(packet)
-                    .then((response) => {
-                    logger.debug('Service call successful');
-                    resolve(response.result);
-                })
-                    .catch((err) => {
-                    logger.error(`Error calling service ${err}`);
-                    reject(err);
-                });
-            });
-        });
+        this._connected = false;
+        clearTimeout(this._pingInterval);
     }
     _sendPacket(packet, handler) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                if (this.connected == false) {
+                if (this._connected == false) {
                     reject(new Error('Connection to server has failed'));
                 }
                 let timer = setTimeout((packet) => {
                     logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
-                    this.tracker.delete(packet.id);
+                    this._tracker.delete(packet.id);
                     reject(new Error(`No response to ${JSON.stringify(packet)}`));
                 }, 10000, packet);
-                this.tracker.set(packet.id, {
+                this._tracker.set(packet.id, {
                     packet: packet,
                     handler: (response) => {
                         clearTimeout(timer);
@@ -389,7 +389,7 @@ class HaInterface extends events_1.default {
                         }
                     },
                 });
-                this.client.send(JSON.stringify(packet));
+                this._client.send(JSON.stringify(packet));
             });
         });
     }
