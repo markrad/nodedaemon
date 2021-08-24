@@ -33,7 +33,7 @@ export type State = {
     entity_id: string;
     last_changed: string;
     last_updated: string;
-    state: string;
+    state: string | number | boolean;
     attributes: any;
     context: any;
 }
@@ -45,54 +45,36 @@ export type StateChange = {
 }
 
 export class HaMain extends EventEmitter {
-    haInterface: HaInterface;
+    _haInterface: HaInterface;
     _items: ItemsManager;
-    config: any;
+    _config: any;
     _apps: Array<AppInfo>;
-    haItemFactory: HaItemFactory;
-    stopping: boolean;
+    _haItemFactory: HaItemFactory;
+    _stopping: boolean;
     _haConfig: any;
     _starttime: Date;
     constructor(config: any) {
         super();
-        this.haInterface = null;
+        this._haInterface = null;
         this._items = new ItemsManager();
         this._apps = new Array<AppInfo>();
-        this.haItemFactory = null;
-        this.config = config;
-        this.stopping = false;
+        this._haItemFactory = null;
+        this._config = config;
+        this._stopping = false;
         this._haConfig = null;
         this._starttime = new Date();
     }
 
-    _processItems(states: State[]) {
-        states.forEach((item) => {
-            logger.trace(`Item name: ${item.entity_id}`);
-            if (!this.items.getItem(item.entity_id)) {
-                let itemInstance: IHaItem = this.haItemFactory.getItemObject(item, this.haInterface);
-                itemInstance.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
-                    try {
-                        await this.haInterface.callService(domain, service, data)
-                    }
-                    catch (err) {
-                        // Error already logged
-                    }
-                });
-                this._items.addItem(itemInstance);
-            }
-        });
-    }
-
-    async start(): Promise<void> {
+    public async start(): Promise<void> {
         try {
-            this.haInterface = new HaInterface(this.config.main.url, this.config.main.accessToken);
-            this.haItemFactory = new HaItemFactory();
-            await this.haInterface.start();
-            this._haConfig = await this.haInterface.getConfig();
-            this._processItems(await this.haInterface.getStates());
+            this._haInterface = new HaInterface(this._config.main.url, this._config.main.accessToken);
+            this._haItemFactory = new HaItemFactory();
+            await this._haInterface.start();
+            this._haConfig = await this._haInterface.getConfig();
+            this._processItems(await this._haInterface.getStates());
 
-            await this.haInterface.subscribe();
-            this.haInterface.on('state_changed', async (state: StateChange) => {
+            await this._haInterface.subscribe();
+            this._haInterface.on('state_changed', async (state: StateChange) => {
                 if (this._items.getItem(state.entity_id)) {
                     if (state.new_state != null) {
                         logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
@@ -105,15 +87,15 @@ export class HaMain extends EventEmitter {
                 }
                 else {
                     logger.warn(`Item ${state.entity_id} not found - refreshing devices`);
-                    this._processItems(await this.haInterface.getStates());
+                    this._processItems(await this._haInterface.getStates());
                 }
             });
 
-            this.haInterface.on('reconnected', async () => {
-                await this.haInterface.subscribe();
+            this._haInterface.on('reconnected', async () => {
+                await this._haInterface.subscribe();
             });
 
-            this.haInterface.on('fatal_error', (err) => {
+            this._haInterface.on('fatal_error', (err) => {
                 logger.fatal(`Transport layer reports fatal error - ${err.message}`);
                 process.exit(4);
             });
@@ -134,10 +116,10 @@ export class HaMain extends EventEmitter {
             }); 
 
             let appPromises: Promise<AppInfo[]>[] = [];
-            this.config.main.appsDir.forEach(async (item: string) => {
+            this._config.main.appsDir.forEach(async (item: string) => {
                 this._setWatcher(item);
             
-                appPromises.push(this._getApps(this.config.main.ignoreApps, item));
+                appPromises.push(this._getApps(this._config.main.ignoreApps, item));
             });
 
             Promise.all(appPromises)
@@ -169,9 +151,9 @@ export class HaMain extends EventEmitter {
         }
     }
 
-    async stop() {
+    public async stop() {
         return new Promise<void>(async (resolve, reject) => {
-            this.stopping = true;
+            this._stopping = true;
 
             this._apps.forEach(async (app) => {
                 try {
@@ -184,8 +166,8 @@ export class HaMain extends EventEmitter {
                 }
             });
             try {
-                if (this.haInterface.isConnected) {
-                    await this.haInterface.stop();
+                if (this._haInterface.isConnected) {
+                    await this._haInterface.stop();
                 }
                 resolve();
             }
@@ -197,49 +179,67 @@ export class HaMain extends EventEmitter {
             });
     }
 
-    get items(): ItemsManager {
+    public get items(): ItemsManager {
         return this._items
     }
 
-    get apps() {
+    public get apps() {
         return this._apps;
     }
 
-    getApp(name: string) {
+    public getApp(name: string) {
         return this.apps.find(item => item.name == name);
     }
 
-    get haConfig() {
+    public get haConfig() {
         return this._haConfig;
     }
 
-    get startTime(): Date {
+    public get startTime(): Date {
         return this._starttime;
     }
 
-    get isConnected(): boolean {
-        return this.haInterface
-            ? this.haInterface.isConnected 
+    public get isConnected(): boolean {
+        return this._haInterface
+            ? this._haInterface.isConnected 
             : false;
     }
 
-    async restartHA(): Promise<void> {
-        await this.haInterface.callService('homeassistant', 'restart', {});
+    public async restartHA(): Promise<void> {
+        await this._haInterface.callService('homeassistant', 'restart', {});
     }
 
-    async stopHA(): Promise<void> {
-        await this.haInterface.callService('homeassistant', 'stop', {});
+    public async stopHA(): Promise<void> {
+        await this._haInterface.callService('homeassistant', 'stop', {});
     }
 
-    async _reconnect(err: Error): Promise<void> {
+    private _processItems(states: State[]) {
+        states.forEach((item) => {
+            logger.trace(`Item name: ${item.entity_id}`);
+            if (!this.items.getItem(item.entity_id)) {
+                let itemInstance: IHaItem = this._haItemFactory.getItemObject(item, this._haInterface);
+                itemInstance.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
+                    try {
+                        await this._haInterface.callService(domain, service, data)
+                    }
+                    catch (err) {
+                        // Error already logged
+                    }
+                });
+                this._items.addItem(itemInstance);
+            }
+        });
+    }
+/*
+    private async _reconnect(err: Error): Promise<void> {
         return new Promise(async (resolve, _reject) => {
-            if (this.stopping || err) {
+            if (this._stopping || err) {
                 let connected = false;
 
                 while (!connected) {
 
                     try {
-                        await this.haInterface.start();
+                        await this._haInterface.start();
                         logger.info('Reconnecton complete');
                         connected = true;
                     }
@@ -254,12 +254,13 @@ export class HaMain extends EventEmitter {
             }
         });
     }
-
-    async _wait(seconds: number): Promise<void> {
+*/
+/*
+    private async _wait(seconds: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
-
-    _setWatcher(_item: unknown) {
+*/
+    private _setWatcher(_item: unknown) {
 /*        
         hound.watch(item)
             .on('create', (file, stats) => {
@@ -320,8 +321,8 @@ export class HaMain extends EventEmitter {
             });
 */
     }
-
-    _isApp(appsDir: string[], file: string, stats?: any) {
+/*
+    private _isApp(appsDir: string[], file: string, stats?: any) {
         stats = stats ?? { isFile: () => { return true; } }
         return stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length;
         // if (stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length) {
@@ -331,8 +332,8 @@ export class HaMain extends EventEmitter {
         //     return false;
         // }
     }
-    
-    async _getApps(ignoreApps: string[], appsDirectory: string): Promise<AppInfo[]> {
+*/
+    private async _getApps(ignoreApps: string[], appsDirectory: string): Promise<AppInfo[]> {
         let ret = new Promise<AppInfo[]>(async (resolve, reject) => {
             try {
                 let apps: AppInfo[] = new Array<AppInfo>();
@@ -352,12 +353,12 @@ export class HaMain extends EventEmitter {
                                     let app = reload(fullname);
                                     try {
                                         let loc: string = path.join(dir.path, dirent.name);
-                                        if (!this.config[dirent.name]) {
+                                        if (!this._config[dirent.name]) {
                                             logger.warn(`Ignoring ${dirent.name} - no config`);
                                         }
                                         else {
-                                            appobject = new app(this, this.config);
-                                            if (appobject.validate == undefined || appobject.validate(this.config[dirent.name])) {
+                                            appobject = new app(this, this._config);
+                                            if (appobject.validate == undefined || appobject.validate(this._config[dirent.name])) {
                                                 apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'constructed' });
                                             }
                                             else {
@@ -388,5 +389,3 @@ export class HaMain extends EventEmitter {
         return ret;
     }
 }
-
-// module.exports = HaMain;

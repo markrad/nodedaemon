@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HaGenericSwitchItem = void 0;
+exports.HaGenericSwitchItem = exports.SUPPORT = void 0;
 const hagenericupdatableitem_js_1 = require("./hagenericupdatableitem.js");
 var SUPPORT;
 (function (SUPPORT) {
@@ -20,12 +20,14 @@ var SUPPORT;
     SUPPORT[SUPPORT["SUPPORT_COLOR"] = 16] = "SUPPORT_COLOR";
     SUPPORT[SUPPORT["SUPPORT_TRANSITION"] = 32] = "SUPPORT_TRANSITION";
     SUPPORT[SUPPORT["SUPPORT_WHITE_VALUE"] = 128] = "SUPPORT_WHITE_VALUE";
-})(SUPPORT || (SUPPORT = {}));
+})(SUPPORT = exports.SUPPORT || (exports.SUPPORT = {}));
 class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
     constructor(item) {
+        var _a, _b;
         super(item);
         this._moment = 0;
         this._timer = null;
+        this._support = (_b = (_a = this.attributes) === null || _a === void 0 ? void 0 : _a.supported_features) !== null && _b !== void 0 ? _b : 0;
         if (this.isBrightnessSupported)
             this.updateBrightness = this._updateBrightness;
         this.on('new_state', (that, _oldstate) => {
@@ -107,13 +109,14 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
             ? 0
             : this._moment - Date.now();
     }
+    get support() {
+        return this._support;
+    }
     get isBrightnessSupported() {
-        var _a, _b;
-        return !!(((_b = (_a = this.attributes) === null || _a === void 0 ? void 0 : _a.supported_features) !== null && _b !== void 0 ? _b : 0) & SUPPORT.SUPPORT_BRIGHTNESS);
+        return !!(this.support & SUPPORT.SUPPORT_BRIGHTNESS);
     }
     get isTemperatureSupported() {
-        var _a, _b;
-        return !!(((_b = (_a = this.attributes) === null || _a === void 0 ? void 0 : _a.supported_features) !== null && _b !== void 0 ? _b : 0) & SUPPORT.SUPPORT_COLOR_TEMP);
+        return !!(this._support & SUPPORT.SUPPORT_COLOR_TEMP);
     }
     get brightness() {
         return this.isBrightnessSupported ? this.attributes.brightness : NaN;
@@ -176,7 +179,6 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
             });
         });
     }
-    // TODO make a type of this
     _getActionAndExpectedSNewtate(newState) {
         let action = '';
         switch (typeof newState) {

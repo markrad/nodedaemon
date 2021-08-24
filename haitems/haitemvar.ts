@@ -1,6 +1,6 @@
 import { State } from '../hamain/index.js';
 import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
-import { ServicePromise } from './haparentitem.js';
+import { ActionAndNewState, ServicePromise } from './haparentitem.js';
 
 class HaItemVar extends HaGenericUpdateableItem {
     constructor(item: State) {
@@ -16,7 +16,7 @@ class HaItemVar extends HaGenericUpdateableItem {
             var myResolve = (ret: ServicePromise) => {
                 if (ret.message == 'success') {
                     // Call var.update to update icons etc.
-                    this.callService(this.type, 'update', { entity_id: this.entityId });
+                    this._callService(this.type, 'update', { entity_id: this.entityId });
                 }
                 resolve({ message: ret.message, err: ret.err });
             }
@@ -25,7 +25,7 @@ class HaItemVar extends HaGenericUpdateableItem {
         });
     }
 
-    _getActionAndExpectedSNewtate(newState: string): { action: typeof action, expectedNewState: typeof expectedNewState } {
+    _getActionAndExpectedSNewtate(newState: string): ActionAndNewState { 
         let action = 'set';
         let expectedNewState = newState.toString();
 

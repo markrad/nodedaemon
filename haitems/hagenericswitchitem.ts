@@ -1,9 +1,9 @@
 // import { resolve } from 'path/posix';
 import { State } from '../hamain/index.js';
 import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
-import { IHaItemEditable, ServicePromise } from './haparentitem.js';
+import { ActionAndNewState, IHaItemEditable, ServicePromise } from './haparentitem.js';
 
-enum SUPPORT {
+export enum SUPPORT {
     SUPPORT_BRIGHTNESS = 1,
     SUPPORT_COLOR_TEMP = 2,
     SUPPORT_EFFECT = 4,
@@ -13,19 +13,15 @@ enum SUPPORT {
     SUPPORT_WHITE_VALUE = 128,
 }
 
-type ActionAndNewState = {
-    action: string,
-    expectedNewState: string
-}
-
 export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemEditable {
-    _moment: number;
-    _support: SUPPORT;
-    _timer: any;
+    private _moment: number;
+    private _support: SUPPORT;       
+    private _timer: NodeJS.Timeout;
     constructor(item: State) {
         super(item);
         this._moment = 0;
         this._timer = null;
+        this._support = this.attributes?.supported_features ?? 0;
 
         if (this.isBrightnessSupported) this.updateBrightness = this._updateBrightness;
 
@@ -110,12 +106,16 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
                 : this._moment - Date.now();
     }
 
+    get support(): SUPPORT {
+        return this._support;
+    }
+
     get isBrightnessSupported(): boolean {
-        return !!((this.attributes?.supported_features ?? 0) & SUPPORT.SUPPORT_BRIGHTNESS);
+        return !!(this.support & SUPPORT.SUPPORT_BRIGHTNESS);
     }
 
     get isTemperatureSupported(): boolean {
-        return !!((this.attributes?.supported_features ?? 0) & SUPPORT.SUPPORT_COLOR_TEMP);
+        return !!(this._support & SUPPORT.SUPPORT_COLOR_TEMP);
     }
 
     get brightness(): number {
@@ -175,7 +175,6 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    // TODO make a type of this
     _getActionAndExpectedSNewtate(newState: boolean | number | string): ActionAndNewState {
         let action: string = '';
         switch (typeof newState) {

@@ -1,7 +1,6 @@
 import EventEmitter from 'events';
 import { Logger, getLogger } from 'log4js';
 import { State } from '../hamain';
-// import { AnyAaaaRecord, AnyARecord } from 'dns';
 
 // Super slow for debugging
 // const RESPONSE_TIMEOUT: number = 30 * 1000
@@ -26,7 +25,7 @@ export interface IHaItem {
     get type(): string;
     get lastChanged(): Date;
     get lastUpdated(): Date;
-    get state(): string;
+    get state(): string | number | boolean;
     get entityId(): string;
     get category(): string;
     get isSwitch(): boolean;
@@ -66,16 +65,21 @@ export function SafeItemAssign(item: IHaItem, throwOnFailure: boolean = false): 
     return ret;
 }
 
+export type ActionAndNewState = {
+    action: string,
+    expectedNewState: string
+}
+
 export abstract class HaParentItem extends EventEmitter implements IHaItem {
-        _attributes: any;
-        _name: string;
-        _type: string;
-        _friendlyName: string;
-        _lastChanged: Date;
-        _lastUpdated: Date;
-        _state: string;
-        _logger: Logger;
-    constructor(item: State) {
+        private _attributes: any;
+        private _name: string;
+        private _type: string;
+        private _friendlyName: string;
+        private _lastChanged: Date;
+        private _lastUpdated: Date;
+        private _state: string | number | boolean;
+        private _logger: Logger;
+    public constructor(item: State) {
         super();
         this._attributes = item.attributes;
         this._name = '';
@@ -88,56 +92,55 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this._logger = getLogger(this.category);
     }
 
-    get logger(): Logger {
+    public get logger(): Logger {
         return this._logger;
     }
 
-    get attributes(): any {
+    public get attributes(): any {
         return this._attributes ?? {};
     }
 
-    get name(): string {
+    public get name(): string {
         return this._name;
     }
 
-    get friendlyName(): string {
+    public get friendlyName(): string {
         return this._friendlyName ?? '';
     }
 
-    get type(): string {
+    public get type(): string {
         return this._type;
     }
 
-    get lastChanged(): Date {
+    public get lastChanged(): Date {
         return this._lastChanged;
     }
 
-    get lastUpdated(): Date {
+    public get lastUpdated(): Date {
         return this._lastUpdated;
     }
 
-    get state(): any {
+    public get state(): string | number | boolean {
         return this._state;
     }
 
-    get entityId(): string {
+    public get entityId(): string {
         return `${this.type}.${this.name}`;
     }
 
-    get category(): string {
+    public get category(): string {
         return `${this.constructor.name}:${this.name}`
-        //return `${this.__proto__.constructor.name}:${this.name}`;
     }
 
-    get isSwitch(): boolean {
+    public get isSwitch(): boolean {
         return false;
     }
 
-    get isEditable(): boolean {
+    public get isEditable(): boolean {
         return false;
     }
 
-    setReceivedState(newState: State): void {
+    public setReceivedState(newState: State): void {
         let oldState: State = {
             entity_id: newState.entity_id,
             context: newState.context,
@@ -154,11 +157,11 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('new_state', this, oldState);
     }
 
-    callService(domain: string, service: string, state: ServiceTarget): void {
+    protected _callService(domain: string, service: string, state: ServiceTarget): void {
         this.emit('callservice', domain, service, state);
     }
 
-    _callServicePromise(resolve: (ret: ServicePromise) => void, newState: string | boolean | number, expectedState: string, domain: string, service: string, state: ServiceTarget): void {
+    protected _callServicePromise(resolve: (ret: ServicePromise) => void, newState: string | boolean | number, expectedState: string, domain: string, service: string, state: ServiceTarget): void {
         
         if (service == 'error') {
             let err: Error = new Error(`Bad value passed to updateState - ${newState}`);
@@ -187,7 +190,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
                 }
             });
 
-            this.callService(domain, service, state);
+            this._callService(domain, service, state);
         }
         else {
             this.logger.debug(`Already in state ${this.state}`);
@@ -195,11 +198,11 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         }
     }
 
-    _childOveride(_state?: ServiceTarget): boolean {
-        return false;
+    protected _getActionAndExpectedSNewtate(newState: any): ActionAndNewState {
+        return { action: newState, expectedNewState: newState };
     }
 
-    _getActionAndExpectedSNewtate(newState: any): { action: any, expectedNewState: any } {
-        return { action: newState, expectedNewState: newState };
+    protected _childOveride(_state?: ServiceTarget): boolean {
+        return false;
     }
 }

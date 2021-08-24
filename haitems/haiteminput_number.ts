@@ -1,5 +1,5 @@
 import { State } from '../hamain/index.js';
-import { HaParentItem, ServicePromise } from './haparentitem.js';
+import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemInputNumber extends HaParentItem {
     constructor(item: State) {
@@ -25,11 +25,11 @@ class HaItemInputNumber extends HaParentItem {
         return this.updateState(Number(this.state - 1));
     }
 
-    get state() {
+    get state(): number {
         return Number(super.state);
     }
 
-    _getActionAndExpectedSNewtate(newState: string | number | boolean): { action: string, expectedNewState: string } {
+    _getActionAndExpectedSNewtate(newState: string | number | boolean): ActionAndNewState { 
         let action = 'set_value';
         let expectedNewState = null;
 
@@ -46,7 +46,7 @@ class HaItemInputNumber extends HaParentItem {
                 expectedNewState = this.attributes.min;
             }
         }
-        // TODO Thought I had a type for this
+
         return { action: action, expectedNewState: expectedNewState };
     }
 }

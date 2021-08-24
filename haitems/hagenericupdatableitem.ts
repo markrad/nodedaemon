@@ -1,15 +1,14 @@
 import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem.js';
 import { State } from '../hamain/index.js';
 
-
 export abstract class HaGenericUpdateableItem extends HaParentItem implements IHaItemEditable {
-    constructor(item: State) {
+    public constructor(item: State) {
         super(item);
     }
 
-    abstract updateState(newState: string | boolean | number): Promise<ServicePromise>;
+    public abstract updateState(newState: string | boolean | number): Promise<ServicePromise>;
 
-    get isEditable(): boolean {
+    public get isEditable(): boolean {
         return true;
     }
 }

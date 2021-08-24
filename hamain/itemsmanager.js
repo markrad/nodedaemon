@@ -1,12 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ItemsManager = void 0;
-const log4js_1 = require("log4js");
-const CATEGORY = 'HaMain';
-var logger = log4js_1.getLogger(CATEGORY);
-if (process.env.HAMAIN_LOGGING) {
-    logger.level = process.env.HAMAIN_LOGGING;
-}
 class ItemsManager {
     // private _items: any;
     constructor() {

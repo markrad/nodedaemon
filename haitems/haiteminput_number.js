@@ -54,7 +54,6 @@ class HaItemInputNumber extends haparentitem_js_1.HaParentItem {
                 expectedNewState = this.attributes.min;
             }
         }
-        // TODO Thought I had a type for this
         return { action: action, expectedNewState: expectedNewState };
     }
 }

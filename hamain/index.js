@@ -56,42 +56,25 @@ if (process.env.HAMAIN_LOGGING) {
 class HaMain extends events_1.default {
     constructor(config) {
         super();
-        this.haInterface = null;
+        this._haInterface = null;
         this._items = new itemsmanager_1.ItemsManager();
         this._apps = new Array();
-        this.haItemFactory = null;
-        this.config = config;
-        this.stopping = false;
+        this._haItemFactory = null;
+        this._config = config;
+        this._stopping = false;
         this._haConfig = null;
         this._starttime = new Date();
-    }
-    _processItems(states) {
-        states.forEach((item) => {
-            logger.trace(`Item name: ${item.entity_id}`);
-            if (!this.items.getItem(item.entity_id)) {
-                let itemInstance = this.haItemFactory.getItemObject(item, this.haInterface);
-                itemInstance.on('callservice', (domain, service, data) => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        yield this.haInterface.callService(domain, service, data);
-                    }
-                    catch (err) {
-                        // Error already logged
-                    }
-                }));
-                this._items.addItem(itemInstance);
-            }
-        });
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.haInterface = new hainterface_1.HaInterface(this.config.main.url, this.config.main.accessToken);
-                this.haItemFactory = new haitems_1.HaItemFactory();
-                yield this.haInterface.start();
-                this._haConfig = yield this.haInterface.getConfig();
-                this._processItems(yield this.haInterface.getStates());
-                yield this.haInterface.subscribe();
-                this.haInterface.on('state_changed', (state) => __awaiter(this, void 0, void 0, function* () {
+                this._haInterface = new hainterface_1.HaInterface(this._config.main.url, this._config.main.accessToken);
+                this._haItemFactory = new haitems_1.HaItemFactory();
+                yield this._haInterface.start();
+                this._haConfig = yield this._haInterface.getConfig();
+                this._processItems(yield this._haInterface.getStates());
+                yield this._haInterface.subscribe();
+                this._haInterface.on('state_changed', (state) => __awaiter(this, void 0, void 0, function* () {
                     if (this._items.getItem(state.entity_id)) {
                         if (state.new_state != null) {
                             logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
@@ -104,13 +87,13 @@ class HaMain extends events_1.default {
                     }
                     else {
                         logger.warn(`Item ${state.entity_id} not found - refreshing devices`);
-                        this._processItems(yield this.haInterface.getStates());
+                        this._processItems(yield this._haInterface.getStates());
                     }
                 }));
-                this.haInterface.on('reconnected', () => __awaiter(this, void 0, void 0, function* () {
-                    yield this.haInterface.subscribe();
+                this._haInterface.on('reconnected', () => __awaiter(this, void 0, void 0, function* () {
+                    yield this._haInterface.subscribe();
                 }));
-                this.haInterface.on('fatal_error', (err) => {
+                this._haInterface.on('fatal_error', (err) => {
                     logger.fatal(`Transport layer reports fatal error - ${err.message}`);
                     process.exit(4);
                 });
@@ -126,9 +109,9 @@ class HaMain extends events_1.default {
                     logger.info(`${value}: ${itemTypes[value]}`);
                 });
                 let appPromises = [];
-                this.config.main.appsDir.forEach((item) => __awaiter(this, void 0, void 0, function* () {
+                this._config.main.appsDir.forEach((item) => __awaiter(this, void 0, void 0, function* () {
                     this._setWatcher(item);
-                    appPromises.push(this._getApps(this.config.main.ignoreApps, item));
+                    appPromises.push(this._getApps(this._config.main.ignoreApps, item));
                 }));
                 Promise.all(appPromises)
                     .then((results) => {
@@ -162,7 +145,7 @@ class HaMain extends events_1.default {
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                this.stopping = true;
+                this._stopping = true;
                 this._apps.forEach((app) => __awaiter(this, void 0, void 0, function* () {
                     try {
                         yield app.instance.stop();
@@ -174,8 +157,8 @@ class HaMain extends events_1.default {
                     }
                 }));
                 try {
-                    if (this.haInterface.isConnected) {
-                        yield this.haInterface.stop();
+                    if (this._haInterface.isConnected) {
+                        yield this._haInterface.stop();
                     }
                     resolve();
                 }
@@ -203,46 +186,67 @@ class HaMain extends events_1.default {
         return this._starttime;
     }
     get isConnected() {
-        return this.haInterface
-            ? this.haInterface.isConnected
+        return this._haInterface
+            ? this._haInterface.isConnected
             : false;
     }
     restartHA() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.haInterface.callService('homeassistant', 'restart', {});
+            yield this._haInterface.callService('homeassistant', 'restart', {});
         });
     }
     stopHA() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.haInterface.callService('homeassistant', 'stop', {});
+            yield this._haInterface.callService('homeassistant', 'stop', {});
         });
     }
-    _reconnect(err) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
-                if (this.stopping || err) {
+    _processItems(states) {
+        states.forEach((item) => {
+            logger.trace(`Item name: ${item.entity_id}`);
+            if (!this.items.getItem(item.entity_id)) {
+                let itemInstance = this._haItemFactory.getItemObject(item, this._haInterface);
+                itemInstance.on('callservice', (domain, service, data) => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        yield this._haInterface.callService(domain, service, data);
+                    }
+                    catch (err) {
+                        // Error already logged
+                    }
+                }));
+                this._items.addItem(itemInstance);
+            }
+        });
+    }
+    /*
+        private async _reconnect(err: Error): Promise<void> {
+            return new Promise(async (resolve, _reject) => {
+                if (this._stopping || err) {
                     let connected = false;
+    
                     while (!connected) {
+    
                         try {
-                            yield this.haInterface.start();
+                            await this._haInterface.start();
                             logger.info('Reconnecton complete');
                             connected = true;
                         }
                         catch (err) {
                             logger.error(`Reconnection failed: ${err} - retrying`);
                         }
-                        yield this._wait(5);
+                        
+                        await this._wait(5);
                     }
+    
                     resolve();
                 }
-            }));
-        });
-    }
-    _wait(seconds) {
-        return __awaiter(this, void 0, void 0, function* () {
+            });
+        }
+    */
+    /*
+        private async _wait(seconds: number): Promise<void> {
             return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-        });
-    }
+        }
+    */
     _setWatcher(_item) {
         /*
                 hound.watch(item)
@@ -304,16 +308,18 @@ class HaMain extends events_1.default {
                     });
         */
     }
-    _isApp(appsDir, file, stats) {
-        stats = stats !== null && stats !== void 0 ? stats : { isFile: () => { return true; } };
-        return stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length;
-        // if (stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length) {
-        //     return true;
-        // }
-        // else {
-        //     return false;
-        // }
-    }
+    /*
+        private _isApp(appsDir: string[], file: string, stats?: any) {
+            stats = stats ?? { isFile: () => { return true; } }
+            return stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length;
+            // if (stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length) {
+            //     return true;
+            // }
+            // else {
+            //     return false;
+            // }
+        }
+    */
     _getApps(ignoreApps, appsDirectory) {
         return __awaiter(this, void 0, void 0, function* () {
             let ret = new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -337,12 +343,12 @@ class HaMain extends events_1.default {
                                             let app = reload(fullname);
                                             try {
                                                 let loc = path.join(dir.path, dirent.name);
-                                                if (!this.config[dirent.name]) {
+                                                if (!this._config[dirent.name]) {
                                                     logger.warn(`Ignoring ${dirent.name} - no config`);
                                                 }
                                                 else {
-                                                    appobject = new app(this, this.config);
-                                                    if (appobject.validate == undefined || appobject.validate(this.config[dirent.name])) {
+                                                    appobject = new app(this, this._config);
+                                                    if (appobject.validate == undefined || appobject.validate(this._config[dirent.name])) {
                                                         apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'constructed' });
                                                     }
                                                     else {

@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaParentItem = exports.SafeItemAssign = void 0;
 const events_1 = __importDefault(require("events"));
 const log4js_1 = require("log4js");
-// import { AnyAaaaRecord, AnyARecord } from 'dns';
 // Super slow for debugging
 // const RESPONSE_TIMEOUT: number = 30 * 1000
 const RESPONSE_TIMEOUT = 3 * 1000;
@@ -65,7 +64,6 @@ class HaParentItem extends events_1.default {
     }
     get category() {
         return `${this.constructor.name}:${this.name}`;
-        //return `${this.__proto__.constructor.name}:${this.name}`;
     }
     get isSwitch() {
         return false;
@@ -88,7 +86,7 @@ class HaParentItem extends events_1.default {
         this._lastChanged = new Date(newState.last_changed);
         this.emit('new_state', this, oldState);
     }
-    callService(domain, service, state) {
+    _callService(domain, service, state) {
         this.emit('callservice', domain, service, state);
     }
     _callServicePromise(resolve, newState, expectedState, domain, service, state) {
@@ -115,18 +113,18 @@ class HaParentItem extends events_1.default {
                     resolve({ message: 'warn', err: err });
                 }
             });
-            this.callService(domain, service, state);
+            this._callService(domain, service, state);
         }
         else {
             this.logger.debug(`Already in state ${this.state}`);
             resolve({ message: 'nochange', err: null });
         }
     }
-    _childOveride(_state) {
-        return false;
-    }
     _getActionAndExpectedSNewtate(newState) {
         return { action: newState, expectedNewState: newState };
+    }
+    _childOveride(_state) {
+        return false;
     }
 }
 exports.HaParentItem = HaParentItem;

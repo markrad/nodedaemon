@@ -1,5 +1,5 @@
 import { State } from '../hamain/index.js';
-import { HaParentItem } from './haparentitem.js';
+import { ActionAndNewState, HaParentItem } from './haparentitem.js';
 
 class HaItemInputDateTime extends HaParentItem {
     constructor(item: State) {
@@ -24,7 +24,7 @@ class HaItemInputDateTime extends HaParentItem {
         });
     }
 
-    _getActionAndExpectedSNewtate(newState: string) {
+    _getActionAndExpectedSNewtate(newState: string): ActionAndNewState { 
         let action: string = 'set';
         let m: Date = new Date(newState);
         let expectedNewState: string;

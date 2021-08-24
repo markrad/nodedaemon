@@ -57,8 +57,6 @@ try {
     const program = new commander_1.Command();
     const debugLevels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
     const defaultDebug = 3;
-    // const debugDefault: string = 'none';
-    // const appsdirDefault: string = 'none';
     var packageJSON = JSON.parse(fs_1.default.readFileSync('package.json').toString());
     program.version(`Version = ${packageJSON.version}\nAuthor  = ${packageJSON.author}\nLicense = ${packageJSON.license}\nWebpage = ${packageJSON.repository.url}`)
         .name('nodedaemon')

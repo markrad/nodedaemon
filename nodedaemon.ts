@@ -50,8 +50,6 @@ try {
 
     const debugLevels: string[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
     const defaultDebug: number = 3;
-    // const debugDefault: string = 'none';
-    // const appsdirDefault: string = 'none';
 
     var packageJSON: any = JSON.parse(fs.readFileSync('package.json').toString());
 

@@ -4,11 +4,10 @@ import { HaParentItem } from './haparentitem.js';
 class HaItemScene extends HaParentItem {
     constructor(item: State) {
         super(item);
-        this.logger.level = 'debug';
     }
 
     activate() {
-        this.callService(this.type, 'turn_on', { entity_id: this.entityId });
+        this._callService(this.type, 'turn_on', { entity_id: this.entityId });
     }
 }
 

@@ -31,47 +31,55 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const haparentitem_1 = require("../../haitems/haparentitem");
 const log4js_1 = require("log4js");
 const https = __importStar(require("https"));
-// TODO Minimum conversion
-//const https = require('https');
 const CATEGORY = 'DynDnsUpdater';
 const ONE_DAY = 86400;
 var logger = log4js_1.getLogger(CATEGORY);
 class DynDnsUpdater {
-    // updateTime: Date;
     constructor(controller, config) {
+        this._errors = new Map([
+            ['badauth', 'DynDns authorization is invalid'],
+            ['notfqdn', 'This hostname not fully qualified'],
+            ['nohost', 'The host name is missing or invalid'],
+            ['numhost', 'Attempted to update too many hosts in one call'],
+            ['abuse', 'The specified host name has been blocked for abuse'],
+            ['dnserr', 'Bad user name or password'],
+            ['911', 'Bad user name or password'],
+        ]);
+        this._url = null;
         // TODO Use a config file
-        this.external_ip = haparentitem_1.SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this.lastUpdate = haparentitem_1.SafeItemAssign(controller.items.getItem('var.last_dns_update'));
-        this.user = config.dyndnsupdater.user;
-        this.updaterKey = config.dyndnsupdater.updaterKey;
-        this.hostname = config.dyndnsupdater.hostname;
+        this._external_ip = haparentitem_1.SafeItemAssign(controller.items.getItem('var.external_ip'));
+        this._lastUpdate = haparentitem_1.SafeItemAssign(controller.items.getItem('var.last_dns_update'));
+        this._user = config.dyndnsupdater.user;
+        this._updaterKey = config.dyndnsupdater.updaterKey;
+        this._hostname = config.dyndnsupdater.hostname;
         logger.debug('Constructed');
     }
     validate(_config) {
         try {
-            if (this.external_ip == undefined)
+            if (this._external_ip == undefined)
                 throw new Error('Could not find externalIp item');
-            if (this.lastUpdate == undefined)
+            if (this._lastUpdate == undefined)
                 throw new Error('Could not find lastUpdate item');
-            if (!this.user)
+            if (!this._user)
                 throw new Error('user not found in config file');
-            if (!this.updaterKey)
+            if (!this._updaterKey)
                 throw new Error('updaterKey not found in config file');
-            if (!this.hostname)
+            if (!this._hostname)
                 throw new Error('hostname not found in config file');
         }
         catch (err) {
             logger.error(err.message);
             return false;
         }
+        this._url = `https://${this._user}:${this._updaterKey}@members.dyndns.org/v3/update?hostname=${this._hostname}&myip=`;
         return true;
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                this.external_ip.on('new_state', (item, oldState) => {
+                this._external_ip.on('new_state', (item, oldState) => {
                     let now = new Date();
-                    let then = new Date(this.lastUpdate.state);
+                    let then = new Date(this._lastUpdate.state);
                     if (isNaN(then.getDate())) {
                         then = new Date(0);
                     }
@@ -84,12 +92,13 @@ class DynDnsUpdater {
                                 'User-Agent': 'Radrealm - HassTest - v0.0.1'
                             }
                         };
-                        https.get(`https://${this.user}:${this.updaterKey}@members.dyndns.org/v3/update?hostname=${this.hostname}&myip=${item.state}`, options, (res) => {
+                        https.get(this._url + item.state, options, (res) => {
                             res.setEncoding('utf8');
                             res.on('data', (chunk) => allchunks += chunk);
                             res.on('end', () => {
                                 logger.debug(`DynDns response: ${allchunks}`);
-                                switch (allchunks.split(' ')[0]) {
+                                let rc = allchunks.split(' ')[0];
+                                switch (rc) {
                                     case 'good':
                                     case 'nochg':
                                         let nowString = now.getFullYear() + '-' +
@@ -98,30 +107,16 @@ class DynDnsUpdater {
                                             now.getHours().toString().padStart(2, '0') + ':' +
                                             now.getMinutes().toString().padStart(2, '0') + ':' +
                                             now.getSeconds().toString().padStart(2, '0');
-                                        this.lastUpdate.updateState(nowString);
+                                        this._lastUpdate.updateState(nowString);
                                         logger.info(`DynDns IP address successfully updated to ${item.state}`);
                                         break;
-                                    case 'badauth':
-                                        logger.error('DynDns authorization is invalid');
-                                        break;
-                                    case 'notfqdn':
-                                        logger.error('This hostname not fully qualified');
-                                        break;
-                                    case 'nohost':
-                                        logger.error('The host name is missing or invalid');
-                                        break;
-                                    case 'numhost':
-                                        logger.error('Attempted to update too many hosts in one call');
-                                        break;
-                                    case 'abuse':
-                                        logger.error('The specified host name has been blocked for abuse');
-                                        break;
-                                    case 'dnserr':
-                                    case '911':
-                                        logger.error('Bad user name or password');
-                                        break;
                                     default:
-                                        logger.error(`Update failed with unrecognized code: ${allchunks}`);
+                                        if (this._errors.has(rc)) {
+                                            logger.error(this._errors.get(rc));
+                                        }
+                                        else {
+                                            logger.error(`Update failed with unrecognized code: ${allchunks}`);
+                                        }
                                 }
                             });
                         }).on('error', (err) => {

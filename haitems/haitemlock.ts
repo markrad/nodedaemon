@@ -1,5 +1,5 @@
 import { State } from '../hamain/index.js';
-import { HaParentItem, ServicePromise } from './haparentitem.js';
+import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemLock extends HaParentItem {
     constructor(item: State) {
@@ -33,7 +33,7 @@ class HaItemLock extends HaParentItem {
         });
     }
 
-    _getActionAndExpectedSNewtate(newState: string | number | boolean) {
+    _getActionAndExpectedSNewtate(newState: string | number | boolean): ActionAndNewState { 
         let action = '';
         switch (typeof newState) {
             case 'boolean':
