@@ -1,5 +1,5 @@
 import { IApplication } from "../../common/IApplication";
-import { HaParentItem, IHaItem, IHaItemEditable, IHaItemSwitch, SafeItemAssign } from "../../haitems/haparentitem";
+import { IHaItem, IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
 import { HaMain, State } from "../../hamain";
 import { getLogger, Logger } from "log4js";
 import * as https from 'https';
@@ -28,7 +28,7 @@ class DynDnsUpdater implements IApplication {
         logger.debug('Constructed');
     }
 
-    validate(config: any): boolean {
+    validate(_config: any): boolean {
         try {
             if (this.external_ip == undefined) throw new Error('Could not find externalIp item');
             if (this.lastUpdate == undefined) throw new Error('Could not find lastUpdate item');

@@ -10,10 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandHa = void 0;
-const log4js_1 = require("log4js");
 const commandbase_1 = require("./commandbase");
-const CATEGORY = 'CommandInspect';
-var logger = log4js_1.getLogger(CATEGORY);
 class CommandHa extends commandbase_1.CommandBase {
     constructor() {
         super('ha', ['restart', 'stop', 'status']);

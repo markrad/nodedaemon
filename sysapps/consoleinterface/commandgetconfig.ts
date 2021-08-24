@@ -1,8 +1,6 @@
 import { ConsoleInterface, IChannel } from '.';
 import { CommandBase } from './commandbase';
 
-const CATEGORY: string = 'CommandGetConfig';
-
 export class CommandGetConfig extends CommandBase {
     constructor() {
         super('getconfig');

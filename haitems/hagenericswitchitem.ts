@@ -1,7 +1,7 @@
 // import { resolve } from 'path/posix';
 import { State } from '../hamain/index.js';
 import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
-import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem.js';
+import { IHaItemEditable, ServicePromise } from './haparentitem.js';
 
 enum SUPPORT {
     SUPPORT_BRIGHTNESS = 1,
@@ -59,7 +59,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
     }
 
     async turnOffAt(moment: number): Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
+        return new Promise<void>(async (resolve, _reject) => {
             if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
                 if (this.isOff) {
                     await this.turnOn();

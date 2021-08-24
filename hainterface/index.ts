@@ -3,36 +3,65 @@
 import EventEmitter from 'events';
 import WebSocket = require('ws');
 import { getLogger } from 'log4js';
-
 import { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError, AuthenticationError } from '../common/haInterfaceError';
-// import { BlobOptions } from 'buffer';
-// import { AnyARecord } from 'dns';
 import { ServiceTarget } from '../haitems/haparentitem';
 
-type ServiceAuthRequired = {
-    type: "auth_required",
-    ha_version: "string",
+enum PacketTypes {
+    ServiceAuthRequired,
+    ServiceAuthOk,
+    ServiceAuthInvalid,
+    ServiceError,
+    ServiceSuccess,
+    ServicePong,
+    ServiceEvent,
+}
+interface ServiceParent {
+    type: string;
+    name: PacketTypes;
+}
+interface ServiceAuthRequired extends ServiceParent {
+    type: "auth_required";
+    ha_version: "string";
 }
 
-type ServiceAuthOk = {
-    type: "auth_ok",
-    ha_version: "string",
+interface ServiceAuthOk extends ServiceParent {
+    type: "auth_ok";
+    ha_version: "string";
 }
 
-type ServiceAuthInvalid = {
-    type: "auth_invalid",
-    message: "string",
+interface ServiceAuthInvalid extends ServiceParent{
+    type: "auth_invalid";
+    message: "string";
 }
 
-type ServiceErrorDetails = {
-    code: string,
+interface ServiceErrorDetails {
+    code: string;
     message: string;
 }
-type ServiceError = {
-    id: number,
-    type: "result",
-    "success": false,
-    error: ServiceErrorDetails,
+
+interface ServiceError extends ServiceParent {
+    id: number;
+    type: "result";
+    "success": false;
+    error: ServiceErrorDetails;
+}
+
+interface ServiceSuccess extends ServiceParent {
+    id: number;
+    type: "result";
+    success: true;
+    result: any;
+}
+
+interface ServiceEvent extends ServiceParent {
+    id: number;
+    type: "event";
+    event: any;
+}
+
+interface ServicePong extends ServiceParent {
+    id: number;
+    type: "pong"
 }
 
 const CATEGORY = 'HaInterface';
@@ -45,10 +74,10 @@ if (process.env.HAINTERFACE_LOGGING) {
 
 export class HaInterface extends EventEmitter {
     accessToken: string;
-    client: any;
+    client: WebSocket;
     url: string;
     id: number;
-    tracker: any;           // TODO What the heck is this?
+    tracker: Map<number, any>;
     pingRate: number;
     pingInterval: NodeJS.Timer;
     closing: boolean;
@@ -59,11 +88,34 @@ export class HaInterface extends EventEmitter {
         this.client = null;
         this.url = url;
         this.id = 0;
-        this.tracker = {};
+        this.tracker = new Map<number, any>();
         this.pingRate = pingRate;
         this.pingInterval = null;
         this.closing = false;
         this.connected = false;
+    }
+
+    _messageFactory(msgJSON: string): ServiceAuthOk | ServiceAuthRequired | ServiceAuthInvalid | ServiceError | ServicePong | ServiceSuccess | ServiceEvent {
+        let msg: any = JSON.parse(msgJSON);
+
+        switch (msg.type) {
+            case "result":
+                return msg.success == true 
+                    ? <ServiceSuccess> { name: PacketTypes.ServiceSuccess, id: msg.id, type: "result", success: true, result: msg.result }
+                    : <ServiceError> { name: PacketTypes.ServiceError, id: msg.id, type: "result", success: false, error: <ServiceErrorDetails> msg.error };
+            case "event":
+                return <ServiceEvent> { name: PacketTypes.ServiceEvent, type: msg.type, event: msg.event };
+            case "pong":
+                return <ServicePong> { name: PacketTypes.ServicePong, id: msg.id, type: "pong" };
+            case "auth_ok":
+                return <ServiceAuthOk> { name: PacketTypes.ServiceAuthOk, type: msg.type, ha_version: msg.ha_version };
+            case "auth_invalid":
+                return <ServiceAuthInvalid> { name: PacketTypes.ServiceAuthInvalid, type: msg.type, message: msg.message };
+            default:
+                let errMsg = `Unrecognized server response: ${msgJSON}`;
+                logger.error(errMsg);
+                throw new Error(errMsg);
+        }
     }
 
     async start(): Promise<void> {
@@ -73,34 +125,46 @@ export class HaInterface extends EventEmitter {
                 logger.info(`Connection complete`);
                 this.connected = true;
 
-                this.client.on('message', (message) => {
+                this.client.on('message', (message: string) => {
                     if (typeof message != 'string') {
                         logger.warn(`Unrecognized message type: ${typeof message}`);
                     }
                     else {
-                        let msg = JSON.parse(message);
-        
-                        if (msg.type == 'pong' || msg.type == 'result') {
-                            if (msg.type != 'pong') {
-                                logger.trace(`Received:\n${JSON.stringify(JSON.parse(message), null, 2)}`);
-                            }
+                        // let msg = JSON.parse(message);
+                        let msg: ServiceParent = this._messageFactory(message);
 
-                            if (msg.id in this.tracker) {
-                                this.tracker[msg.id].handler(msg);
-                                delete this.tracker[msg.id];
-                            }
+                        if (msg.name == PacketTypes.ServiceEvent) {
+                            let msgEvent = msg as ServiceEvent;
+                            logger.trace(`msg.event.event_type=${msgEvent.event.event_type}`);
+                            this.emit(msgEvent.event.event_type, msgEvent.event.data);
+                            return;
                         }
-                        else if (msg.type == 'event') {
-                            logger.trace(`msg.event.event_type=${msg.event.event_type}`);
-                            this.emit(msg.event.event_type, msg.event.data);
+                        
+                        let msgResponse: ServiceSuccess | ServiceError | ServicePong;
+
+                        switch (msg.name) {
+                            case PacketTypes.ServiceSuccess:
+                                msgResponse = msg as ServiceSuccess;
+                                break;
+                            case PacketTypes.ServiceError:
+                                msgResponse = msg as ServiceError;
+                                break;
+                            case PacketTypes.ServicePong:
+                                msgResponse = msg as ServicePong;
+                                break;
                         }
-                        else {
-                            logger.warn(`Unknown message: ${msg}`);
+
+                        try {
+                            this.tracker.get(msgResponse.id).handler(msgResponse);
+                            this.tracker.delete(msgResponse.id);
+                        }
+                        catch {
+                            logger.fatal('This should never happen. Send packets should always have a response handler');
                         }
                     }
                 });
 
-                var restart = async (that) => {
+                var restart = async (that: HaInterface) => {
                     that._kill();
                     
                     try {
@@ -114,12 +178,12 @@ export class HaInterface extends EventEmitter {
                     }
                 }
 
-                this.client.on('error', async (err) => {
+                this.client.on('error', async (err: Error) => {
                     logger.debug(`Connection errored: ${err} - reconnecting`);
                     restart(this);
                 });
 
-                this.client.on('close', async (reasonCode) => {
+                this.client.on('close', async (reasonCode: Number) => {
                     logger.info(`Connection closed: ${reasonCode}`);
 
                     if (!this.closing) {
@@ -133,7 +197,7 @@ export class HaInterface extends EventEmitter {
 
                 this.pingInterval = setInterval(() => {
                     let ping = { id: ++this.id, type: 'ping' };
-                    this._sendPacket(ping, null)
+                    this._sendPacket(ping)
                         .then((_response) => {})
                         .catch((err) => {
                             logger.error(`Ping failed ${err}`);
@@ -154,10 +218,9 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    async _connect(url) {
-
+    async _connect(url: string): Promise<WebSocket> {
         return new Promise(async (resolve, reject) => {
-            var client;
+            let client: WebSocket;
 
             while (true) {
                 try {
@@ -197,7 +260,7 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    async _innerconnect(url: string) {
+    async _innerconnect(url: string): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
             var client = new WebSocket(url);
             var connectFailed = (err: Error) => {
@@ -214,7 +277,7 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    async _authenticate(client): Promise<void> {
+    async _authenticate(client: WebSocket): Promise<void> {
         let ret = new Promise<void>((resolve, reject) => {
             logger.info('Authenticating');
 
@@ -224,7 +287,7 @@ export class HaInterface extends EventEmitter {
                     reject(new WebSocketError('Expected auth_required - received binary packet'));
                 }
 
-                let msg = JSON.parse(message);
+                let msg = JSON.parse(message.toString());
 
                 if (msg.type != 'auth_required') {
                     logger.debug('Did not get auth_required');
@@ -236,7 +299,7 @@ export class HaInterface extends EventEmitter {
                         reject(new WebSocketError('Expected auth - received binary packet'));
                     }
 
-                    let authResponse = JSON.parse(message);
+                    let authResponse = JSON.parse(message.toString());
 
                     if (authResponse.type != 'auth_ok') {
                         if (authResponse.type == 'auth_invalid') {
@@ -253,7 +316,6 @@ export class HaInterface extends EventEmitter {
                 });
 
                 let auth = { type: 'auth', access_token: this.accessToken };
-                //logger.debug(`Sending auth \n${JSON.stringify(auth, null, 2)}`);
                 client.send(JSON.stringify(auth));
             });
         });
@@ -261,7 +323,7 @@ export class HaInterface extends EventEmitter {
         return ret;
     }
 
-    async _wait(seconds) {
+    async _wait(seconds: number) {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
 
@@ -274,7 +336,7 @@ export class HaInterface extends EventEmitter {
                 logger.warn('Failed to close before timeout')
                 reject(new Error('Failed to close connection'));
             }, 5000);
-            this.client.once('close', (reason, description) => {
+            this.client.once('close', (_reason, _description) => {
                 logger.info('Closed');
                 clearTimeout(timer);
                 resolve();
@@ -298,7 +360,7 @@ export class HaInterface extends EventEmitter {
     async subscribe() {
         return new Promise((resolve, reject) => {
             let packet = { id: ++this.id, type: 'subscribe_events' };
-            this._sendPacket(packet, null)
+            this._sendPacket(packet)
                 .then((response: any) => {
                     logger.info('Subscribed to events');
                     resolve(response.result);
@@ -313,7 +375,7 @@ export class HaInterface extends EventEmitter {
     async getStates(): Promise<any []> {
         return new Promise<any []>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_states' };
-            this._sendPacket(packet, null)
+            this._sendPacket(packet)
                 .then((response: any) => {
                     logger.info('States acquired');
                     resolve(response.result);
@@ -328,7 +390,7 @@ export class HaInterface extends EventEmitter {
     async getConfig(): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_config' };
-            this._sendPacket(packet, null)
+            this._sendPacket(packet)
                 .then((response: any) => {
                     logger.debug('Config acquired');
                     resolve(response.result);
@@ -343,7 +405,7 @@ export class HaInterface extends EventEmitter {
     async getPanels(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'get_panels' };
-            this._sendPacket(packet, null)
+            this._sendPacket(packet)
                 .then((response: any) => {
                     logger.info('Panels acquired');
                     resolve(response.result);
@@ -358,7 +420,7 @@ export class HaInterface extends EventEmitter {
     async callService(domain: string, service: string, data: ServiceTarget): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let packet = { id: ++this.id, type: 'call_service', domain: domain, service: service, service_data: data };
-            this._sendPacket(packet, null)
+            this._sendPacket(packet)
                 .then((response: any) => {
                     logger.debug('Service call successful');
                     resolve(response.result);
@@ -370,19 +432,19 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    async _sendPacket(packet, handler): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
+    async _sendPacket(packet: any, handler?:Function): Promise<ServiceSuccess | ServiceError | ServicePong> {
+        return new Promise<ServiceSuccess | ServiceError | ServicePong>((resolve, reject) => {
             if (this.connected == false) {
                 reject(new Error('Connection to server has failed'));
             }
             let timer = setTimeout((packet) => {
                 logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
-                delete this.tracker[packet.id];
+                this.tracker.delete(packet.id);
                 reject(new Error(`No response to ${JSON.stringify(packet)}`));
             }, 10000, packet);
-            this.tracker[packet.id] = {
+            this.tracker.set(packet.id, {
                 packet: packet,
-                handler: (response: any) => {
+                handler: (response: ServiceSuccess | ServiceError | ServicePong) => {
                     clearTimeout(timer);
                     if (handler) {
                         handler(response);
@@ -395,7 +457,7 @@ export class HaInterface extends EventEmitter {
                         reject(new Error('Bad response:' + JSON.stringify(response)));
                     }
                 },
-            };
+            });
             this.client.send(JSON.stringify(packet));
         });
     }

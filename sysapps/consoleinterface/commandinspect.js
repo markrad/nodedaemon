@@ -28,7 +28,7 @@ class CommandInspect extends commandbase_1.CommandBase {
             .sort((l, r) => l < r ? -1 : 1);
         return (possibles.length == 1 || tabCount > 1) ? possibles : [];
     }
-    execute(inputArray, that, sock, commands) {
+    execute(inputArray, that, sock, _commands) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 this.validateParameters(inputArray.slice(0, inputArray.length - 1));

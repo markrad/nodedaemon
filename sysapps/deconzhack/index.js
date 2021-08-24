@@ -21,6 +21,7 @@ class DeconzHack {
     constructor(_controller) {
         this._client = null;
         this._ws = null;
+        this._mqttOptions = { clean: true, clientId: "deCONZHack" };
         logger.info('DeconzHack constructed');
     }
     validate(configIn) {
@@ -40,9 +41,8 @@ class DeconzHack {
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                let client = 'deCONZHack';
-                this._client = mqtt_1.default.connect(`mqtt://${this._mqttConfig.host}:${this._mqttConfig.port}`, { clientId: client, clean: true });
+            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
+                this._client = mqtt_1.default.connect(`mqtt://${this._mqttConfig.host}:${this._mqttConfig.port}`, this._mqttOptions);
                 this._client.on('error', err => logger.warn(`MQTT error ${err}`));
                 this._client.on('reconnect', () => logger.warn('MQTT is reconnecting'));
                 yield new Promise(resolve => this._client.once('connect', resolve));

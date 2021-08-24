@@ -4,7 +4,7 @@ import { State } from '../hamain';
 // import { AnyAaaaRecord, AnyARecord } from 'dns';
 
 // Super slow for debugging
-const RESPONSE_TIMEOUT_DEBUG: number = 30 * 1000
+// const RESPONSE_TIMEOUT: number = 30 * 1000
 const RESPONSE_TIMEOUT: number = 3 * 1000
 
 export type ServiceTarget = {
@@ -195,7 +195,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         }
     }
 
-    _childOveride(state?: ServiceTarget): boolean {
+    _childOveride(_state?: ServiceTarget): boolean {
         return false;
     }
 

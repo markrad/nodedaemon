@@ -6,6 +6,8 @@
     "alwaysStrict": true,
     "esModuleInterop": true,
     "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": false,
     "checkJs": false,

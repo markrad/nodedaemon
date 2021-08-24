@@ -60,7 +60,7 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
     }
     turnOffAt(moment) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
                 if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
                     if (this.isOff) {
                         yield this.turnOn();

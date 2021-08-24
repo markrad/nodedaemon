@@ -4,7 +4,6 @@ import { HaParentItem } from './haparentitem.js';
 class HaItemZone extends HaParentItem {
     constructor(item: State) {
         super(item);
-        let x = this.category;
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });

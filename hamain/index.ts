@@ -12,7 +12,6 @@ import { Dir } from 'node:fs';
 import { IApplication } from '../common/IApplication';
 //import * as hound  from 'hound';
 var reload = require('require-reload');
-var hound = require('hound');
 
 // TODO - put in own file
 export type AppInfo = {
@@ -123,7 +122,6 @@ export class HaMain extends EventEmitter {
 
             let itemTypes: any = {};
             
-            var test = Array.from(this.items.items.values());
             Array.from(this._items.items.values()).forEach((value: IHaItem) => {
                 if (!(value.type in itemTypes)) {
                     itemTypes[value.type] = 0;
@@ -261,7 +259,7 @@ export class HaMain extends EventEmitter {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     }
 
-    _setWatcher(item: unknown) {
+    _setWatcher(_item: unknown) {
 /*        
         hound.watch(item)
             .on('create', (file, stats) => {

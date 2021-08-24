@@ -4,7 +4,6 @@ const haparentitem_js_1 = require("./haparentitem.js");
 class HaItemZone extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
-        let x = this.category;
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });

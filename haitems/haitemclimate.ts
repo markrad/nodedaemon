@@ -1,5 +1,5 @@
 import { State } from '../hamain/index.js';
-import { HaParentItem, IHaItem } from './haparentitem.js';
+import { HaParentItem } from './haparentitem.js';
 
 class HaItemClimate extends HaParentItem {
     constructor(item: State) {

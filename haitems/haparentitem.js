@@ -8,7 +8,7 @@ const events_1 = __importDefault(require("events"));
 const log4js_1 = require("log4js");
 // import { AnyAaaaRecord, AnyARecord } from 'dns';
 // Super slow for debugging
-const RESPONSE_TIMEOUT_DEBUG = 30 * 1000;
+// const RESPONSE_TIMEOUT: number = 30 * 1000
 const RESPONSE_TIMEOUT = 3 * 1000;
 function SafeItemAssign(item, throwOnFailure = false) {
     let ret = (item.isEditable)
@@ -122,7 +122,7 @@ class HaParentItem extends events_1.default {
             resolve({ message: 'nochange', err: null });
         }
     }
-    _childOveride(state) {
+    _childOveride(_state) {
         return false;
     }
     _getActionAndExpectedSNewtate(newState) {

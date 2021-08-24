@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandGetConfig = void 0;
 const commandbase_1 = require("./commandbase");
-const CATEGORY = 'CommandGetConfig';
 class CommandGetConfig extends commandbase_1.CommandBase {
     constructor() {
         super('getconfig');

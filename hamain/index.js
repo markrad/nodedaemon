@@ -48,7 +48,6 @@ const hainterface_1 = require("../hainterface");
 const haitems_1 = require("../haitems");
 //import * as hound  from 'hound';
 var reload = require('require-reload');
-var hound = require('hound');
 const CATEGORY = 'HaMain';
 var logger = log4js_1.getLogger(CATEGORY);
 if (process.env.HAMAIN_LOGGING) {
@@ -117,7 +116,6 @@ class HaMain extends events_1.default {
                 });
                 logger.info(`Items loaded: ${Object.keys(this._items.items).length}`);
                 let itemTypes = {};
-                var test = Array.from(this.items.items.values());
                 Array.from(this._items.items.values()).forEach((value) => {
                     if (!(value.type in itemTypes)) {
                         itemTypes[value.type] = 0;
@@ -245,7 +243,7 @@ class HaMain extends events_1.default {
             return new Promise(resolve => setTimeout(resolve, seconds * 1000));
         });
     }
-    _setWatcher(item) {
+    _setWatcher(_item) {
         /*
                 hound.watch(item)
                     .on('create', (file, stats) => {

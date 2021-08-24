@@ -8,14 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const haparentitem_1 = require("../../haitems/haparentitem");
-// TODO Minimum conversion
-const http = require('http');
-var log4js = require('log4js');
-const { resolve } = require('path');
+const http_1 = __importDefault(require("http"));
+const log4js_1 = require("log4js");
 const CATEGORY = 'UpdateExternalIP';
-var logger = log4js.getLogger(CATEGORY);
+var logger = log4js_1.getLogger(CATEGORY);
 class UpdateExternalIP {
     constructor(controller, config) {
         this.multiplier = 24;
@@ -60,7 +61,7 @@ class UpdateExternalIP {
                     path: '/',
                 };
                 let allchunks = '';
-                http.get(options, (res) => {
+                http_1.default.get(options, (res) => {
                     if (res.statusCode != 200) {
                         let err = new Error(`Error status code returned from IP server ${res.statusCode}`);
                         logger.error(err.message);

@@ -39,6 +39,7 @@ class DeconzHack implements IApplication {
     constructor(_controller: HaMain) {
         this._client = null;
         this._ws = null;
+        this._mqttOptions = { clean: true, clientId: "deCONZHack"}
         logger.info('DeconzHack constructed');
     }
 
@@ -59,9 +60,8 @@ class DeconzHack implements IApplication {
     }
 
     async run(): Promise<boolean> {
-        return new Promise(async (resolve, reject) => {
-            let client = 'deCONZHack'; 
-            this._client = mqtt.connect(`mqtt://${this._mqttConfig.host}:${this._mqttConfig.port}`, { clientId: client, clean: true });
+        return new Promise(async (resolve, _reject) => {
+            this._client = mqtt.connect(`mqtt://${this._mqttConfig.host}:${this._mqttConfig.port}`, this._mqttOptions);
             this._client.on('error', err => logger.warn(`MQTT error ${err}`));
             this._client.on('reconnect', () => logger.warn('MQTT is reconnecting'));
             await new Promise(resolve => this._client.once('connect', resolve));

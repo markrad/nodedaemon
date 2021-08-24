@@ -25,7 +25,7 @@ export class CommandInspect extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<void> {
+    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, _commands: ICommand[]): Promise<void> {
         try {
             this.validateParameters(inputArray.slice(0, inputArray.length - 1));
             if (inputArray.length != 2) {

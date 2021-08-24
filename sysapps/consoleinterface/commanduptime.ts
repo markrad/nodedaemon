@@ -1,8 +1,6 @@
 import { ConsoleInterface, IChannel } from ".";
 import { CommandBase } from "./commandbase";
 
-const CATEGORY: string = 'CommandUptime';
-
 export class CommandUptime extends CommandBase {
     constructor() {
         super('uptime');

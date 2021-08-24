@@ -2,11 +2,7 @@
 
 import { ConsoleInterface, IChannel } from ".";
 
-import { getLogger } from "log4js";
 import { CommandBase } from './commandbase'; 
-
-const CATEGORY: string = 'CommandInspect';
-var logger = getLogger(CATEGORY);
 
 export class CommandHa extends CommandBase {
     constructor() {

@@ -1,9 +1,5 @@
-import { getLogger } from 'log4js';
 import { ConsoleInterface, IChannel } from '.';
 import { ICommand } from './ICommand';
-
-const CATEGORY: string = 'CommandBase';
-var logger = getLogger(CATEGORY);
 
 export abstract class CommandBase implements ICommand {
     private _commandName: string;

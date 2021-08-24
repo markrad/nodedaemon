@@ -1,7 +1,7 @@
 "use strict";
 
 import { getLogger, Logger } from 'log4js';
-import { HaParentItem, IHaItem, IHaItemSwitch } from '../haitems/haparentitem';
+import { IHaItem } from '../haitems/haparentitem';
 
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);

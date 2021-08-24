@@ -1,9 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandBase = void 0;
-const log4js_1 = require("log4js");
-const CATEGORY = 'CommandBase';
-var logger = log4js_1.getLogger(CATEGORY);
 class CommandBase {
     constructor(commandName, parameters) {
         this._commandName = commandName;

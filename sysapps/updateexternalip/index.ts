@@ -1,12 +1,10 @@
-import { HaParentItem, IHaItem, IHaItemEditable, IHaItemSwitch, SafeItemAssign } from "../../haitems/haparentitem";
+import { IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
-// TODO Minimum conversion
-const http = require('http');
-var log4js = require('log4js');
-const { resolve } = require('path');
+import http from 'http';
+import { getLogger } from "log4js";
 
 const CATEGORY = 'UpdateExternalIP';
-var logger = log4js.getLogger(CATEGORY);
+var logger = getLogger(CATEGORY);
 
 class UpdateExternalIP {
     external_ip: IHaItemEditable;

@@ -160,7 +160,7 @@ class TransportSSH {
                                 logger.error(`Exception caught: ${err}`);
                             }
                         })
-                            .once('shell', (accept, reject, info) => {
+                            .once('shell', (accept, _reject, _info) => {
                             let stream = accept();
                             stream.write("$ ");
                             let len = 0;

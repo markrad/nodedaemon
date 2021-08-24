@@ -4,7 +4,7 @@ import WebSocket = require('ws');
 import { getLogger } from 'log4js';
 import EventEmitter from 'events';
 
-import { ErrorFactory, ConnectionError, DNSError, GenericSyscallError, WebSocketError } from './haInterfaceError';
+import { ErrorFactory, ConnectionError, DNSError, GenericSyscallError } from './haInterfaceError';
 
 const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);

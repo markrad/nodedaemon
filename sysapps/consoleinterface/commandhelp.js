@@ -10,10 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CommandHelp = void 0;
-var log4js = require('log4js');
 const commandbase_1 = require("./commandbase");
-const CATEGORY = 'CommandHelp';
-var logger = log4js.getLogger(CATEGORY);
 class CommandHelp extends commandbase_1.CommandBase {
     constructor() {
         super('help');
@@ -21,7 +18,7 @@ class CommandHelp extends commandbase_1.CommandBase {
     get helpText() {
         return `${this.commandName}\t\t\t\tPrints this message`;
     }
-    execute(inputArray, that, sock, commands) {
+    execute(inputArray, _that, sock, commands) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 this.validateParameters(inputArray);

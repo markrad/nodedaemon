@@ -52,7 +52,6 @@ export class CommandList extends CommandBase {
     async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
             this.validateParameters(inputArray);
-            let re: RegExp;
             let items: IHaItem[];
             switch (inputArray[1]) {
                 case 'apps':

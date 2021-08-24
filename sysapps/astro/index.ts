@@ -1,8 +1,7 @@
 "use strict";
-// TODO Minimum conversion
 
 import { getMoonIllumination, GetMoonIlluminationResult, getTimes, GetTimesResult } from 'suncalc';
-var schedule = require('node-schedule');
+import * as schedule from 'node-schedule';
 import { HaMain } from '../../hamain';
 import { EventEmitter } from 'events';
 import { getLogger } from 'log4js';
@@ -25,7 +24,7 @@ class Astro extends EventEmitter implements IApplication
     //config: any;
     private _dayStart: string;
     private _dayEnd: string;
-constructor(controller: HaMain, config: any)
+constructor(controller: HaMain, _config: any)
     {
         super();
         this.times = {};

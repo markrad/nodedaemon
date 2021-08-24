@@ -1,15 +1,8 @@
 "use strict";
 
-import { HaParentItem, IHaItem, IHaItemSwitch } from "../../haitems/haparentitem";
+import { IHaItem, IHaItemSwitch } from "../../haitems/haparentitem";
 import { HaMain, State } from "../../hamain";
 import { getLogger } from 'log4js'
-
-// TODO Minimum conversion
-
-// type TripTarget = {
-//     Targets: IHaItemSwitch[];
-//     Timeout: number;
-// }
 
 interface Trip {
     sensor: IHaItem;

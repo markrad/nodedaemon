@@ -1,6 +1,6 @@
 import { State } from '../hamain/index.js';
 import { HaGenericSwitchItem } from './hagenericswitchitem.js';
-import { IHaItemSwitch, ServicePromise } from './haparentitem.js';
+import { ServicePromise } from './haparentitem.js';
 
 class HaItemGroup extends HaGenericSwitchItem {
     children: any;

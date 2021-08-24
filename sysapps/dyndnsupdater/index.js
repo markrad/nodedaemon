@@ -47,7 +47,7 @@ class DynDnsUpdater {
         this.hostname = config.dyndnsupdater.hostname;
         logger.debug('Constructed');
     }
-    validate(config) {
+    validate(_config) {
         try {
             if (this.external_ip == undefined)
                 throw new Error('Could not find externalIp item');

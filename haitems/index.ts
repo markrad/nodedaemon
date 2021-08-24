@@ -1,7 +1,7 @@
 import fs from 'fs';
 import log4js from 'log4js';
 import { HaInterface } from '../hainterface';
-import { HaParentItem, IHaItem } from './haparentitem';
+import { IHaItem } from './haparentitem';
 //var config = require('../config.json').main;
 
 const CATEGORY: string = 'HaItemFactory';
