@@ -13,7 +13,6 @@ const haparentitem_js_1 = require("./haparentitem.js");
 class HaItemInputNumber extends haparentitem_js_1.HaParentItem {
     constructor(item) {
         super(item);
-        this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });
@@ -21,7 +20,7 @@ class HaItemInputNumber extends haparentitem_js_1.HaParentItem {
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId, value: expectedNewState });
             });
         });
@@ -39,7 +38,7 @@ class HaItemInputNumber extends haparentitem_js_1.HaParentItem {
     get state() {
         return Number(super.state);
     }
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedNewState(newState) {
         let action = 'set_value';
         let expectedNewState = null;
         if (typeof newState == 'number' && isNaN(newState)) {

@@ -39,7 +39,7 @@ function config(config: appenderConfig, layouts: any): appender {
     if (config.username != null) mqttOptions.username = config.username;
     if (config.password != null) mqttOptions.password = config.password;
 
-    let client: mqtt.MqttClient = mqtt.connect(`${mqttHost}`, mqttOptions);
+    let client: mqtt.MqttClient = mqtt.connect(mqttHost, mqttOptions);
     
     return mqttAppender(layout, config.otherOptions, client, mqttTopic);
 }

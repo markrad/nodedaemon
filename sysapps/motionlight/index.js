@@ -14,9 +14,9 @@ const CATEGORY = 'MotionLight';
 var logger = log4js_1.getLogger(CATEGORY);
 class MotionLight {
     constructor(controller) {
-        this.controller = controller;
-        this.actioners = [];
-        this.trips = null;
+        this._actioners = [];
+        this._trips = null;
+        this._controller = controller;
     }
     validate(config) {
         if (!config.devices) {
@@ -27,25 +27,25 @@ class MotionLight {
                 logger.error('Invalid device specification');
                 return false;
             }
-            this.trips = config.devices.map((value) => {
+            this._trips = config.devices.map((value) => {
                 if (!Array.isArray(value)) {
                     logger.error(`Specified value is not an array: ${value}`);
                 }
                 if (!Array.isArray(value[1])) {
                     value[1] = [value[1]];
                 }
-                if (!this.controller.items.getItem(value[0])) {
+                if (!this._controller.items.getItem(value[0])) {
                     logger.error(`Specified motion sensor does not exist: ${value[0]}`);
                 }
-                else if (this.controller.items.getItem(value[0]).type != 'binary_sensor') {
+                else if (this._controller.items.getItem(value[0]).type != 'binary_sensor') {
                     logger.error(`Specified motion sensor needs to be type binary_sensor: ${value[0]}`);
                 }
                 else if (false == value[1].reduce((flag, value) => {
-                    if (!this.controller.items.getItem(value)) {
+                    if (!this._controller.items.getItem(value)) {
                         logger.error(`Specified target light does not exist: ${value}`);
                         flag = false;
                     }
-                    else if (!this.controller.items.getItem(value).isSwitch) {
+                    else if (!this._controller.items.getItem(value).isSwitch) {
                         logger.error(`Specified target light is not a switch or a light: ${value[1]}`);
                         flag = false;
                     }
@@ -57,9 +57,9 @@ class MotionLight {
                     logger.error(`Minutes before action is not numeric`);
                 }
                 else {
-                    let lights = value[1].map((value) => this.controller.items.getItem(value));
+                    let lights = value[1].map((value) => this._controller.items.getItem(value));
                     let trip = {
-                        sensor: this.controller.items.getItem(value[0]),
+                        sensor: this._controller.items.getItem(value[0]),
                         lights: lights,
                         timeout: value[2]
                     };
@@ -72,57 +72,83 @@ class MotionLight {
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.trips == null || this.trips.length == 0) {
+            if (this._trips == null || this._trips.length == 0) {
                 let err = new Error('No valid device pairs found');
                 logger.warn(err.message);
                 throw err;
             }
-            this.trips.forEach((trip) => this.actioners.push(new actioner(trip)));
+            this._trips.forEach((trip) => this._actioners.push(new actioner(trip)));
         });
     }
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.actioners.forEach(actioner => {
+            this._actioners.forEach(actioner => {
                 actioner.stop();
             });
         });
     }
 }
 class actioner {
+    // private _eventHandler: (that: IHaItem, oldState: State) => void;
     constructor(trip) {
-        this.trip = trip;
-        this.timer = null;
-        this.eventHandler = (that, _oldState) => {
-            logger.debug(`State ${that.state} triggered on ${this.trip.sensor.entityId} for ${this.trip.lights.map(item => item.entityId).join(' ')}`);
-            if (that.state == 'on') {
-                this.trip.lights.forEach((light) => {
-                    light.turnOffAt(Date.now() + this.trip.timeout * 60 * 1000);
-                });
-                this.timer = setInterval(() => {
-                    if (!this.trip.lights[0].isTimerRunning) {
-                        clearInterval(this.timer);
-                        this.timer = null;
-                    }
-                    else if (this.trip.sensor.state == 'on') {
-                        logger.trace(`Checking motion sensor status: ${this.trip.sensor.state}`);
-                        this.trip.lights.forEach((light) => {
-                            logger.debug('Extenting turn off time');
-                            light.turnOffAt(Date.now() + this.trip.timeout * 60 * 1000);
-                        });
-                    }
-                }, 30000);
-            }
-            else {
-                clearInterval(this.timer);
-                this.timer = null;
-            }
-        };
-        // this.eventHandler.trip = this.trip;
-        // this.eventHandler.timer = null;
-        this.trip.sensor.on('new_state', this.eventHandler);
+        this._timer = null;
+        this._trip = trip;
+        this._timer = null;
+        // this._eventHandler = (that: IHaItem, _oldState: State) => {
+        //     logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
+        //     if (that.state == 'on') {
+        //         this._trip.lights.forEach((light: IHaItemSwitch) => {
+        //             light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+        //         });
+        //         this._timer = setInterval(() => 
+        //         { 
+        //             if (!this._trip.lights[0].isTimerRunning) {
+        //                 clearInterval(this._timer);
+        //                 this._timer = null;
+        //             }
+        //             else if (this._trip.sensor.state == 'on') {
+        //                 logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
+        //                 this._trip.lights.forEach((light) => {
+        //                     logger.debug('Extenting turn off time');
+        //                     light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+        //                 });
+        //             }
+        //         }, 30000);
+        //     }
+        //     else {
+        //         clearInterval(this._timer);
+        //         this._timer = null;
+        //     }
+        // }
+        this._trip.sensor.on('new_state', this._eventHandler);
+    }
+    _eventHandler(that, _oldState) {
+        logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
+        if (that.state == 'on') {
+            this._trip.lights.forEach((light) => {
+                light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+            });
+            this._timer = setInterval(() => {
+                if (!this._trip.lights[0].isTimerRunning) {
+                    clearInterval(this._timer);
+                    this._timer = null;
+                }
+                else if (this._trip.sensor.state == 'on') {
+                    logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
+                    this._trip.lights.forEach((light) => {
+                        logger.debug('Extending turn off time');
+                        light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+                    });
+                }
+            }, 30000);
+        }
+        else {
+            clearInterval(this._timer);
+            this._timer = null;
+        }
     }
     stop() {
-        this.trip.sensor.off('new_state', this.eventHandler);
+        this._trip.sensor.off('new_state', this._eventHandler);
     }
 }
 module.exports = MotionLight;

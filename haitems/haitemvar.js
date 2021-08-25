@@ -20,7 +20,7 @@ class HaItemVar extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 var myResolve = (ret) => {
                     if (ret.message == 'success') {
                         // Call var.update to update icons etc.
@@ -32,7 +32,7 @@ class HaItemVar extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
             });
         });
     }
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedNewState(newState) {
         let action = 'set';
         let expectedNewState = newState.toString();
         return { action: action, expectedNewState: expectedNewState };

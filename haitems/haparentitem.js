@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -90,37 +99,39 @@ class HaParentItem extends events_1.default {
         this.emit('callservice', domain, service, state);
     }
     _callServicePromise(resolve, newState, expectedState, domain, service, state) {
-        if (service == 'error') {
-            let err = new Error(`Bad value passed to updateState - ${newState}`);
-            this.logger.error(`${err.message}`);
-            resolve({ message: 'error', err: err });
-            return;
-        }
-        if (this.state != expectedState || this._childOveride(state)) {
-            var timer = setTimeout(() => {
-                var err = new Error('Timeout waiting for state change');
-                this.logger.warn(`${err.message}`);
+        return __awaiter(this, void 0, void 0, function* () {
+            if (service == 'error') {
+                let err = new Error(`Bad value passed to updateState - ${newState}`);
+                this.logger.error(`${err.message}`);
                 resolve({ message: 'error', err: err });
-            }, RESPONSE_TIMEOUT);
-            this.once('new_state', (that, _oldState) => {
-                clearTimeout(timer);
-                if (that.state == expectedState) {
-                    resolve({ message: 'success', err: null });
-                }
-                else {
-                    var err = new Error('New state did not match expected state');
-                    this.logger.info(`${err.message}`);
-                    resolve({ message: 'warn', err: err });
-                }
-            });
-            this._callService(domain, service, state);
-        }
-        else {
-            this.logger.debug(`Already in state ${this.state}`);
-            resolve({ message: 'nochange', err: null });
-        }
+                return;
+            }
+            if (this.state != expectedState || this._childOveride(state)) {
+                var timer = setTimeout(() => {
+                    var err = new Error('Timeout waiting for state change');
+                    this.logger.warn(`${err.message}`);
+                    resolve({ message: 'error', err: err });
+                }, RESPONSE_TIMEOUT);
+                this.once('new_state', (that, _oldState) => {
+                    clearTimeout(timer);
+                    if (that.state == expectedState) {
+                        resolve({ message: 'success', err: null });
+                    }
+                    else {
+                        var err = new Error('New state did not match expected state');
+                        this.logger.info(`${err.message}`);
+                        resolve({ message: 'warn', err: err });
+                    }
+                });
+                this._callService(domain, service, state);
+            }
+            else {
+                this.logger.debug(`Already in state ${this.state}`);
+                resolve({ message: 'nochange', err: null });
+            }
+        });
     }
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedNewState(newState) {
         return { action: newState, expectedNewState: newState };
     }
     _childOveride(_state) {

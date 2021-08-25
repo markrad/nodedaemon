@@ -21,7 +21,7 @@ class HaItemInputBoolean extends hagenericswitchitem_js_1.HaGenericSwitchItem {
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
             });
         });

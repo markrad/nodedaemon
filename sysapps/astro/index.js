@@ -38,8 +38,8 @@ const logger = log4js_1.getLogger(CATEGORY);
 class Astro extends events_1.EventEmitter {
     constructor(controller, _config) {
         super();
-        this.times = {};
-        this.events = [
+        this._times = {};
+        this._events = [
             "sunrise",
             "sunriseEnd",
             "goldenHourEnd",
@@ -55,21 +55,21 @@ class Astro extends events_1.EventEmitter {
             "nauticalDawn",
             "dawn"
         ];
-        this.lastEventSave = null;
-        this.lastMoonPhaseSave = '';
-        this.longitude = controller.haConfig.longitude;
-        this.latitude = controller.haConfig.latitude;
-        this.midnight = null;
-        this.moon = null;
-        //this.config = config.astro;
+        this._lastEventSave = null;
+        this._lastMoonPhaseSave = '';
+        this._midnightSched = null;
+        this._moonSched = null;
         this._dayStart = null;
         this._dayEnd = null;
+        this._longitude = controller.haConfig.longitude;
+        this._latitude = controller.haConfig.latitude;
         this._midnight();
         this._updateMoon();
         logger.info('Constructed');
     }
+    ;
     validate(config) {
-        if (!this.longitude || !this.latitude) {
+        if (!this._longitude || !this._latitude) {
             logger.error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
             return false;
         }
@@ -87,25 +87,25 @@ class Astro extends events_1.EventEmitter {
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.midnight = schedule.scheduleJob({ hour: 0, minute: 0, second: 0 }, () => this._midnight());
-            this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
+            this._midnightSched = schedule.scheduleJob({ hour: 0, minute: 0, second: 0 }, () => this._midnight());
+            this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
             return true;
         });
     }
     stop() {
-        this.midnight.cancel();
-        this.moon.cancel();
+        this._midnightSched.cancel();
+        this._moonSched.cancel();
     }
     _setupTimes(times1, times2) {
         logger.debug('In setupTimes');
-        var now = new Date();
-        var latest = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2);
-        var latestIndex = -1;
-        for (var event of this.events) {
-            this.times[event] = (this._isAfter(times1[event], now))
+        let now = new Date();
+        let latest = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2);
+        let latestIndex = null;
+        for (let event of this._events) {
+            this._times[event] = (this._isAfter(times1[event], now))
                 ? times1[event]
                 : times2[event];
-            logger.debug(`Firing event ${event} at ${this.times[event].toString()}`);
+            logger.debug(`Firing event ${event} at ${this._times[event].toString()}`);
             setTimeout((myEvent, that) => {
                 logger.debug(`Firing event ${myEvent}`);
                 that.emit('astroevent', myEvent);
@@ -117,25 +117,25 @@ class Astro extends events_1.EventEmitter {
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }
-            }, Number(this.times[event]) - Number(now), event, this);
-            logger.trace(`astro - Compare ${this.times[event].toString()} to ${latest.toString()}`);
-            if (Number(this.times[event]) > Number(latest)) {
+            }, Number(this._times[event]) - Number(now), event, this);
+            logger.trace(`astro - Compare ${this._times[event].toString()} to ${latest.toString()}`);
+            if (Number(this._times[event]) > Number(latest)) {
                 logger.trace('astro - Replacing previous time');
-                latest = this.times[event];
+                latest = this._times[event];
                 latestIndex = event;
             }
         }
-        this.lastEventSave = latestIndex;
-        logger.debug(`Last event was ${this.lastEventSave}`);
+        this._lastEventSave = latestIndex;
+        logger.debug(`Last event was ${this._lastEventSave}`);
     }
     _midnight() {
         var today = new Date();
         var tomorrow = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
-        this._setupTimes(suncalc_1.getTimes(today, this.latitude, this.longitude), suncalc_1.getTimes(tomorrow, this.latitude, this.longitude));
+        this._setupTimes(suncalc_1.getTimes(today, this._latitude, this._longitude), suncalc_1.getTimes(tomorrow, this._latitude, this._longitude));
     }
     _updateMoon() {
-        this.lastMoonPhaseSave = this._moonPhase();
-        this.emit("moonPhase", this.lastMoonPhaseSave);
+        this._lastMoonPhaseSave = this._moonPhase();
+        this.emit("moonPhase", this._lastMoonPhaseSave);
     }
     _moonPhase() {
         let d1 = new Date();
@@ -177,25 +177,25 @@ class Astro extends events_1.EventEmitter {
         return phase;
     }
     get lastEvent() {
-        return this.lastEventSave;
+        return this._lastEventSave;
     }
     getEvent(eventName) {
-        if (this.times.hasOwnProperty(eventName))
-            return this.times[eventName];
+        if (this._times.hasOwnProperty(eventName))
+            return this._times[eventName];
         else
             return "0";
     }
     get lastMoonPhase() {
-        return this.lastMoonPhaseSave;
+        return this._lastMoonPhaseSave;
     }
     get isDark() {
         var temp = new Date();
         var result;
-        if (this._isBefore(this.times[this._dayStart], this.times[this._dayEnd])) {
-            result = (this._isBetween(temp, this.times[this._dayStart], this.times[this._dayEnd])) ? false : true;
+        if (this._isBefore(this._times[this._dayStart], this._times[this._dayEnd])) {
+            result = (this._isBetween(temp, this._times[this._dayStart], this._times[this._dayEnd])) ? false : true;
         }
         else {
-            result = (this._isBetween(temp, this.times[this._dayEnd], this.times[this._dayStart])) ? true : false;
+            result = (this._isBetween(temp, this._times[this._dayEnd], this._times[this._dayStart])) ? true : false;
         }
         return result;
     }

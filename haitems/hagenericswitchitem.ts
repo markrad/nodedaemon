@@ -17,13 +17,14 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
     private _moment: number;
     private _support: SUPPORT;       
     private _timer: NodeJS.Timeout;
-    constructor(item: State) {
+    public constructor(item: State) {
         super(item);
         this._moment = 0;
         this._timer = null;
         this._support = this.attributes?.supported_features ?? 0;
 
         if (this.isBrightnessSupported) this.updateBrightness = this._updateBrightness;
+        if (this.isTemperatureSupported) this.updateTemperature = this._updateTemperature;
 
         this.on('new_state', (that, _oldstate) => {
             let brightnessMsg = `${that.isOn && that.isBrightnessSupported? 'Brightness: ' + that.brightness : ''}`;
@@ -38,7 +39,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    async turnOn(): Promise<ServicePromise> {
+    public async turnOn(): Promise<ServicePromise> {
         return new Promise<ServicePromise>(async (resolve, _reject) => {
             let ret: ServicePromise = null;
             ret = await this.updateState('on');
@@ -46,7 +47,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    async turnOff(): Promise<ServicePromise> {
+    public async turnOff(): Promise<ServicePromise> {
         return new Promise<ServicePromise>(async (resolve, _reject) => {
             let ret: ServicePromise = null;
             ret = await this.updateState('off');
@@ -54,7 +55,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    async turnOffAt(moment: number): Promise<void> {
+    public async turnOffAt(moment: number): Promise<void> {
         return new Promise<void>(async (resolve, _reject) => {
             if (this.isOff || (this.isOn && this._moment != 0 && this._moment < moment)) {
                 if (this.isOff) {
@@ -80,7 +81,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    async toggle(): Promise<ServicePromise> {
+    public async toggle(): Promise<ServicePromise> {
         return new Promise<ServicePromise>(async (resolve, _reject) => {
             let ret: ServicePromise = null;
             ret = await this.updateState('toggle');
@@ -88,94 +89,96 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
         });
     }
 
-    get isOn(): boolean {
+    public get isOn(): boolean {
         return this.state == 'on';
     }
 
-    get isOff(): boolean {
+    public get isOff(): boolean {
         return this.state == 'off';
     }
 
-    get isTimerRunning(): boolean {
+    public get isTimerRunning(): boolean {
         return this._moment != 0;
     }
 
-    get timeBeforeOff(): number {
+    public get timeBeforeOff(): number {
         return this._moment == 0
                 ? 0
                 : this._moment - Date.now();
     }
 
-    get support(): SUPPORT {
+    public get support(): SUPPORT {
         return this._support;
     }
 
-    get isBrightnessSupported(): boolean {
+    public get isBrightnessSupported(): boolean {
         return !!(this.support & SUPPORT.SUPPORT_BRIGHTNESS);
     }
 
-    get isTemperatureSupported(): boolean {
+    public get isTemperatureSupported(): boolean {
         return !!(this._support & SUPPORT.SUPPORT_COLOR_TEMP);
     }
 
-    get brightness(): number {
+    public get brightness(): number {
         return this.isBrightnessSupported? this.attributes.brightness : NaN
     }
 
-    get temperature(): number {
+    public get temperature(): number {
         return this.isTemperatureSupported? this.attributes.color_temp : NaN
     }
 
-    get isSwitch(): boolean {
+    public get isSwitch(): boolean {
         return true;
     }
 
+    // This function will be replaced if brightness is supported
     async updateBrightness(_newValue: number | string) { 
         return new Promise(resolve => resolve(new Error('Brightness is not supported')));
     }
 
+    // This function will be replaced if temperature is supported
     async updateTemperature(_newValue: number | string) {
         return new Promise(resolve => resolve(new Error('Temperature is not supported')));
     }
 
-    _updateBrightness(newValue: number | string) {
+    private async _updateBrightness(newValue: number | string): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var level = Number(newValue);
             if (level == NaN) {
-                resolve(new Error('Brightness value must be a number between 1 and 254'));
+                resolve({ message: 'Error', err: new Error('Brightness value must be a number between 1 and 254') });
             }
             else {
                 if (level < 0) level = 0;
                 else if (level > 254) level = 254;
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
+                var { action, expectedNewState } = this._getActionAndExpectedNewState('turn_on');
                 this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, brightness: level });
             }
         });
     }
 
-    async _updateTemperature(newValue: number | string): Promise<any> {
+    private async _updateTemperature(newValue: number | string): Promise<ServicePromise> {
         return new Promise<any>((resolve, _reject) => {
             var temp = Number(newValue);
             if (temp == NaN) {
-                resolve(new Error('Color temperature must be numeric'));
+                resolve({ message: 'Error', err: new Error('Color temperature must be numeric') });
             }
             else {
                 if (temp < this.attributes.min_mireds) temp = this.attributes.min_mireds;
                 else if (temp > this.attributes.max_mireds) temp = this.attributes.max_mireds;
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
+                var { action, expectedNewState } = this._getActionAndExpectedNewState('turn_on');
                 this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, color_temp: temp });
             }
         });
     }
 
-    async updateState(newState: string | boolean | number): Promise<ServicePromise> {
+    public async updateState(newState: string | boolean | number): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
-            var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+            var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
         });
     }
 
-    _getActionAndExpectedSNewtate(newState: boolean | number | string): ActionAndNewState {
+    protected _getActionAndExpectedNewState(newState: boolean | number | string): ActionAndNewState {
         let action: string = '';
         switch (typeof newState) {
             case 'boolean':

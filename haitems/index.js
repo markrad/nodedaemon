@@ -22,7 +22,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaItemFactory = void 0;
 const fs_1 = __importDefault(require("fs"));
 const log4js_1 = __importDefault(require("log4js"));
-//var config = require('../config.json').main;
 const CATEGORY = 'HaItemFactory';
 var logger = log4js_1.default.getLogger(CATEGORY);
 logger.level = 'info';

@@ -10,14 +10,13 @@ const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);
 
 export class WSWrapper extends EventEmitter {
-    url: string;
     private _url: string;
     private _pingRate: number;
     private _pingTimer: NodeJS.Timer;
     private _connected: boolean;
     private _closing: boolean;
     private _client: WebSocket;
-    constructor(url: string, pingRate: number) {
+    public constructor(url: string, pingRate: number) {
         super();
 
         if (!url) throw new Error('Error: WSWrapper requires url');
@@ -30,7 +29,7 @@ export class WSWrapper extends EventEmitter {
         logger.debug(`Constructed with ${this._url}`);
     }
     
-    async open(): Promise<void> {
+    public async open(): Promise<void> {
         this._closing = false;
         return new Promise(async (resolve, reject) => {
             while (true) {
@@ -64,7 +63,7 @@ export class WSWrapper extends EventEmitter {
                 }
                 catch (err) {
                     if (err instanceof DNSError) {
-                        logger.fatal(`Unable to resolve host address: ${this.url}`);
+                        logger.fatal(`Unable to resolve host address: ${this._url}`);
                         reject(err);
                         break;
                     }
@@ -94,9 +93,9 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
-    async send(data: string | Buffer): Promise<void> {
+    public async send(data: string | Buffer): Promise<void> {
         return new Promise<void>((resolve, reject) =>{
-            this._client.send(data, (err) => {
+            this._client.send(data, (err: Error) => {
                 if (err) {
                     reject(err);
                 }
@@ -107,7 +106,7 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
-    async close(): Promise<void> {
+    public async close(): Promise<void> {
         return new Promise(async (resolve, _reject) => {
             this._closing = true;
             logger.info('Closing');
@@ -129,11 +128,11 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
-    get connected(): boolean {
+    public get connected(): boolean {
         return this._connected;
     }
 
-    async _open(url: string): Promise<WebSocket> {
+    private async _open(url: string): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
             var client = new WebSocket(url);
             var connectFailed = (err: Error) => {
@@ -150,7 +149,7 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
-    _runPings() {
+    private _runPings() {
         if (this._pingRate > 0) {
             let pingId: number = 0;
             let pingOutstanding: number = 0;
@@ -177,5 +176,3 @@ export class WSWrapper extends EventEmitter {
         }
     }
 }
-
-//module.exports = WSWrapper;

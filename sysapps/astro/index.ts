@@ -13,53 +13,42 @@ const SECONDS_IN_A_DAY = 24 * 60 * 60;
 const logger = getLogger(CATEGORY);
 class Astro extends EventEmitter implements IApplication
 {
-    times: any;
-    events: string[];
-    lastEventSave: number;
-    lastMoonPhaseSave: string;
-    longitude: number;
-    latitude: number;
-    midnight: any;
-    moon: any;
-    //config: any;
-    private _dayStart: string;
-    private _dayEnd: string;
-constructor(controller: HaMain, _config: any)
-    {
+    private _times: any = {};
+    private _events: string[] = [
+        "sunrise",
+        "sunriseEnd",
+        "goldenHourEnd",
+        "solarNoon",
+        "goldenHour",
+        "sunsetStart",
+        "sunset",
+        "dusk",
+        "nauticalDusk",
+        "night",
+        "nadir",
+        "nightEnd",
+        "nauticalDawn",
+        "dawn"
+    ];;
+    private _lastEventSave: string = null;
+    private _lastMoonPhaseSave: string = '';
+    private _longitude: number;
+    private _latitude: number;
+    private _midnightSched: schedule.Job = null;
+    private _moonSched: schedule.Job = null;
+    private _dayStart: string = null;
+    private _dayEnd: string = null;
+    public constructor(controller: HaMain, _config: any) {
         super();
-        this.times = {};
-        this.events = [
-            "sunrise",
-            "sunriseEnd",
-            "goldenHourEnd",
-            "solarNoon",
-            "goldenHour",
-            "sunsetStart",
-            "sunset",
-            "dusk",
-            "nauticalDusk",
-            "night",
-            "nadir",
-            "nightEnd",
-            "nauticalDawn",
-            "dawn"
-        ];
-        this.lastEventSave = null;
-        this.lastMoonPhaseSave = '';
-        this.longitude = controller.haConfig.longitude;
-        this.latitude = controller.haConfig.latitude;
-        this.midnight = null;
-        this.moon = null;
-        //this.config = config.astro;
-        this._dayStart = null;
-        this._dayEnd = null;
+        this._longitude = controller.haConfig.longitude;
+        this._latitude = controller.haConfig.latitude;
         this._midnight();
         this._updateMoon();
         logger.info('Constructed')
     }
 
-    validate(config: any): boolean {
-        if (!this.longitude || !this.latitude) {
+    public validate(config: any): boolean {
+        if (!this._longitude || !this._latitude) {
             logger.error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
             return false;
         }
@@ -80,32 +69,32 @@ constructor(controller: HaMain, _config: any)
         return true;
     }
     
-    async run(): Promise<boolean> {
-        this.midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
-        this.moon = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
+    public async run(): Promise<boolean> {
+        this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
+        this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
 
         return true;
     }
 
-    stop() {
-        this.midnight.cancel();
-        this.moon.cancel();
+    public stop() {
+        this._midnightSched.cancel();
+        this._moonSched.cancel();
     }
 
-    _setupTimes(times1: GetTimesResult, times2: GetTimesResult)
+    private _setupTimes(times1: GetTimesResult, times2: GetTimesResult): void
     {
         logger.debug('In setupTimes');
-        var now = new Date();
-        var latest = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2)
-        var latestIndex: any = -1;
+        let now: Date = new Date();
+        let latest: Date = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2)
+        let latestIndex: string = null;
 
-        for (var event of this.events)
+        for (let event of this._events)
         {
-            this.times[event] = (this._isAfter((times1 as any)[event], now))
+            this._times[event] = (this._isAfter((times1 as any)[event], now))
                 ? (times1 as any)[event]
                 : (times2 as any)[event];
 
-            logger.debug(`Firing event ${event} at ${this.times[event].toString()}`);
+            logger.debug(`Firing event ${event} at ${this._times[event].toString()}`);
             setTimeout((myEvent, that) =>
             {
                 logger.debug(`Firing event ${myEvent}`);
@@ -118,36 +107,36 @@ constructor(controller: HaMain, _config: any)
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }
-            }, Number(this.times[event]) -  Number(now), event, this);
+            }, Number(this._times[event]) -  Number(now), event, this);
             
-            logger.trace(`astro - Compare ${this.times[event].toString()} to ${latest.toString()}`);
-            if (Number(this.times[event]) > Number(latest))
+            logger.trace(`astro - Compare ${this._times[event].toString()} to ${latest.toString()}`);
+            if (Number(this._times[event]) > Number(latest))
             {
                 logger.trace('astro - Replacing previous time');
-                latest = this.times[event];
+                latest = this._times[event];
                 latestIndex = event;
             }
         }
         
-        this.lastEventSave = latestIndex;
-        logger.debug(`Last event was ${this.lastEventSave}`);
+        this._lastEventSave = latestIndex;
+        logger.debug(`Last event was ${this._lastEventSave}`);
     }
 
-    _midnight(): void {
+    private _midnight(): void {
         var today: Date = new Date();
         var tomorrow: Date = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
         this._setupTimes(
-            getTimes(today, this.latitude, this.longitude),
-            getTimes(tomorrow, this.latitude, this.longitude));
+            getTimes(today, this._latitude, this._longitude),
+            getTimes(tomorrow, this._latitude, this._longitude));
     }
 
-    _updateMoon(): void
+    private _updateMoon(): void
     {
-        this.lastMoonPhaseSave = this._moonPhase();
-        this.emit("moonPhase", this.lastMoonPhaseSave);
+        this._lastMoonPhaseSave = this._moonPhase();
+        this.emit("moonPhase", this._lastMoonPhaseSave);
     }
 
-    _moonPhase(): string
+    private _moonPhase(): string
     {
         let d1 = new Date();
         let d2 = new Date(Number(d1) + SECONDS_IN_A_DAY * 1000);
@@ -200,50 +189,50 @@ constructor(controller: HaMain, _config: any)
         return phase;
     }
     
-    get lastEvent(): number
+    public get lastEvent(): string
     {
-        return this.lastEventSave;
+        return this._lastEventSave;
     }
 
-    getEvent(eventName: string): string
+    public getEvent(eventName: string): string
     {
-        if (this.times.hasOwnProperty(eventName))
-            return this.times[eventName];
+        if (this._times.hasOwnProperty(eventName))
+            return this._times[eventName];
         else
             return "0";
     }
     
-    get lastMoonPhase(): string
+    public get lastMoonPhase(): string
     {
-        return this.lastMoonPhaseSave;
+        return this._lastMoonPhaseSave;
     }
 
-    get isDark(): boolean {
+    public get isDark(): boolean {
         var temp = new Date();
         var result;
 
-        if (this._isBefore(this.times[this._dayStart], this.times[this._dayEnd])) {
-            result = (this._isBetween(temp, this.times[this._dayStart], this.times[this._dayEnd]))? false : true;
+        if (this._isBefore(this._times[this._dayStart], this._times[this._dayEnd])) {
+            result = (this._isBetween(temp, this._times[this._dayStart], this._times[this._dayEnd]))? false : true;
         } else {
-            result = (this._isBetween(temp, this.times[this._dayEnd], this.times[this._dayStart]))? true : false;
+            result = (this._isBetween(temp, this._times[this._dayEnd], this._times[this._dayStart]))? true : false;
         }
 
         return result;
     }
 
-    get isLight(): boolean {
+    public get isLight(): boolean {
         return this.isDark == false;
     }
 
-    _isBetween(test: Date, low: Date, high: Date): boolean {
+    private _isBetween(test: Date, low: Date, high: Date): boolean {
         return Number(test) > Number(low) && Number(test) < Number(high);
     }
 
-    _isBefore(test: Date, comparand: Date): boolean {
+    private _isBefore(test: Date, comparand: Date): boolean {
         return Number(test) < Number(comparand);
     }
 
-    _isAfter(test: Date, comparand: Date): boolean {
+    private _isAfter(test: Date, comparand: Date): boolean {
         return Number(test) > Number(comparand);
     }
 }

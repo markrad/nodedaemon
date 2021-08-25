@@ -101,6 +101,7 @@ class DynDnsUpdater {
                                 switch (rc) {
                                     case 'good':
                                     case 'nochg':
+                                        // HACK Must be a better way to do this
                                         let nowString = now.getFullYear() + '-' +
                                             (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
                                             now.getDate().toString().padStart(2, '0') + ' ' +

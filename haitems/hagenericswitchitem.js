@@ -30,6 +30,8 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
         this._support = (_b = (_a = this.attributes) === null || _a === void 0 ? void 0 : _a.supported_features) !== null && _b !== void 0 ? _b : 0;
         if (this.isBrightnessSupported)
             this.updateBrightness = this._updateBrightness;
+        if (this.isTemperatureSupported)
+            this.updateTemperature = this._updateTemperature;
         this.on('new_state', (that, _oldstate) => {
             let brightnessMsg = `${that.isOn && that.isBrightnessSupported ? 'Brightness: ' + that.brightness : ''}`;
             let tempMsg = `${that.isOn && that.isTemperatureSupported ? 'Temperature: ' + that.temperature : ''}`;
@@ -127,30 +129,34 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
     get isSwitch() {
         return true;
     }
+    // This function will be replaced if brightness is supported
     updateBrightness(_newValue) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise(resolve => resolve(new Error('Brightness is not supported')));
         });
     }
+    // This function will be replaced if temperature is supported
     updateTemperature(_newValue) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise(resolve => resolve(new Error('Temperature is not supported')));
         });
     }
     _updateBrightness(newValue) {
-        return new Promise((resolve, _reject) => {
-            var level = Number(newValue);
-            if (level == NaN) {
-                resolve(new Error('Brightness value must be a number between 1 and 254'));
-            }
-            else {
-                if (level < 0)
-                    level = 0;
-                else if (level > 254)
-                    level = 254;
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
-                this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, brightness: level });
-            }
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => {
+                var level = Number(newValue);
+                if (level == NaN) {
+                    resolve({ message: 'Error', err: new Error('Brightness value must be a number between 1 and 254') });
+                }
+                else {
+                    if (level < 0)
+                        level = 0;
+                    else if (level > 254)
+                        level = 254;
+                    var { action, expectedNewState } = this._getActionAndExpectedNewState('turn_on');
+                    this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, brightness: level });
+                }
+            });
         });
     }
     _updateTemperature(newValue) {
@@ -158,14 +164,14 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
             return new Promise((resolve, _reject) => {
                 var temp = Number(newValue);
                 if (temp == NaN) {
-                    resolve(new Error('Color temperature must be numeric'));
+                    resolve({ message: 'Error', err: new Error('Color temperature must be numeric') });
                 }
                 else {
                     if (temp < this.attributes.min_mireds)
                         temp = this.attributes.min_mireds;
                     else if (temp > this.attributes.max_mireds)
                         temp = this.attributes.max_mireds;
-                    var { action, expectedNewState } = this._getActionAndExpectedSNewtate('turn_on');
+                    var { action, expectedNewState } = this._getActionAndExpectedNewState('turn_on');
                     this._callServicePromise(resolve, 'on', expectedNewState, this.type, action, { entity_id: this.entityId, color_temp: temp });
                 }
             });
@@ -174,12 +180,12 @@ class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateabl
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
             });
         });
     }
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedNewState(newState) {
         let action = '';
         switch (typeof newState) {
             case 'boolean':

@@ -2,34 +2,33 @@ import { State } from '../hamain/index.js';
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemInputNumber extends HaParentItem {
-    constructor(item: State) {
+    public constructor(item: State) {
         super(item);
-        this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });
     }
 
-    async updateState(newState: string | number | boolean): Promise<ServicePromise> {
+    public async updateState(newState: string | number | boolean): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
-            var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+            var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId, value: expectedNewState });
         });
     }
 
-    async incrementState() {
+    public async incrementState() {
         return this.updateState(Number(this.state) + 1);
     }
 
-    async decrementState() {
+    public async decrementState() {
         return this.updateState(Number(this.state - 1));
     }
 
-    get state(): number {
+    public get state(): number {
         return Number(super.state);
     }
 
-    _getActionAndExpectedSNewtate(newState: string | number | boolean): ActionAndNewState { 
+    protected _getActionAndExpectedNewState(newState: string | number | boolean): ActionAndNewState { 
         let action = 'set_value';
         let expectedNewState = null;
 

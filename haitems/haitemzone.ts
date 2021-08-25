@@ -2,22 +2,22 @@ import { State } from '../hamain/index.js';
 import { HaParentItem } from './haparentitem.js';
 
 class HaItemZone extends HaParentItem {
-    constructor(item: State) {
+    public constructor(item: State) {
         super(item);
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });
     }
 
-    get longitude() {
+    public get longitude(): number {
         return this.attributes.longitude;
     }
 
-    get latitude() {
+    public get latitude(): number {
         return this.attributes.latitude;
     }
 
-    get radius() {
+    public get radius(): number {
         return this.attributes.radius;
     }
 }

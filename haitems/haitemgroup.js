@@ -13,7 +13,7 @@ const hagenericswitchitem_js_1 = require("./hagenericswitchitem.js");
 class HaItemGroup extends hagenericswitchitem_js_1.HaGenericSwitchItem {
     constructor(item) {
         super(item);
-        this.children = item.attributes.entity_id;
+        this._children = item.attributes.entity_id;
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });
@@ -21,10 +21,13 @@ class HaItemGroup extends hagenericswitchitem_js_1.HaGenericSwitchItem {
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 this._callServicePromise(resolve, newState, expectedNewState, 'homeassistant', action, { entity_id: this.entityId, value: expectedNewState });
             });
         });
+    }
+    get children() {
+        return this._children;
     }
 }
 module.exports = HaItemGroup;

@@ -7,44 +7,41 @@ const CATEGORY = 'UpdateExternalIP';
 var logger = getLogger(CATEGORY);
 
 class UpdateExternalIP {
-    external_ip: IHaItemEditable;
-    interval: NodeJS.Timer;
-    config: any;
-    multiplier: number = 24;
-    delay: number = 5;
-    constructor(controller: HaMain, config: any) {
-        this.external_ip = SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this.config = config;
-        this.delay = 5;
-        this.multiplier = 24;       // Check every two minutes
-        this.interval = null;
+    _external_ip: IHaItemEditable;
+    _interval: NodeJS.Timer = null;
+    _config: any;
+    _multiplier: number = 24;
+    _delay: number = 5;
+    public constructor(controller: HaMain, config: any) {
+        this._external_ip = SafeItemAssign(controller.items.getItem('var.external_ip'));
+        this._config = config;
         logger.debug('Constructed');
     }
 
-    async run() {
+    public async run() {
         let counter = 0;
 
-        this.interval = setInterval(async (multiplier) => {
+        this._interval = setInterval(async (multiplier) => {
             if (++counter % multiplier == 0) {
                 counter = 0;
                 try {
-                    let currentIP = await this.whatsMyIP();
+                    let currentIP = await this._whatsMyIP();
 
                     logger.info(`Updating external IP address to ${currentIP}`);
-                    this.external_ip.updateState(currentIP);
+                    this._external_ip.updateState(currentIP);
                 }
                 catch (err) {
                     logger.error(`Could not get IP address: ${err}`);
                 }
             }
-        }, this.delay * 1000, this.multiplier);
+        }, this._delay * 1000, this._multiplier);
     }
 
-    async stop() {
-        clearInterval(this.interval);
+    public async stop() {
+        clearInterval(this._interval);
     }
 
-    async whatsMyIP(): Promise<string> {
+    private async _whatsMyIP(): Promise<string> {
         const IP_HOST = 'api.ipify.org';
         return new Promise((resolve, reject) => {
             const options = {

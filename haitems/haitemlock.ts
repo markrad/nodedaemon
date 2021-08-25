@@ -2,7 +2,7 @@ import { State } from '../hamain/index.js';
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem.js';
 
 class HaItemLock extends HaParentItem {
-    constructor(item: State) {
+    public constructor(item: State) {
         super(item);
         this.logger.level = 'debug';
         this.on('new_state', (that, _oldstate) => {
@@ -10,30 +10,30 @@ class HaItemLock extends HaParentItem {
         });
     }
 
-    lock() {
-        return this.updateState('lock');
+    public async lock(): Promise<ServicePromise> {
+        return await this.updateState('lock');
     }
 
-    unlock() {
+    public async unlock(): Promise<ServicePromise> {
         return this.updateState('unlock');
     }
 
-    get isLocked() {
+    public get isLocked(): boolean {
         return this.state == 'locked';
     }
 
-    get isUnlocked() {
+    public get isUnlocked(): boolean {
         return this.state == 'unlocked';
     }
 
-    async updateState(newState: string | number | boolean): Promise<ServicePromise> {
+    public async updateState(newState: string | number | boolean): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
-            var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+            var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
             this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
         });
     }
 
-    _getActionAndExpectedSNewtate(newState: string | number | boolean): ActionAndNewState { 
+    protected _getActionAndExpectedNewState(newState: string | number | boolean): ActionAndNewState { 
         let action = '';
         switch (typeof newState) {
             case 'boolean':

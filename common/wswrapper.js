@@ -67,7 +67,7 @@ class WSWrapper extends events_1.default {
                     }
                     catch (err) {
                         if (err instanceof haInterfaceError_1.DNSError) {
-                            logger.fatal(`Unable to resolve host address: ${this.url}`);
+                            logger.fatal(`Unable to resolve host address: ${this._url}`);
                             reject(err);
                             break;
                         }

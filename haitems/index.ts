@@ -2,16 +2,15 @@ import fs from 'fs';
 import log4js from 'log4js';
 import { HaInterface } from '../hainterface';
 import { IHaItem } from './haparentitem';
-//var config = require('../config.json').main;
 
 const CATEGORY: string = 'HaItemFactory';
 var logger: any = log4js.getLogger(CATEGORY);
 logger.level = 'info';
 
 export class HaItemFactory {
-    _itemClasses: any;
+    private _itemClasses: any;
 
-    constructor() {
+    public constructor() {
         this._itemClasses = {};
         this._getItemObjects()
             .then(() => logger.debug('Objects acquired'))
@@ -21,7 +20,7 @@ export class HaItemFactory {
             });
     }
 
-    getItemObject(item: any, transport: HaInterface): IHaItem {
+    public getItemObject(item: any, transport: HaInterface): IHaItem {
         let itemType: string = item.entity_id.split('.')[0];
         if (itemType in this._itemClasses) {
             return new this._itemClasses[itemType](item, transport);
@@ -31,7 +30,7 @@ export class HaItemFactory {
         }
     }
 
-    async _getItemObjects(): Promise<void> {
+    private async _getItemObjects(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
                 const dir = await fs.promises.opendir(__dirname);

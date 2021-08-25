@@ -25,7 +25,7 @@ function config(config, layouts) {
         mqttOptions.username = config.username;
     if (config.password != null)
         mqttOptions.password = config.password;
-    let client = mqtt_1.default.connect(`${mqttHost}`, mqttOptions);
+    let client = mqtt_1.default.connect(mqttHost, mqttOptions);
     return mqttAppender(layout, config.otherOptions, client, mqttTopic);
 }
 exports.configure = config;

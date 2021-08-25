@@ -20,11 +20,11 @@ class HaItemInputDateTime extends haparentitem_js_1.HaParentItem {
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                let { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 if (action == 'error') {
                     let err = new Error(`Bad value passed to updateState - ${newState}`);
                     this.logger.error(`${err.message}`);
-                    resolve({ action: action, error: err });
+                    resolve({ message: action, err: err });
                 }
                 else {
                     this._callServicePromise(resolve, newState, expectedNewState, 'var', action, { entity_id: this.entityId, value: expectedNewState });
@@ -32,7 +32,7 @@ class HaItemInputDateTime extends haparentitem_js_1.HaParentItem {
             });
         });
     }
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedNewState(newState) {
         let action = 'set';
         let m = new Date(newState);
         let expectedNewState;

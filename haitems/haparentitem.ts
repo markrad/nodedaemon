@@ -161,7 +161,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('callservice', domain, service, state);
     }
 
-    protected _callServicePromise(resolve: (ret: ServicePromise) => void, newState: string | boolean | number, expectedState: string, domain: string, service: string, state: ServiceTarget): void {
+    protected async _callServicePromise(resolve: (ret: ServicePromise) => void, newState: string | boolean | number, expectedState: string, domain: string, service: string, state: ServiceTarget): Promise<ServicePromise> {
         
         if (service == 'error') {
             let err: Error = new Error(`Bad value passed to updateState - ${newState}`);
@@ -198,11 +198,11 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         }
     }
 
-    protected _getActionAndExpectedSNewtate(newState: any): ActionAndNewState {
+    protected _getActionAndExpectedNewState(newState: any): ActionAndNewState {
         return { action: newState, expectedNewState: newState };
     }
 
-    protected _childOveride(_state?: ServiceTarget): boolean {
+    protected _childOveride(_state: ServiceTarget): boolean {
         return false;
     }
 }

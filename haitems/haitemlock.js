@@ -19,10 +19,14 @@ class HaItemLock extends haparentitem_js_1.HaParentItem {
         });
     }
     lock() {
-        return this.updateState('lock');
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.updateState('lock');
+        });
     }
     unlock() {
-        return this.updateState('unlock');
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.updateState('unlock');
+        });
     }
     get isLocked() {
         return this.state == 'locked';
@@ -33,12 +37,12 @@ class HaItemLock extends haparentitem_js_1.HaParentItem {
     updateState(newState) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, _reject) => {
-                var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState);
+                var { action, expectedNewState } = this._getActionAndExpectedNewState(newState);
                 this._callServicePromise(resolve, newState, expectedNewState, this.type, action, { entity_id: this.entityId });
             });
         });
     }
-    _getActionAndExpectedSNewtate(newState) {
+    _getActionAndExpectedNewState(newState) {
         let action = '';
         switch (typeof newState) {
             case 'boolean':

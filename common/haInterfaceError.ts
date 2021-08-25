@@ -4,8 +4,8 @@ export function ErrorFactory(err: Error) {
     if (!(err instanceof Error)) {
         return err;
     }
-    else if ((err as any).syscall) {
-        switch ((err as any).syscall) {
+    else if ((err as HaInterfaceError).syscall) {
+        switch ((err as HaInterfaceError).syscall) {
             case 'getaddrinfo':
                 return new DNSError(err);
             case 'connect':
@@ -21,49 +21,49 @@ export function ErrorFactory(err: Error) {
 }
 
 export class HaInterfaceError extends Error {
-    errno: number;
-    innerErr: Error;
-    name: string;
-    syscall?: number;
-    code?: string;
-    constructor(err: Error) {
+    public errno: number;
+    public innerErr: Error;
+    public name: string;
+    public syscall?: string;
+    public code?: string;
+    public constructor(err: Error) {
         super(err.message);
-        this.errno = (err as any).errno;
+        this.errno = (err as HaInterfaceError).errno;
         this.innerErr = err;
     }
 }
 
 export class GenericSyscallError extends HaInterfaceError {
-    constructor(err: Error) {
+    public constructor(err: Error) {
         super(err);
         this.name = 'GenericSyscallError';
-        this.syscall = (err as any).syscall;
+        this.syscall = (err as HaInterfaceError).syscall;
     }
 }
 
 export class ConnectionError extends HaInterfaceError {
-    constructor(err: Error) {
+    public constructor(err: Error) {
         super(err);
         this.name = 'ConnectionError';
-        this.code = (err as any).code;
+        this.code = (err as HaInterfaceError).code;
     }
 }
 
 export class DNSError extends HaInterfaceError {
-    constructor(err: Error) {
+    public constructor(err: Error) {
         super(err);
         this.name = 'DNSError';
     }
 }
 
 export class WebSocketError extends Error {
-    constructor(message: string) {
+    public constructor(message: string) {
         super(message);
     }
 }
 
 export class AuthenticationError extends Error {
-    constructor(message: string) {
+    public constructor(message: string) {
         super(message);
     }
 }

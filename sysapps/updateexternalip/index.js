@@ -19,39 +19,37 @@ const CATEGORY = 'UpdateExternalIP';
 var logger = log4js_1.getLogger(CATEGORY);
 class UpdateExternalIP {
     constructor(controller, config) {
-        this.multiplier = 24;
-        this.delay = 5;
-        this.external_ip = haparentitem_1.SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this.config = config;
-        this.delay = 5;
-        this.multiplier = 24; // Check every two minutes
-        this.interval = null;
+        this._interval = null;
+        this._multiplier = 24;
+        this._delay = 5;
+        this._external_ip = haparentitem_1.SafeItemAssign(controller.items.getItem('var.external_ip'));
+        this._config = config;
         logger.debug('Constructed');
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             let counter = 0;
-            this.interval = setInterval((multiplier) => __awaiter(this, void 0, void 0, function* () {
+            this._interval = setInterval((multiplier) => __awaiter(this, void 0, void 0, function* () {
                 if (++counter % multiplier == 0) {
                     counter = 0;
                     try {
-                        let currentIP = yield this.whatsMyIP();
+                        let currentIP = yield this._whatsMyIP();
                         logger.info(`Updating external IP address to ${currentIP}`);
-                        this.external_ip.updateState(currentIP);
+                        this._external_ip.updateState(currentIP);
                     }
                     catch (err) {
                         logger.error(`Could not get IP address: ${err}`);
                     }
                 }
-            }), this.delay * 1000, this.multiplier);
+            }), this._delay * 1000, this._multiplier);
         });
     }
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
-            clearInterval(this.interval);
+            clearInterval(this._interval);
         });
     }
-    whatsMyIP() {
+    _whatsMyIP() {
         return __awaiter(this, void 0, void 0, function* () {
             const IP_HOST = 'api.ipify.org';
             return new Promise((resolve, reject) => {

@@ -3,16 +3,16 @@ import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
 import { ActionAndNewState, ServicePromise } from './haparentitem.js';
 
 class HaItemVar extends HaGenericUpdateableItem {
-    constructor(item: State) {
+    public constructor(item: State) {
         super(item);
         this.on('new_state', (that, _oldstate) => {
             this.logger.debug(`Received new state: ${that.state}`);
         });
     }
 
-    async updateState(newState: string | boolean | number): Promise<ServicePromise> {
+    public async updateState(newState: string | boolean | number): Promise<ServicePromise> {
         return new Promise<ServicePromise>((resolve, _reject) => {
-            var { action, expectedNewState } = this._getActionAndExpectedSNewtate(newState as string);
+            var { action, expectedNewState } = this._getActionAndExpectedNewState(newState as string);
             var myResolve = (ret: ServicePromise) => {
                 if (ret.message == 'success') {
                     // Call var.update to update icons etc.
@@ -25,7 +25,7 @@ class HaItemVar extends HaGenericUpdateableItem {
         });
     }
 
-    _getActionAndExpectedSNewtate(newState: string): ActionAndNewState { 
+    protected _getActionAndExpectedNewState(newState: string): ActionAndNewState { 
         let action = 'set';
         let expectedNewState = newState.toString();
 
