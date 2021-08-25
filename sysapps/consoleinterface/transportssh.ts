@@ -2,7 +2,8 @@ import fs from 'fs';
 import * as Crypto from 'crypto';
 import path from 'path';
 import { Server, utils, Connection, AuthContext, Session, PseudoTtyInfo }  from 'ssh2';
-import { ConsoleInterface, IChannel, ITransport } from './';
+import { ConsoleInterface, ITransport } from './';
+import { IChannel } from './ichannel';
 import { getLogger } from "log4js";
 import { ICommand } from './ICommand';
 

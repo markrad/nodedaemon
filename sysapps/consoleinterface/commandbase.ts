@@ -1,4 +1,5 @@
-import { ConsoleInterface, IChannel } from '.';
+import { ConsoleInterface } from '.';
+import { IChannel } from './ichannel';
 import { ICommand } from './ICommand';
 
 export abstract class CommandBase implements ICommand {

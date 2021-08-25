@@ -1,7 +1,8 @@
 "use strict";
 
 import { getLogger, Logger } from 'log4js';
-import { ConsoleInterface, IChannel } from '.';
+import { ConsoleInterface } from '.';
+import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
 import { ICommand } from './ICommand';
 

@@ -1,7 +1,8 @@
-import { ConsoleInterface, IChannel } from ".";
+import { ConsoleInterface } from ".";
 import { AppInfo } from "../../hamain";
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase';
+import { IChannel } from "./ichannel";
 
 const CATEGORY: string = 'CommandApp';
 var logger = getLogger(CATEGORY);

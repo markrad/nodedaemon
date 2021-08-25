@@ -1,4 +1,5 @@
-import { ConsoleInterface, IChannel } from ".";
+import { ConsoleInterface } from ".";
+import { IChannel } from "./ichannel";
 
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase'; 

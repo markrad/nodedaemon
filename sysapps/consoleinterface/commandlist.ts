@@ -1,6 +1,7 @@
 import { getLogger, Logger } from "log4js";
 import { CommandBase } from './commandbase'; 
-import { ConsoleInterface, IChannel } from './';
+import { ConsoleInterface } from './';
+import { IChannel } from "./ichannel";
 import { IHaItem } from "../../haitems/haparentitem";
 
 const CATEGORY: string = 'CommandList';

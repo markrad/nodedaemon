@@ -10,10 +10,6 @@ const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
 
 // TODO put exported interfaces into their own files
-export interface IChannel {
-    write: (data: string) => void;
-}
-
 export interface ITransport {
     start(): Promise<void>;
     stop(): Promise<void>;
