@@ -24,7 +24,7 @@ class CommandStop extends commandbase_1.CommandBase {
     execute(inputArray, that, sock) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray);
+                this._validateParameters(inputArray);
                 logger.debug('Stop called');
                 sock.write('Requested stop will occur in five seconds\r\n');
                 setTimeout(() => __awaiter(this, void 0, void 0, function* () {

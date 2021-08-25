@@ -57,7 +57,7 @@ class CommandList extends commandbase_1.CommandBase {
     execute(inputArray, that, sock) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray);
+                this._validateParameters(inputArray);
                 let items;
                 switch (inputArray[1]) {
                     case 'apps':

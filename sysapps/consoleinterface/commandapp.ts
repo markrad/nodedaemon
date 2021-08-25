@@ -7,15 +7,15 @@ const CATEGORY: string = 'CommandApp';
 var logger = getLogger(CATEGORY);
 
 export class CommandApp extends CommandBase {
-    constructor() {
+    public constructor() {
         super('app', ['start', 'stop', 'list']);
     }
 
-    get helpText(): string {
+    public get helpText(): string {
         return `${this.commandName}\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)`;
     }
 
-    async _appStart(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    private async _appStart(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         return new Promise(async (resolve, reject) => {
             logger.debug('app start called');
             let appName: string = inputArray[2];
@@ -43,7 +43,7 @@ export class CommandApp extends CommandBase {
         });
     }
 
-    async _appStop(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    private async _appStop(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         return new Promise(async (resolve, reject) => {
             logger.debug('app stop called');
             let appName: string = inputArray[2];
@@ -71,14 +71,14 @@ export class CommandApp extends CommandBase {
         });
     }
 
-    _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
+    private _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
         logger.debug('app list called');
         that.controller.apps.forEach((app: AppInfo) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
         });
     }
 
-    tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
+    public tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[] = that.controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
         
         if (possibles.length == 0 || (tabCount < 2 && possibles.length > 1)) {
@@ -89,9 +89,9 @@ export class CommandApp extends CommandBase {
         }
     }
 
-    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
-            this.validateParameters(inputArray);
+            this._validateParameters(inputArray);
             switch (inputArray[1]) {
                 case "start":
                     if (inputArray.length != 3) {

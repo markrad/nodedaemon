@@ -21,7 +21,7 @@ class CommandGetConfig extends commandbase_1.CommandBase {
     execute(inputArray, that, sock) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray);
+                this._validateParameters(inputArray);
                 sock.write('Configuration:\r\n');
                 sock.write(JSON.stringify(that.controller.haConfig, null, 2).replace(/\n/g, '\r\n'));
                 sock.write('\r\n');

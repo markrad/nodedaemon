@@ -26,18 +26,16 @@ class TransportSSH implements ITransport {
     _host: string;
     _port: number;
     _commands: ICommand[];
-    _users: User[];
-    _server: Server;
+    _users: User[] = [];
+    _server: Server = null;
     _hostKey: any;
     _allowdPubKey: any;
-    constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
+    public constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
         this._name = name;
         this._parent = parent;
         this._host = config?.ssh.host || '0.0.0.0';
         this._port = config?.ssh.port || 8822;
         this._commands = commands;
-        this._users = [];
-        this._server = null;
 
         if (!config?.ssh.certFile || !config?.ssh.keyFile) {
             throw new Error('Required certificate or key file locations are missing');
@@ -69,7 +67,7 @@ class TransportSSH implements ITransport {
         this._hostKey = fs.readFileSync(key);
     }
 
-    async _parseAndSend(stream: IChannel, cmd: string, interactive: boolean = false) {
+    private async _parseAndSend(stream: IChannel, cmd: string, interactive: boolean = false) {
 
         if (interactive) {
             stream.write('\r\n');
@@ -86,7 +84,7 @@ class TransportSSH implements ITransport {
         }
     }
 
-    async start(): Promise<void> {
+    public async start(): Promise<void> {
         this._server = new Server({ hostKeys: [this._hostKey] }, (client: Connection) => {
             logger.info('New client connected');
 
@@ -424,7 +422,7 @@ class TransportSSH implements ITransport {
         });
     }
 
-    async stop(): Promise<void> {
+    public async stop(): Promise<void> {
         return new Promise((resolve, _reject) => {
             this._server.close(() => resolve());
         });

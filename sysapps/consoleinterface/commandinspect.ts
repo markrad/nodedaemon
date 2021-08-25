@@ -9,15 +9,15 @@ const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);
 
 export class CommandInspect extends CommandBase {
-    constructor() {
+    public constructor() {
         super('inspect');
     }
 
-    get helpText(): string {
+    public get helpText(): string {
         return `${this.commandName} <optional regex>\tInspect items optionally filtered by a regex query`;
     }
 
-    tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
+    public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[] = [ ...that._controller.items.items ]
             .filter((item) => item[1].name.startsWith(parameters[1]))
             .map((item) => item[1].name)
@@ -25,9 +25,9 @@ export class CommandInspect extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, _commands: ICommand[]): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, _commands: ICommand[]): Promise<void> {
         try {
-            this.validateParameters(inputArray.slice(0, inputArray.length - 1));
+            this._validateParameters(inputArray.slice(0, inputArray.length - 1));
             if (inputArray.length != 2) {
                 throw new Error('Missing or invalid inspection target');
             }

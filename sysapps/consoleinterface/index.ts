@@ -23,29 +23,27 @@ export class ConsoleInterface implements IApplication {
     _config: any;
     _controller: HaMain;
     _items: ItemsManager;
-    _transports: ITransport[];
-    constructor(controller: HaMain) {
-        this._config;
+    _transports: ITransport[] = [];
+    public constructor(controller: HaMain) {
         this._controller = controller;
         this._items = controller.items;
-        this._transports = [];
     }
 
-    validate(config: any): boolean {
+    public validate(config: any): boolean {
         this._config = config;
         logger.info('Constructed');
         return true;
     }
 
-    get items(): ItemsManager {
+    public get items(): ItemsManager {
         return this._items;
     }
 
-    get controller(): HaMain {
+    public get controller(): HaMain {
         return this._controller;
     }
 
-    async run(): Promise<boolean> {
+    public async run(): Promise<boolean> {
         let name: string = this.controller.haConfig.location_name;
         // TODO Expose this to simplify the help command?
         let cmds: ICommand[] = [
@@ -83,7 +81,7 @@ export class ConsoleInterface implements IApplication {
         return true;
     }
 
-    async stop(): Promise<void> {
+    public async stop(): Promise<void> {
         return new Promise((resolve, reject) => {
             let rets: Promise<void>[] = [];
             this._transports.forEach(async (transport) => rets.push(transport.stop()));

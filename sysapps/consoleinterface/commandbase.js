@@ -16,7 +16,7 @@ class CommandBase {
         this._parameters = this._validateInputParameters(value);
         ;
     }
-    validateParameters(parameters) {
+    _validateParameters(parameters) {
         if (this.parameters == null) {
             if (parameters.length > 1) {
                 throw new Error(`Command ${this.commandName} does not accept parameters`);
@@ -60,5 +60,4 @@ class CommandBase {
     }
 }
 exports.CommandBase = CommandBase;
-// module.exports = CommandBase
 //# sourceMappingURL=commandbase.js.map

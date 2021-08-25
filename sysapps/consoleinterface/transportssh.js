@@ -40,13 +40,13 @@ const CATEGORY = 'TransportSSH';
 var logger = log4js_1.getLogger(CATEGORY);
 class TransportSSH {
     constructor(name, parent, commands, config) {
+        this._users = [];
+        this._server = null;
         this._name = name;
         this._parent = parent;
         this._host = (config === null || config === void 0 ? void 0 : config.ssh.host) || '0.0.0.0';
         this._port = (config === null || config === void 0 ? void 0 : config.ssh.port) || 8822;
         this._commands = commands;
-        this._users = [];
-        this._server = null;
         if (!(config === null || config === void 0 ? void 0 : config.ssh.certFile) || !(config === null || config === void 0 ? void 0 : config.ssh.keyFile)) {
             throw new Error('Required certificate or key file locations are missing');
         }

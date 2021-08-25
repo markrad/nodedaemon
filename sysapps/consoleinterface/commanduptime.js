@@ -21,7 +21,7 @@ class CommandUptime extends commandbase_1.CommandBase {
     execute(inputArray, that, sock) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray);
+                this._validateParameters(inputArray);
                 let millis = (new Date().getTime() - that.controller.startTime.getTime());
                 let seconds = (Math.floor((millis / 1000) % 60)).toString().padStart(2, '0') + ' second';
                 let minutes = (Math.floor((millis / (1000 * 60)) % 60)).toString().padStart(2, '0') + ' minute';

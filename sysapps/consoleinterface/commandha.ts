@@ -1,21 +1,20 @@
 "use strict";
 
 import { ConsoleInterface, IChannel } from ".";
-
 import { CommandBase } from './commandbase'; 
 
 export class CommandHa extends CommandBase {
-    constructor() {
+    public constructor() {
         super('ha', ['restart', 'stop', 'status']);
     }
 
-    get helpText(): string {
+    public get helpText(): string {
         return `${this.commandName} \tstatus\t\t\tGet Home Assistant Status\r\n\trestart\t\t\tRestart Home Assistant\r\n\tstop\t\t\tStop Home Assistant`;
     }
 
-    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
-            this.validateParameters(inputArray);
+            this._validateParameters(inputArray);
 
             if (inputArray.length != 2) {
                 throw new Error(`Too many parameters passed for ${inputArray[1]}`)

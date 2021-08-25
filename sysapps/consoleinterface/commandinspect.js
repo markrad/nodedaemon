@@ -31,7 +31,7 @@ class CommandInspect extends commandbase_1.CommandBase {
     execute(inputArray, that, sock, _commands) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray.slice(0, inputArray.length - 1));
+                this._validateParameters(inputArray.slice(0, inputArray.length - 1));
                 if (inputArray.length != 2) {
                     throw new Error('Missing or invalid inspection target');
                 }

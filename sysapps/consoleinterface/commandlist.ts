@@ -7,15 +7,15 @@ const CATEGORY: string = 'CommandList';
 var logger: Logger = getLogger(CATEGORY);
 
 export class CommandList extends CommandBase {
-    constructor() {
+    public constructor() {
         super('list', ['apps', 'items', 'types', 'names']);
     }
 
-    get helpText(): string {
+    public get helpText(): string {
         return `${this.commandName} \tapps\r\n\titems <optional regex>\r\n\ttypes <optional regex>\r\n\tnames <optional regex>\tList the selected type with optional regex filter`;
     }
 
-    tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
+    public tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let items: Map<string, IHaItem> = that.items.items;
         let possibles: string[];
         switch (parameters[1]) {
@@ -49,9 +49,9 @@ export class CommandList extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
-            this.validateParameters(inputArray);
+            this._validateParameters(inputArray);
             let items: IHaItem[];
             switch (inputArray[1]) {
                 case 'apps':
@@ -102,7 +102,7 @@ export class CommandList extends CommandBase {
         }
     }
 
-    _printItems(sock: IChannel, items: IHaItem[]): void {
+    private _printItems(sock: IChannel, items: IHaItem[]): void {
         const TYPE: string = 'Type';
         const NAME: string = 'Name';
         const FRIENDLY: string ='Friendly Name';
@@ -117,7 +117,7 @@ export class CommandList extends CommandBase {
         }
     }
 
-    _listapps(that: ConsoleInterface, sock: IChannel): void {
+    private _listapps(that: ConsoleInterface, sock: IChannel): void {
         logger.debug('listapps called');
         that.controller.apps.forEach((app) => {
             sock.write(`${app.name} ${app.path} ${app.status}\r\n`);

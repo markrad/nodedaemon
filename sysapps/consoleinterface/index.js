@@ -15,10 +15,9 @@ const CATEGORY = 'ConsoleInterface';
 var logger = log4js_1.getLogger(CATEGORY);
 class ConsoleInterface {
     constructor(controller) {
-        this._config;
+        this._transports = [];
         this._controller = controller;
         this._items = controller.items;
-        this._transports = [];
     }
     validate(config) {
         this._config = config;

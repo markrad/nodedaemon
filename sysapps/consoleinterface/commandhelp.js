@@ -21,7 +21,7 @@ class CommandHelp extends commandbase_1.CommandBase {
     execute(inputArray, _that, sock, commands) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray);
+                this._validateParameters(inputArray);
                 sock.write('Available commands:\r\n');
                 commands.forEach((item) => sock.write(`${item.helpText}\r\n`));
             }
@@ -32,5 +32,4 @@ class CommandHelp extends commandbase_1.CommandBase {
     }
 }
 exports.CommandHelp = CommandHelp;
-// module.exports = CommandHelp;
 //# sourceMappingURL=commandhelp.js.map

@@ -13,7 +13,7 @@ class TransportTelnet implements ITransport {
     _port: number;
     _commands: ICommand[];
     _server: net.Server;
-    constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
+    public constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
         this._name = name;
         this._parent = parent;
         this._host = config?.telnet?.host || '0.0.0.0';
@@ -22,7 +22,7 @@ class TransportTelnet implements ITransport {
         this._server = null;
     }
 
-    async _parseAndSend(stream: net.Socket, cmd: string): Promise<void> {
+    private async _parseAndSend(stream: net.Socket, cmd: string): Promise<void> {
 
         let words: string[] = cmd.trim().split(' ');
 
@@ -36,7 +36,7 @@ class TransportTelnet implements ITransport {
         }
     }
 
-    async start(): Promise<void> {
+    public async start(): Promise<void> {
         this._server = net.createServer();
         this._server.on('connection', async (sock: net.Socket) => {
             sock.write(`\nConnected to ${this._name} - enter help for a list of commands\n\n`);
@@ -59,7 +59,7 @@ class TransportTelnet implements ITransport {
         logger.info(`Telnet server listening on port ${this._port}`);
     }
 
-    async stop(): Promise<void> {
+    public async stop(): Promise<void> {
         return new Promise((resolve, _reject) => {
             this._server.close(() => resolve());
         });

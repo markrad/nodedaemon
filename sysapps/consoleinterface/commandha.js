@@ -21,7 +21,7 @@ class CommandHa extends commandbase_1.CommandBase {
     execute(inputArray, that, sock) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                this.validateParameters(inputArray);
+                this._validateParameters(inputArray);
                 if (inputArray.length != 2) {
                     throw new Error(`Too many parameters passed for ${inputArray[1]}`);
                 }

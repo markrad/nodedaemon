@@ -4,27 +4,27 @@ import { ICommand } from './ICommand';
 export abstract class CommandBase implements ICommand {
     private _commandName: string;
     private _parameters: string[];
-    constructor(commandName: string, parameters?: string[]) {
+    public constructor(commandName: string, parameters?: string[]) {
         this._commandName = commandName;
         this._parameters = this._validateInputParameters(parameters);
     }
 
-    abstract get helpText(): string;
-    abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<void>;
+    public abstract get helpText(): string;
+    public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<void>;
 
-    get commandName(): string {
+    public get commandName(): string {
         return this._commandName;
     }
 
-    get parameters(): string[] {
+    public get parameters(): string[] {
         return this._parameters;
     }
 
-    set parameters(value: string[]) {
+    public set parameters(value: string[]) {
         this._parameters = this._validateInputParameters(value);;
     }
 
-    validateParameters(parameters: string[]): void {
+    protected _validateParameters(parameters: string[]): void {
         if (this.parameters == null) {
             if (parameters.length > 1) {
                 throw new Error(`Command ${this.commandName} does not accept parameters`);
@@ -35,12 +35,12 @@ export abstract class CommandBase implements ICommand {
         }
     }
 
-    tabTargets(_that: ConsoleInterface, _tabCount: number, _parameters: string[]): string[] {
+    public tabTargets(_that: ConsoleInterface, _tabCount: number, _parameters: string[]): string[] {
         // If the command accepts a target then this needs to be overriden in the child
         return [];
     }
 
-    tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
+    public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         if (parameters.length == 2) {
             if (this.parameters == null) {
                 return [];
@@ -61,7 +61,7 @@ export abstract class CommandBase implements ICommand {
         }
     }
 
-    _validateInputParameters(parameters: string | string[]): string[] {
+    protected _validateInputParameters(parameters: string | string[]): string[] {
         if (!parameters) {
             return null;
         }
@@ -73,5 +73,3 @@ export abstract class CommandBase implements ICommand {
         return Array.isArray(parameters) ? parameters : [ parameters ];
     }
 }
-
-// module.exports = CommandBase

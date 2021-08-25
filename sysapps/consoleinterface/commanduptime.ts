@@ -2,17 +2,17 @@ import { ConsoleInterface, IChannel } from ".";
 import { CommandBase } from "./commandbase";
 
 export class CommandUptime extends CommandBase {
-    constructor() {
+    public constructor() {
         super('uptime');
     }
 
-    get helpText(): string {
+    public get helpText(): string {
         return `${this.commandName}\t\t\t\tTime since last restart`;
     }
 
-    async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
         try {
-            this.validateParameters(inputArray);
+            this._validateParameters(inputArray);
             let millis: number = (new Date().getTime() - that.controller.startTime.getTime());
             let seconds: string = (Math.floor((millis / 1000) % 60)).toString().padStart(2, '0') + ' second';
             let minutes: string = (Math.floor((millis / (1000 * 60)) % 60)).toString().padStart(2, '0') + ' minute';
