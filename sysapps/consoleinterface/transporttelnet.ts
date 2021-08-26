@@ -1,6 +1,5 @@
 import { ConsoleInterface, ITransport } from ".";
 import net from 'net';
-import { ICommand } from "./ICommand";
 import { getLogger } from 'log4js';
 
 const CATEGORY: string = 'TransportTelnet';
@@ -11,29 +10,13 @@ class TransportTelnet implements ITransport {
     _parent: ConsoleInterface;
     _host: string;
     _port: number;
-    _commands: ICommand[];
     _server: net.Server;
-    public constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
+    public constructor(name: string, parent: ConsoleInterface, config: any) {
         this._name = name;
         this._parent = parent;
         this._host = config?.telnet?.host || '0.0.0.0';
         this._port = config?.telnet?.port || 8821;
-        this._commands = commands;
         this._server = null;
-    }
-
-    private async _parseAndSend(stream: net.Socket, cmd: string): Promise<void> {
-
-        let words: string[] = cmd.trim().split(' ');
-
-        let command: ICommand = this._commands.find((entry) => entry.commandName == words[0].toLowerCase());
-
-        if (!command) {
-            stream.write(`Unknown command: ${words[0]}\r\n`);
-        }
-        else {
-            command.execute(words, this._parent, stream, this._commands);
-        }
     }
 
     public async start(): Promise<void> {
@@ -48,7 +31,7 @@ class TransportTelnet implements ITransport {
                     setTimeout(() => sock.end(), 500);
                 }
                 else {
-                    await this._parseAndSend(sock, data.toString());
+                    await this._parent.parseAndSend(sock, data.toString());
                     sock.write(`${this._name} $ `);
                 }
             });

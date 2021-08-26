@@ -16,6 +16,7 @@ var logger = log4js_1.getLogger(CATEGORY);
 class ConsoleInterface {
     constructor(controller) {
         this._transports = [];
+        this._cmds = [];
         this._controller = controller;
         this._items = controller.items;
     }
@@ -30,12 +31,29 @@ class ConsoleInterface {
     get controller() {
         return this._controller;
     }
+    get commands() {
+        return this._cmds;
+    }
+    parseAndSend(stream, cmd) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, _reject) => __awaiter(this, void 0, void 0, function* () {
+                let words = cmd.trim().split(' ');
+                let command = this._cmds.find((entry) => entry.commandName == words[0].toLowerCase());
+                if (!command) {
+                    stream.write(`Unknown command: ${words[0]}\r\n`);
+                }
+                else {
+                    yield command.execute(words, this, stream, this._cmds);
+                }
+                resolve();
+            }));
+        });
+    }
     run() {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let name = this.controller.haConfig.location_name;
-            // TODO Expose this to simplify the help command?
-            let cmds = [
+            this._cmds = [
                 new (require('./commandhelp')).CommandHelp(),
                 new (require('./commandgetconfig')).CommandGetConfig(),
                 new (require('./commanduptime')).CommandUptime(),
@@ -49,7 +67,7 @@ class ConsoleInterface {
                 try {
                     this._config.transports.forEach((transport) => {
                         try {
-                            this._transports.push(new (require(transport))(name, this, cmds, this._config));
+                            this._transports.push(new (require(transport))(name, this, this._config));
                         }
                         catch (err) {
                             logger.error(`Failed to create transport ${transport}: ${err}`);

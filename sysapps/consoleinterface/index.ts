@@ -5,6 +5,7 @@ import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
 import { getLogger, Logger } from "log4js";
 import { ICommand } from "./ICommand";
+import { IChannel } from "./ichannel";
 
 const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
@@ -20,6 +21,7 @@ export class ConsoleInterface implements IApplication {
     _controller: HaMain;
     _items: ItemsManager;
     _transports: ITransport[] = [];
+    _cmds: ICommand[] = [];
     public constructor(controller: HaMain) {
         this._controller = controller;
         this._items = controller.items;
@@ -39,10 +41,30 @@ export class ConsoleInterface implements IApplication {
         return this._controller;
     }
 
+    public get commands(): ICommand[] {
+        return this._cmds;
+    }
+
+    public async parseAndSend(stream: IChannel, cmd: string): Promise<void> {
+        return new Promise<void>(async (resolve, _reject) => {
+            let words = cmd.trim().split(' ');
+
+            let command = this._cmds.find((entry) => entry.commandName == words[0].toLowerCase());
+    
+            if (!command) {
+                stream.write(`Unknown command: ${words[0]}\r\n`);
+            }
+            else {
+                await command.execute(words, this, stream, this._cmds);
+            }
+            
+            resolve();
+        });
+    }
+
     public async run(): Promise<boolean> {
         let name: string = this.controller.haConfig.location_name;
-        // TODO Expose this to simplify the help command?
-        let cmds: ICommand[] = [
+        this._cmds = [
             new (require('./commandhelp')).CommandHelp(),
             new (require('./commandgetconfig')).CommandGetConfig(),
             new (require('./commanduptime')).CommandUptime(),
@@ -57,7 +79,7 @@ export class ConsoleInterface implements IApplication {
             try {
                 this._config.transports.forEach((transport: string) => {
                     try {
-                        this._transports.push(new (require(transport))(name, this, cmds, this._config));
+                        this._transports.push(new (require(transport))(name, this, this._config));
                     }
                     catch (err) {
                         logger.error(`Failed to create transport ${transport}: ${err}`);

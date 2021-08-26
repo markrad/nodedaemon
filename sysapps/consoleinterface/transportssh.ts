@@ -3,7 +3,6 @@ import * as Crypto from 'crypto';
 import path from 'path';
 import { Server, utils, Connection, AuthContext, Session, PseudoTtyInfo }  from 'ssh2';
 import { ConsoleInterface, ITransport } from './';
-import { IChannel } from './ichannel';
 import { getLogger } from "log4js";
 import { ICommand } from './ICommand';
 
@@ -26,17 +25,15 @@ class TransportSSH implements ITransport {
     _parent: any;
     _host: string;
     _port: number;
-    _commands: ICommand[];
     _users: User[] = [];
     _server: Server = null;
     _hostKey: any;
     _allowdPubKey: any;
-    public constructor(name: string, parent: ConsoleInterface, commands: ICommand[], config: any) {
+    public constructor(name: string, parent: ConsoleInterface, config: any) {
         this._name = name;
         this._parent = parent;
         this._host = config?.ssh.host || '0.0.0.0';
         this._port = config?.ssh.port || 8822;
-        this._commands = commands;
 
         if (!config?.ssh.certFile || !config?.ssh.keyFile) {
             throw new Error('Required certificate or key file locations are missing');
@@ -66,23 +63,6 @@ class TransportSSH implements ITransport {
 
         this._allowdPubKey = utils.parseKey(fs.readFileSync(cert));
         this._hostKey = fs.readFileSync(key);
-    }
-
-    private async _parseAndSend(stream: IChannel, cmd: string, interactive: boolean = false) {
-
-        if (interactive) {
-            stream.write('\r\n');
-        }
-        let words = cmd.trim().split(' ');
-
-        let command = this._commands.find((entry) => entry.commandName == words[0].toLowerCase());
-
-        if (!command) {
-            stream.write(`Unknown command: ${words[0]}\r\n`);
-        }
-        else {
-            command.execute(words, this._parent, stream, this._commands);
-        }
     }
 
     public async start(): Promise<void> {
@@ -155,7 +135,7 @@ class TransportSSH implements ITransport {
                                     logger.warn(`Stream failed: ${err}`)
                                 }
                             });
-                            this._parseAndSend(stream, info.command);
+                            this._parent._parseAndSend(stream, info.command);
                             stream.exit(0);
                             ending = true;
                             stream.end();
@@ -291,7 +271,7 @@ class TransportSSH implements ITransport {
                                 let allCmds: string[];
                                 if (len == 0 || !sig) {
                                     if (++tabCount > 1) {
-                                        allCmds = this._commands.map((cmd) => cmd.commandName.padEnd(8));
+                                        allCmds = this._parent.commands.map((cmd: ICommand) => cmd.commandName.padEnd(8));
                                         stream.write('\r\n');
                                         stream.write(`${allCmds.join('\t')}\r\n`);
                                         stream.write(`$ ${line.slice(0, len).toString()}`);
@@ -300,7 +280,7 @@ class TransportSSH implements ITransport {
                                 else {
                                     let cmdWords: string[] = line.slice(0, cursor).toString().split(' ');
                                     if (cmdWords.length == 1) {
-                                        allCmds = this._commands.filter((cmd) => cmd.commandName.startsWith(cmdWords[0])).map((cmd) => cmd.commandName);
+                                        allCmds = this._parent.commands.filter((cmd: ICommand) => cmd.commandName.startsWith(cmdWords[0])).map((cmd: ICommand) => cmd.commandName);
                                         if (allCmds.length == 1) {
                                             let cursorAdjust: number = line.slice(cursor, len).toString().length;
                                             line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].substring(cmdWords[0].length)), line.slice(cursor)]);
@@ -313,7 +293,7 @@ class TransportSSH implements ITransport {
                                         }
                                     }
                                     else {
-                                        let command: ICommand = this._commands.find((entry) => entry.commandName == cmdWords[0].toLowerCase());
+                                        let command: ICommand = this._parent.commands.find((cmd: ICommand) => cmd.commandName == cmdWords[0].toLowerCase());
                                         if (command) {
                                             let possibles: string[] = command.tabParameters(this._parent, ++tabCount, cmdWords);
                                             switch (possibles.length) {
@@ -363,7 +343,8 @@ class TransportSSH implements ITransport {
                                         return;
                                     }
                                     else {
-                                        await this._parseAndSend(stream, line.slice(0, len).toString(), true);
+                                        stream.write('\r\n');
+                                        await this._parent._parseAndSend(stream, line.slice(0, len).toString());
                                     }
                                     if (history.length == 0 || cmd != history[0]) {
                                         history.unshift(cmd);

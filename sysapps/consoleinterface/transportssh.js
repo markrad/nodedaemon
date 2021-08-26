@@ -39,14 +39,13 @@ const log4js_1 = require("log4js");
 const CATEGORY = 'TransportSSH';
 var logger = log4js_1.getLogger(CATEGORY);
 class TransportSSH {
-    constructor(name, parent, commands, config) {
+    constructor(name, parent, config) {
         this._users = [];
         this._server = null;
         this._name = name;
         this._parent = parent;
         this._host = (config === null || config === void 0 ? void 0 : config.ssh.host) || '0.0.0.0';
         this._port = (config === null || config === void 0 ? void 0 : config.ssh.port) || 8822;
-        this._commands = commands;
         if (!(config === null || config === void 0 ? void 0 : config.ssh.certFile) || !(config === null || config === void 0 ? void 0 : config.ssh.keyFile)) {
             throw new Error('Required certificate or key file locations are missing');
         }
@@ -69,21 +68,6 @@ class TransportSSH {
         }
         this._allowdPubKey = ssh2_1.utils.parseKey(fs_1.default.readFileSync(cert));
         this._hostKey = fs_1.default.readFileSync(key);
-    }
-    _parseAndSend(stream, cmd, interactive = false) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (interactive) {
-                stream.write('\r\n');
-            }
-            let words = cmd.trim().split(' ');
-            let command = this._commands.find((entry) => entry.commandName == words[0].toLowerCase());
-            if (!command) {
-                stream.write(`Unknown command: ${words[0]}\r\n`);
-            }
-            else {
-                command.execute(words, this._parent, stream, this._commands);
-            }
-        });
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -151,7 +135,7 @@ class TransportSSH {
                                         logger.warn(`Stream failed: ${err}`);
                                     }
                                 });
-                                this._parseAndSend(stream, info.command);
+                                this._parent._parseAndSend(stream, info.command);
                                 stream.exit(0);
                                 ending = true;
                                 stream.end();
@@ -287,7 +271,7 @@ class TransportSSH {
                                         let allCmds;
                                         if (len == 0 || !sig) {
                                             if (++tabCount > 1) {
-                                                allCmds = this._commands.map((cmd) => cmd.commandName.padEnd(8));
+                                                allCmds = this._parent.commands.map((cmd) => cmd.commandName.padEnd(8));
                                                 stream.write('\r\n');
                                                 stream.write(`${allCmds.join('\t')}\r\n`);
                                                 stream.write(`$ ${line.slice(0, len).toString()}`);
@@ -296,7 +280,7 @@ class TransportSSH {
                                         else {
                                             let cmdWords = line.slice(0, cursor).toString().split(' ');
                                             if (cmdWords.length == 1) {
-                                                allCmds = this._commands.filter((cmd) => cmd.commandName.startsWith(cmdWords[0])).map((cmd) => cmd.commandName);
+                                                allCmds = this._parent.commands.filter((cmd) => cmd.commandName.startsWith(cmdWords[0])).map((cmd) => cmd.commandName);
                                                 if (allCmds.length == 1) {
                                                     let cursorAdjust = line.slice(cursor, len).toString().length;
                                                     line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].substring(cmdWords[0].length)), line.slice(cursor)]);
@@ -309,7 +293,7 @@ class TransportSSH {
                                                 }
                                             }
                                             else {
-                                                let command = this._commands.find((entry) => entry.commandName == cmdWords[0].toLowerCase());
+                                                let command = this._parent.commands.find((cmd) => cmd.commandName == cmdWords[0].toLowerCase());
                                                 if (command) {
                                                     let possibles = command.tabParameters(this._parent, ++tabCount, cmdWords);
                                                     switch (possibles.length) {
@@ -358,7 +342,8 @@ class TransportSSH {
                                                 return;
                                             }
                                             else {
-                                                yield this._parseAndSend(stream, line.slice(0, len).toString(), true);
+                                                stream.write('\r\n');
+                                                yield this._parent._parseAndSend(stream, line.slice(0, len).toString());
                                             }
                                             if (history.length == 0 || cmd != history[0]) {
                                                 history.unshift(cmd);
