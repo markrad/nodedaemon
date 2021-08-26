@@ -4,7 +4,7 @@ import { IApplication } from "../../common/IApplication";
 import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
 import { getLogger, Logger } from "log4js";
-import { ICommand } from "./ICommand";
+import { ICommand } from "./icommand";
 import { IChannel } from "./ichannel";
 
 const CATEGORY: string = 'ConsoleInterface';

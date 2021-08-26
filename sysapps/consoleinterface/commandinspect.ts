@@ -4,7 +4,7 @@ import { getLogger, Logger } from 'log4js';
 import { ConsoleInterface } from '.';
 import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
-import { ICommand } from './ICommand';
+import { ICommand } from './icommand';
 
 const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);

@@ -1,7 +1,7 @@
 import { ConsoleInterface } from '.';
 import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
-import { ICommand } from './ICommand';
+import { ICommand } from './icommand';
 
 export class CommandHelp extends CommandBase {
     public constructor() {

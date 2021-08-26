@@ -1,6 +1,6 @@
 import { ConsoleInterface } from '.';
 import { IChannel } from './ichannel';
-import { ICommand } from './ICommand';
+import { ICommand } from './icommand';
 
 export abstract class CommandBase implements ICommand {
     private _commandName: string;
