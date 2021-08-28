@@ -116,7 +116,6 @@ class TransportSSH implements ITransport {
                 }
             })
             .on('ready', () => {
-
                 client.on('session', (accept: () => Session, _reject: boolean) => {
                     let session: Session = accept();
                     let line: Buffer = Buffer.alloc(256);
@@ -135,7 +134,7 @@ class TransportSSH implements ITransport {
                                     logger.warn(`Stream failed: ${err}`)
                                 }
                             });
-                            this._parent._parseAndSend(stream, info.command);
+                            this._parent.parseAndSend(stream, info.command);
                             stream.exit(0);
                             ending = true;
                             stream.end();
@@ -326,7 +325,6 @@ class TransportSSH implements ITransport {
                                                     len += resultLen - lastLen;
                                                     cursor += resultLen - lastLen;
                                                     stream.write(`$ ${line.slice(0, len).toString()}`);
-                                                    
                                                 break;
                                             }
                                         }
@@ -344,7 +342,7 @@ class TransportSSH implements ITransport {
                                     }
                                     else {
                                         stream.write('\r\n');
-                                        await this._parent._parseAndSend(stream, line.slice(0, len).toString());
+                                        await this._parent.parseAndSend(stream, line.slice(0, len).toString());
                                     }
                                     if (history.length == 0 || cmd != history[0]) {
                                         history.unshift(cmd);

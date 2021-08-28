@@ -135,7 +135,7 @@ class TransportSSH {
                                         logger.warn(`Stream failed: ${err}`);
                                     }
                                 });
-                                this._parent._parseAndSend(stream, info.command);
+                                this._parent.parseAndSend(stream, info.command);
                                 stream.exit(0);
                                 ending = true;
                                 stream.end();
@@ -343,7 +343,7 @@ class TransportSSH {
                                             }
                                             else {
                                                 stream.write('\r\n');
-                                                yield this._parent._parseAndSend(stream, line.slice(0, len).toString());
+                                                yield this._parent.parseAndSend(stream, line.slice(0, len).toString());
                                             }
                                             if (history.length == 0 || cmd != history[0]) {
                                                 history.unshift(cmd);

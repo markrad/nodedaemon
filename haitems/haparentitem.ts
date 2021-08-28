@@ -52,8 +52,10 @@ export interface IHaItemSwitch extends IHaItemEditable {
     get isTimerRunning(): boolean;
 }
 
-export function SafeItemAssign(item: IHaItem, throwOnFailure: boolean = false): IHaItemEditable {
-    let ret = (item.isEditable)
+export function SafeItemAssign(item: IHaItem, throwOnFailure: boolean = false): IHaItemEditable | IHaItemSwitch {
+    let ret = (item.isSwitch)
+        ? item as IHaItemSwitch
+        : item.isEditable
         ? item as IHaItemEditable
         : null;
 

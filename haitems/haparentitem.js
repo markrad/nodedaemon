@@ -19,9 +19,11 @@ const log4js_1 = require("log4js");
 // const RESPONSE_TIMEOUT: number = 30 * 1000
 const RESPONSE_TIMEOUT = 3 * 1000;
 function SafeItemAssign(item, throwOnFailure = false) {
-    let ret = (item.isEditable)
+    let ret = (item.isSwitch)
         ? item
-        : null;
+        : item.isEditable
+            ? item
+            : null;
     if (ret == null && throwOnFailure) {
         let msg = `Unable to convert ${item.entityId} to IHaItemEditable`;
         throw new Error(msg);

@@ -71,6 +71,7 @@ export class ConsoleInterface implements IApplication {
             new (require('./commandinspect')).CommandInspect(),
             new (require('./commandstop')).CommandStop(),
             new (require('./commandlist')).CommandList(),
+            new (require('./commandset')).CommandSet(),
             new (require('./commandapp')).CommandApp(),
             new (require('./commandha')).CommandHa(),
         ];

@@ -89,64 +89,63 @@ class MotionLight {
     }
 }
 class actioner {
-    // private _eventHandler: (that: IHaItem, oldState: State) => void;
     constructor(trip) {
         this._timer = null;
         this._trip = trip;
         this._timer = null;
-        // this._eventHandler = (that: IHaItem, _oldState: State) => {
-        //     logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
-        //     if (that.state == 'on') {
-        //         this._trip.lights.forEach((light: IHaItemSwitch) => {
-        //             light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
-        //         });
-        //         this._timer = setInterval(() => 
-        //         { 
-        //             if (!this._trip.lights[0].isTimerRunning) {
-        //                 clearInterval(this._timer);
-        //                 this._timer = null;
-        //             }
-        //             else if (this._trip.sensor.state == 'on') {
-        //                 logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
-        //                 this._trip.lights.forEach((light) => {
-        //                     logger.debug('Extenting turn off time');
-        //                     light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
-        //                 });
-        //             }
-        //         }, 30000);
-        //     }
-        //     else {
-        //         clearInterval(this._timer);
-        //         this._timer = null;
-        //     }
-        // }
+        this._eventHandler = (that, _oldState) => {
+            logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
+            if (that.state == 'on') {
+                this._trip.lights.forEach((light) => {
+                    light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+                });
+                this._timer = setInterval(() => {
+                    if (!this._trip.lights[0].isTimerRunning) {
+                        clearInterval(this._timer);
+                        this._timer = null;
+                    }
+                    else if (this._trip.sensor.state == 'on') {
+                        logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
+                        this._trip.lights.forEach((light) => {
+                            logger.debug('Extenting turn off time');
+                            light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+                        });
+                    }
+                }, 30000);
+            }
+            else {
+                clearInterval(this._timer);
+                this._timer = null;
+            }
+        };
         this._trip.sensor.on('new_state', this._eventHandler);
     }
-    _eventHandler(that, _oldState) {
-        logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
-        if (that.state == 'on') {
-            this._trip.lights.forEach((light) => {
-                light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
-            });
-            this._timer = setInterval(() => {
-                if (!this._trip.lights[0].isTimerRunning) {
-                    clearInterval(this._timer);
-                    this._timer = null;
-                }
-                else if (this._trip.sensor.state == 'on') {
-                    logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
-                    this._trip.lights.forEach((light) => {
-                        logger.debug('Extending turn off time');
-                        light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
-                    });
-                }
-            }, 30000);
-        }
-        else {
-            clearInterval(this._timer);
-            this._timer = null;
-        }
-    }
+    // private _eventHandler(that: IHaItem, _oldState: State): void {
+    //     logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
+    //     if (that.state == 'on') {
+    //         this._trip.lights.forEach((light: IHaItemSwitch) => {
+    //             light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+    //         });
+    //         this._timer = setInterval(() => 
+    //         { 
+    //             if (!this._trip.lights[0].isTimerRunning) {
+    //                 clearInterval(this._timer);
+    //                 this._timer = null;
+    //             }
+    //             else if (this._trip.sensor.state == 'on') {
+    //                 logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
+    //                 this._trip.lights.forEach((light) => {
+    //                     logger.debug('Extending turn off time');
+    //                     light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
+    //                 });
+    //             }
+    //         }, 30000);
+    //     }
+    //     else {
+    //         clearInterval(this._timer);
+    //         this._timer = null;
+    //     }
+    // }
     stop() {
         this._trip.sensor.off('new_state', this._eventHandler);
     }
