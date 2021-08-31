@@ -5,6 +5,9 @@ import { Server, utils, Connection, AuthContext, Session, PseudoTtyInfo }  from 
 import { ConsoleInterface, ITransport } from './';
 import { getLogger } from "log4js";
 import { ICommand } from './icommand';
+import { readFileSync } from 'fs';
+
+let parseKey = utils.parseKey;
 
 const CATEGORY: string = 'TransportSSH';
 var logger = getLogger(CATEGORY);
@@ -22,12 +25,12 @@ type Keys = {
 
 class TransportSSH implements ITransport {
     _name: string;
-    _parent: any;
+    _parent: ConsoleInterface;
     _host: string;
     _port: number;
     _users: User[] = [];
     _server: Server = null;
-    _hostKey: any;
+    _hostKey: Buffer;
     _allowdPubKey: any;
     public constructor(name: string, parent: ConsoleInterface, config: any) {
         this._name = name;
@@ -35,8 +38,8 @@ class TransportSSH implements ITransport {
         this._host = config?.ssh.host || '0.0.0.0';
         this._port = config?.ssh.port || 8822;
 
-        if (!config?.ssh.certFile || !config?.ssh.keyFile) {
-            throw new Error('Required certificate or key file locations are missing');
+        if (!config?.ssh.certFile) {
+            throw new Error('Required certificate location is missing');
         }
 
         if (!config?.ssh.users || typeof(config.ssh.users) != 'object' || Array.isArray(config.ssh.users) == false) {
@@ -61,8 +64,8 @@ class TransportSSH implements ITransport {
             key = path.join(__dirname, key);
         }
 
-        this._allowdPubKey = utils.parseKey(fs.readFileSync(cert));
         this._hostKey = fs.readFileSync(key);
+        this._allowdPubKey = parseKey(readFileSync(cert));
     }
 
     public async start(): Promise<void> {
@@ -88,10 +91,10 @@ class TransportSSH implements ITransport {
                     break;
                     case 'publickey':
                         let allowedPubKey: any = this._allowdPubKey.getPublicSSH();
-                        if (ctx.key.algo != allowedPubKey.type ||
+                        if (ctx.key.algo != this._allowdPubKey.type ||
                             ctx.key.data.length !== allowedPubKey.length ||
                             !Crypto.timingSafeEqual(ctx.key.data, allowedPubKey) ||
-                            (ctx.signature && allowedPubKey.verify(ctx.blob, ctx.signature) != true)) {
+                            (ctx.signature && this._allowdPubKey.verify(ctx.blob, ctx.signature) != true)) {
                                 return ctx.reject();
                         }
                     break;

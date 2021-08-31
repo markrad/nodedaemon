@@ -36,6 +36,8 @@ const Crypto = __importStar(require("crypto"));
 const path_1 = __importDefault(require("path"));
 const ssh2_1 = require("ssh2");
 const log4js_1 = require("log4js");
+const fs_2 = require("fs");
+let parseKey = ssh2_1.utils.parseKey;
 const CATEGORY = 'TransportSSH';
 var logger = log4js_1.getLogger(CATEGORY);
 class TransportSSH {
@@ -46,8 +48,8 @@ class TransportSSH {
         this._parent = parent;
         this._host = (config === null || config === void 0 ? void 0 : config.ssh.host) || '0.0.0.0';
         this._port = (config === null || config === void 0 ? void 0 : config.ssh.port) || 8822;
-        if (!(config === null || config === void 0 ? void 0 : config.ssh.certFile) || !(config === null || config === void 0 ? void 0 : config.ssh.keyFile)) {
-            throw new Error('Required certificate or key file locations are missing');
+        if (!(config === null || config === void 0 ? void 0 : config.ssh.certFile)) {
+            throw new Error('Required certificate location is missing');
         }
         if (!(config === null || config === void 0 ? void 0 : config.ssh.users) || typeof (config.ssh.users) != 'object' || Array.isArray(config.ssh.users) == false) {
             throw new Error('No userids were provided');
@@ -66,8 +68,8 @@ class TransportSSH {
         if (!path_1.default.isAbsolute(key)) {
             key = path_1.default.join(__dirname, key);
         }
-        this._allowdPubKey = ssh2_1.utils.parseKey(fs_1.default.readFileSync(cert));
         this._hostKey = fs_1.default.readFileSync(key);
+        this._allowdPubKey = parseKey(fs_2.readFileSync(cert));
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -91,10 +93,10 @@ class TransportSSH {
                             break;
                         case 'publickey':
                             let allowedPubKey = this._allowdPubKey.getPublicSSH();
-                            if (ctx.key.algo != allowedPubKey.type ||
+                            if (ctx.key.algo != this._allowdPubKey.type ||
                                 ctx.key.data.length !== allowedPubKey.length ||
                                 !Crypto.timingSafeEqual(ctx.key.data, allowedPubKey) ||
-                                (ctx.signature && allowedPubKey.verify(ctx.blob, ctx.signature) != true)) {
+                                (ctx.signature && this._allowdPubKey.verify(ctx.blob, ctx.signature) != true)) {
                                 return ctx.reject();
                             }
                             break;
