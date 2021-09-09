@@ -2,23 +2,29 @@ import { IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
 import http from 'http';
 import { getLogger } from "log4js";
+import { IApplication } from "../../common/IApplication";
 
 const CATEGORY = 'UpdateExternalIP';
 var logger = getLogger(CATEGORY);
 
-class UpdateExternalIP {
+// TODO: This needs to use the config
+class UpdateExternalIP implements IApplication {
     _external_ip: IHaItemEditable;
     _interval: NodeJS.Timer = null;
     _config: any;
-    _multiplier: number = 24;
-    _delay: number = 5;
-    public constructor(controller: HaMain, config: any) {
+    private _multiplier: number = 24;
+    private _delay: number = 5;
+    public constructor(controller: HaMain, _config: any) {
         this._external_ip = SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this._config = config;
-        logger.debug('Constructed');
+        // this._config = config;
+        logger.info('Constructed');
     }
 
-    public async run() {
+    public validate(_config: any): boolean {
+        return true;
+    }
+
+    public async run(): Promise<boolean> {
         let counter = 0;
 
         this._interval = setInterval(async (multiplier) => {
@@ -35,6 +41,8 @@ class UpdateExternalIP {
                 }
             }
         }, this._delay * 1000, this._multiplier);
+
+        return true;
     }
 
     public async stop() {

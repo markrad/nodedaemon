@@ -17,14 +17,18 @@ const http_1 = __importDefault(require("http"));
 const log4js_1 = require("log4js");
 const CATEGORY = 'UpdateExternalIP';
 var logger = log4js_1.getLogger(CATEGORY);
+// TODO: This needs to use the config
 class UpdateExternalIP {
-    constructor(controller, config) {
+    constructor(controller, _config) {
         this._interval = null;
         this._multiplier = 24;
         this._delay = 5;
         this._external_ip = haparentitem_1.SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this._config = config;
-        logger.debug('Constructed');
+        // this._config = config;
+        logger.info('Constructed');
+    }
+    validate(_config) {
+        return true;
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42,6 +46,7 @@ class UpdateExternalIP {
                     }
                 }
             }), this._delay * 1000, this._multiplier);
+            return true;
         });
     }
     stop() {

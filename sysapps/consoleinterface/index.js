@@ -19,10 +19,11 @@ class ConsoleInterface {
         this._cmds = [];
         this._controller = controller;
         this._items = controller.items;
+        logger.info('Constructed');
     }
     validate(config) {
         this._config = config;
-        logger.info('Constructed');
+        logger.info('Validated successfully');
         return true;
     }
     get items() {

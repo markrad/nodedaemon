@@ -25,11 +25,12 @@ export class ConsoleInterface implements IApplication {
     public constructor(controller: HaMain) {
         this._controller = controller;
         this._items = controller.items;
+        logger.info('Constructed');
     }
 
     public validate(config: any): boolean {
         this._config = config;
-        logger.info('Constructed');
+        logger.info('Validated successfully');
         return true;
     }
 

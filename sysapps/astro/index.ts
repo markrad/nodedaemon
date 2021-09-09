@@ -65,6 +65,7 @@ class Astro extends EventEmitter implements IApplication
 
         this._dayStart = config.daystart;
         this._dayEnd = config.dayend;
+        logger.info('Validated successful')
 
         return true;
     }

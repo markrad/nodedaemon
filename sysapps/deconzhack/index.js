@@ -22,7 +22,7 @@ class DeconzHack {
         this._client = null;
         this._ws = null;
         this._mqttOptions = { clean: true, clientId: "deCONZHack" };
-        logger.info('DeconzHack constructed');
+        logger.info('Constructed');
     }
     validate(configIn) {
         var _a, _b;
@@ -36,7 +36,7 @@ class DeconzHack {
             this._mqttConfig.topicTemplate += '%deviceid%';
         this._deconzConfig = Object.assign({ host: '127.0.0.1', port: 8443 }, ((_b = config.deconz) !== null && _b !== void 0 ? _b : {}));
         this._devices = config.devices;
-        logger.info('Validation successful');
+        logger.info('Validated successfully');
         return true;
     }
     run() {
