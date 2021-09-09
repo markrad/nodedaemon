@@ -16,6 +16,25 @@ export interface ITransport {
     stop(): Promise<void>;
 }
 
+/* -------------------------------------------------------------------------- *\
+    Two transports are provided and specified in the sample below. Either one
+    can be dropped. For example you may not want to use telnet since it is 
+    not encrypted and potentially insecure.
+
+    Config format:
+    {
+        consoleInterface: {
+            transports: ["./transportssh", "./transporttelnet" ],
+        }
+        "ssh": {
+            "certFile": <path to public cert for certificate authentication>,
+            "keyFile": <path to a key which I don't really get yet>,
+            "users": [
+                { "userid": "bob", "password": "bobspassword" }
+            ]
+        }
+    }
+\* -------------------------------------------------------------------------- */
 export class ConsoleInterface implements IApplication {
     _config: any;
     _controller: HaMain;

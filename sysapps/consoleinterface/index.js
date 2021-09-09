@@ -13,6 +13,25 @@ exports.ConsoleInterface = void 0;
 const log4js_1 = require("log4js");
 const CATEGORY = 'ConsoleInterface';
 var logger = log4js_1.getLogger(CATEGORY);
+/* -------------------------------------------------------------------------- *\
+    Two transports are provided and specified in the sample below. Either one
+    can be dropped. For example you may not want to use telnet since it is
+    not encrypted and potentially insecure.
+
+    Config format:
+    {
+        consoleInterface: {
+            transports: ["./transportssh", "./transporttelnet" ],
+        }
+        "ssh": {
+            "certFile": <path to public cert for certificate authentication>,
+            "keyFile": <path to a key which I don't really get yet>,
+            "users": [
+                { "userid": "bob", "password": "bobspassword" }
+            ]
+        }
+    }
+\* -------------------------------------------------------------------------- */
 class ConsoleInterface {
     constructor(controller) {
         this._transports = [];
