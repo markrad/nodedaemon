@@ -3,6 +3,7 @@
 import { IHaItem, IHaItemSwitch } from "../../haitems/haparentitem";
 import { HaMain, State } from "../../hamain";
 import { getLogger } from 'log4js'
+import { IApplication } from "../../common/IApplication";
 
 interface Trip {
     sensor: IHaItem;
@@ -13,12 +14,13 @@ interface Trip {
 const CATEGORY = 'MotionLight';
 var logger = getLogger(CATEGORY);
 
-class MotionLight {
+class MotionLight implements IApplication {
     private _controller: HaMain;
     private _actioners: actioner[] = [];
     private _trips: Trip[] = null;
     constructor(controller: HaMain) {
         this._controller = controller;
+        logger.info('Constructed');
     }
 
     public validate(config: any): boolean {
@@ -70,13 +72,13 @@ class MotionLight {
                     return trip;
                 }
             }).filter((item: Trip) => item != undefined);
-            logger.info('Constructed');
+            logger.info('Validated successfully');
 
             return true;
         }
     }
 
-    public async run() {
+    public async run(): Promise<boolean> {
         if (this._trips == null || this._trips.length == 0) {
             let err = new Error('No valid device pairs found');
             logger.warn(err.message);
@@ -84,6 +86,8 @@ class MotionLight {
         }
 
         this._trips.forEach((trip) => this._actioners.push(new actioner(trip)));
+
+        return true;
     }
 
     public async stop() {

@@ -52,7 +52,7 @@ class DynDnsUpdater {
         this._user = config.dyndnsupdater.user;
         this._updaterKey = config.dyndnsupdater.updaterKey;
         this._hostname = config.dyndnsupdater.hostname;
-        logger.debug('Constructed');
+        logger.info('Constructed');
     }
     validate(_config) {
         try {
@@ -72,6 +72,7 @@ class DynDnsUpdater {
             return false;
         }
         this._url = `https://${this._user}:${this._updaterKey}@members.dyndns.org/v3/update?hostname=${this._hostname}&myip=`;
+        logger.info('Validated successfully');
         return true;
     }
     run() {

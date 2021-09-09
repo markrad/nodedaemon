@@ -83,6 +83,7 @@ class Astro extends events_1.EventEmitter {
         }
         this._dayStart = config.daystart;
         this._dayEnd = config.dayend;
+        logger.info('Validated successful');
         return true;
     }
     run() {

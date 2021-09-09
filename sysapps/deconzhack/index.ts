@@ -40,7 +40,7 @@ class DeconzHack implements IApplication {
         this._client = null;
         this._ws = null;
         this._mqttOptions = { clean: true, clientId: "deCONZHack"}
-        logger.info('DeconzHack constructed');
+        logger.info('Constructed');
     }
 
     validate(configIn: any): boolean {
@@ -54,7 +54,7 @@ class DeconzHack implements IApplication {
         if (this._mqttConfig.topicTemplate.search('%deviceid%') == -1) this._mqttConfig.topicTemplate += '%deviceid%'
         this._deconzConfig = { ...{ host: '127.0.0.1', port: 8443}, ...(config.deconz ?? {}) };
         this._devices = config.devices;
-        logger.info('Validation successful');
+        logger.info('Validated successfully');
 
         return true;
     }

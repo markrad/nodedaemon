@@ -17,6 +17,7 @@ class MotionLight {
         this._actioners = [];
         this._trips = null;
         this._controller = controller;
+        logger.info('Constructed');
     }
     validate(config) {
         if (!config.devices) {
@@ -66,7 +67,7 @@ class MotionLight {
                     return trip;
                 }
             }).filter((item) => item != undefined);
-            logger.info('Constructed');
+            logger.info('Validated successfully');
             return true;
         }
     }
@@ -78,6 +79,7 @@ class MotionLight {
                 throw err;
             }
             this._trips.forEach((trip) => this._actioners.push(new actioner(trip)));
+            return true;
         });
     }
     stop() {
