@@ -36,11 +36,11 @@ export interface ITransport {
     }
 \* -------------------------------------------------------------------------- */
 export class ConsoleInterface implements IApplication {
-    _config: any;
-    _controller: HaMain;
-    _items: ItemsManager;
-    _transports: ITransport[] = [];
-    _cmds: ICommand[] = [];
+    private _config: any;
+    private _controller: HaMain;
+    private _items: ItemsManager;
+    private _transports: ITransport[] = [];
+    private _cmds: ICommand[] = [];
     public constructor(controller: HaMain) {
         this._controller = controller;
         this._items = controller.items;

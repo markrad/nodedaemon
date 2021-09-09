@@ -22,7 +22,7 @@ class CommandInspect extends commandbase_1.CommandBase {
         return `${this.commandName} <optional regex>\tInspect items optionally filtered by a regex query`;
     }
     tabParameters(that, tabCount, parameters) {
-        let possibles = [...that._controller.items.items]
+        let possibles = [...that.controller.items.items]
             .filter((item) => item[1].name.startsWith(parameters[1]))
             .map((item) => item[1].name)
             .sort((l, r) => l < r ? -1 : 1);

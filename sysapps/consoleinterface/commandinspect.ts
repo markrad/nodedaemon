@@ -19,7 +19,7 @@ export class CommandInspect extends CommandBase {
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
-        let possibles: string[] = [ ...that._controller.items.items ]
+        let possibles: string[] = [ ...that.controller.items.items ]
             .filter((item) => item[1].name.startsWith(parameters[1]))
             .map((item) => item[1].name)
             .sort((l, r) => l < r? -1 : 1);

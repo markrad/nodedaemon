@@ -22,7 +22,7 @@ export class CommandSet extends CommandBase {
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[];
         if (parameters.length == 3) {
-            possibles = [ ...that._controller.items.items ]
+            possibles = [ ...that.controller.items.items ]
                 .filter((item) => item[1].entityId.startsWith(parameters[2]))
                 .map((item) => item[1].entityId)
                 .sort((l, r) => l < r? -1 : 1);
