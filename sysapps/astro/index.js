@@ -35,6 +35,16 @@ const log4js_1 = require("log4js");
 const CATEGORY = 'Astro';
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
 const logger = log4js_1.getLogger(CATEGORY);
+/* -------------------------------------------------------------------------- *\
+    Config format:
+    {
+        astro: {
+            "daystart": "sunrise",
+            "dayend": "sunset"
+        }
+    }
+    Values for daystart and dayend will determine the isDark timespan.
+\* -------------------------------------------------------------------------- */
 class Astro extends events_1.EventEmitter {
     constructor(controller, _config) {
         super();

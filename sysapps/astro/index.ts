@@ -11,6 +11,17 @@ const CATEGORY: string = 'Astro'
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
 
 const logger = getLogger(CATEGORY);
+
+/* -------------------------------------------------------------------------- *\
+    Config format:
+    {
+        astro: {
+            "daystart": "sunrise",
+            "dayend": "sunset"
+        }
+    }
+    Values for daystart and dayend will determine the isDark timespan.
+\* -------------------------------------------------------------------------- */
 class Astro extends EventEmitter implements IApplication
 {
     private _times: any = {};
