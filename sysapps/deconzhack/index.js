@@ -17,15 +17,46 @@ const mqtt_1 = __importDefault(require("mqtt"));
 const log4js_1 = require("log4js");
 const CATEGORY = 'DeconzHack';
 var logger = log4js_1.getLogger(CATEGORY);
+/* -------------------------------------------------------------------------- *\
+    printMessages: true will print everything sent by deconz which can be a
+    lot but it will let you find the uniqueId for the push button you are
+    trying to respond to. Aqara push buttons are sent as events rather than
+    state changes. This will convert it to a state event and turn on a MQTT
+    device
+    The topic template allows one to specify the topic. However this will
+    add a device identifier to the topic. If the topic is deconz/devices/
+    then it will be published as deconz/devices/<index target> from the
+    devices array. Default is deconzhack/switch/device_<index target>.
+    Config format:
+    {
+    "deconzhack": {
+        "mqtt": {
+            "host": "<mqtt server host name that ha subscribes to - default localhost>",
+            "port": <port number for above - default 1883>,
+            "topicTemplate": <topic to use. If it doesn't contain %deviceid% this will be appended and converted to deviceid_<target> when published
+        },
+        "deconz": {
+            "host": "<deconz instance host name - default localhost>",
+            "port": <port number for above default 8443>
+        },
+        "printMessages": <true or false - use true to determine uniqueId for you device required in the next section>
+        "devices": [
+            { "uniqueId": "<Obtain this from printMessages> ", "target": "<anything to match to an MQTT device that you created>" },
+        ]
+    },
+    }
+    Values for daystart and dayend will determine the isDark timespan.
+\* -------------------------------------------------------------------------- */
 class DeconzHack {
     constructor(_controller) {
+        this._printMessages = false;
         this._client = null;
         this._ws = null;
         this._mqttOptions = { clean: true, clientId: "deCONZHack" };
         logger.info('Constructed');
     }
     validate(configIn) {
-        var _a, _b;
+        var _a, _b, _c;
         let config = configIn;
         if (!config.devices || config.devices.length == 0) {
             logger.error('Missing deconzhack.devices section in config - this is required');
@@ -36,6 +67,7 @@ class DeconzHack {
             this._mqttConfig.topicTemplate += '%deviceid%';
         this._deconzConfig = Object.assign({ host: '127.0.0.1', port: 8443 }, ((_b = config.deconz) !== null && _b !== void 0 ? _b : {}));
         this._devices = config.devices;
+        this._printMessages = (_c = config.printMessages) !== null && _c !== void 0 ? _c : false;
         logger.info('Validated successfully');
         return true;
     }
@@ -50,6 +82,8 @@ class DeconzHack {
                 this._ws = new wswrapper_1.WSWrapper(`ws://${this._deconzConfig.host}:${this._deconzConfig.port}`, 60);
                 this._ws.on('message', (msg) => {
                     var _a;
+                    if (this._printMessages)
+                        logger.info(msg);
                     var msgData = JSON.parse(msg);
                     logger.trace(`Received:\n${JSON.stringify(msgData, null, 2)}`);
                     if ((_a = msgData.state) === null || _a === void 0 ? void 0 : _a.buttonevent) {

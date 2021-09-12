@@ -8,14 +8,14 @@ const CATEGORY = 'DeconzHack';
 var logger = getLogger(CATEGORY);
 
 type MqttConfig = {
-    host: string;
-    port: number;
-    topicTemplate: string;
+    host?: string;
+    port?: number;
+    topicTemplate?: string;
 }
 
 type DeconzConfig = {
-    host: string;
-    port: number;
+    host?: string;
+    port?: number;
 }
 
 type Device = {
@@ -24,11 +24,43 @@ type Device = {
 }
 
 type Config = {
-    deconz: DeconzConfig;
-    mqtt: MqttConfig;
+    deconz?: DeconzConfig;
+    mqtt?: MqttConfig;
     devices: Device[];
+    printMessages?: boolean;
 }
 
+
+/* -------------------------------------------------------------------------- *\
+    printMessages: true will print everything sent by deconz which can be a
+    lot but it will let you find the uniqueId for the push button you are
+    trying to respond to. Aqara push buttons are sent as events rather than
+    state changes. This will convert it to a state event and turn on a MQTT
+    device
+    The topic template allows one to specify the topic. However this will 
+    add a device identifier to the topic. If the topic is deconz/devices/
+    then it will be published as deconz/devices/<index target> from the
+    devices array. Default is deconzhack/switch/device_<index target>.
+    Config format:
+    {
+    "deconzhack": {
+        "mqtt": {
+            "host": "<mqtt server host name that ha subscribes to - default localhost>",
+            "port": <port number for above - default 1883>,
+            "topicTemplate": <topic to use. If it doesn't contain %deviceid% this will be appended and converted to deviceid_<target> when published
+        },
+        "deconz": {
+            "host": "<deconz instance host name - default localhost>",
+            "port": <port number for above default 8443>
+        },
+        "printMessages": <true or false - use true to determine uniqueId for you device required in the next section>
+        "devices": [
+            { "uniqueId": "<Obtain this from printMessages> ", "target": "<anything to match to an MQTT device that you created>" },
+        ]
+    },
+    }
+    Values for daystart and dayend will determine the isDark timespan.
+\* -------------------------------------------------------------------------- */
 class DeconzHack implements IApplication {
     private _mqttOptions: mqtt.IClientOptions;
     private _mqttConfig: MqttConfig;
@@ -36,6 +68,7 @@ class DeconzHack implements IApplication {
     private _devices: Device[];
     private _ws: WSWrapper;
     private _client: mqtt.MqttClient;
+    private _printMessages: boolean = false;
     constructor(_controller: HaMain) {
         this._client = null;
         this._ws = null;
@@ -54,6 +87,7 @@ class DeconzHack implements IApplication {
         if (this._mqttConfig.topicTemplate.search('%deviceid%') == -1) this._mqttConfig.topicTemplate += '%deviceid%'
         this._deconzConfig = { ...{ host: '127.0.0.1', port: 8443}, ...(config.deconz ?? {}) };
         this._devices = config.devices;
+        this._printMessages = config.printMessages ?? false;
         logger.info('Validated successfully');
 
         return true;
@@ -68,6 +102,7 @@ class DeconzHack implements IApplication {
             logger.info('Connected to MQTT server');
             this._ws = new WSWrapper(`ws://${this._deconzConfig.host}:${this._deconzConfig.port}`, 60);
             this._ws.on('message', (msg) => {
+                if (this._printMessages) logger.info(msg);
                 var msgData = JSON.parse(msg);
 
                 logger.trace(`Received:\n${JSON.stringify(msgData, null, 2)}`);
