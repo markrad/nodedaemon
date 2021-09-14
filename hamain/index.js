@@ -97,7 +97,7 @@ class HaMain extends events_1.default {
                     logger.fatal(`Transport layer reports fatal error - ${err.message}`);
                     process.exit(4);
                 });
-                logger.info(`Items loaded: ${Object.keys(this._items.items).length}`);
+                logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
                 let itemTypes = {};
                 Array.from(this._items.items.values()).forEach((value) => {
                     if (!(value.type in itemTypes)) {

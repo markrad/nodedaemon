@@ -100,7 +100,7 @@ export class HaMain extends EventEmitter {
                 process.exit(4);
             });
 
-            logger.info(`Items loaded: ${Object.keys(this._items.items).length}`);
+            logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
 
             let itemTypes: any = {};
             
