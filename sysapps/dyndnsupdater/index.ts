@@ -9,7 +9,7 @@ const ONE_DAY: number = 86400;
 var logger: Logger = getLogger(CATEGORY);
 
 class DynDnsUpdater implements IApplication {
-    private _external_ip: IHaItemEditable;
+    private _externalIp: IHaItemEditable;
     private _lastUpdate: IHaItemEditable;
     private _user: string;
     private _updaterKey: string;
@@ -25,9 +25,8 @@ class DynDnsUpdater implements IApplication {
     ]);
     private _url: string = null;
     public constructor(controller: HaMain, config: any) {
-        // TODO Use a config file
-        this._external_ip = SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this._lastUpdate = SafeItemAssign(controller.items.getItem('var.last_dns_update'));
+        this._externalIp = SafeItemAssign(controller.items.getItem(config.dyndnsupdater.externalIp));
+        this._lastUpdate = SafeItemAssign(controller.items.getItem(config.dyndnsupdater.lastUpdate));
         this._user = config.dyndnsupdater.user;
         this._updaterKey = config.dyndnsupdater.updaterKey;
         this._hostname = config.dyndnsupdater.hostname;
@@ -36,8 +35,8 @@ class DynDnsUpdater implements IApplication {
 
     public validate(_config: any): boolean {
         try {
-            if (this._external_ip == undefined) throw new Error('Could not find externalIp item');
-            if (this._lastUpdate == undefined) throw new Error('Could not find lastUpdate item');
+            if (this._externalIp == undefined || this._externalIp.type != 'var') throw new Error('Config value externalIp is missing or invalid (must be type var)');
+            if (this._lastUpdate == undefined || this._lastUpdate.type != 'var') throw new Error('Config value lastUpdate is missing or invalid (must be type var)');
             if (!this._user) throw new Error('user not found in config file');
             if (!this._updaterKey) throw new Error('updaterKey not found in config file');
             if (!this._hostname) throw new Error('hostname not found in config file');
@@ -54,7 +53,7 @@ class DynDnsUpdater implements IApplication {
 
     public async run(): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
-            this._external_ip.on('new_state', (item: IHaItem, oldState: State) => {
+            this._externalIp.on('new_state', (item: IHaItem, oldState: State) => {
                 let now: Date = new Date();
                 let then: Date = new Date(this._lastUpdate.state as string);
 

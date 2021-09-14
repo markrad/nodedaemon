@@ -29,23 +29,24 @@ var logger = log4js_1.getLogger(CATEGORY);
     devices array. Default is deconzhack/switch/device_<index target>.
     Config format:
     {
-    "deconzhack": {
-        "mqtt": {
-            "host": "<mqtt server host name that ha subscribes to - default localhost>",
-            "port": <port number for above - default 1883>,
-            "topicTemplate": <topic to use. If it doesn't contain %deviceid% this will be appended and converted to deviceid_<target> when published
-        },
-        "deconz": {
-            "host": "<deconz instance host name - default localhost>",
-            "port": <port number for above default 8443>
-        },
-        "printMessages": <true or false - use true to determine uniqueId for you device required in the next section>
-        "devices": [
-            { "uniqueId": "<Obtain this from printMessages> ", "target": "<anything to match to an MQTT device that you created>" },
-        ]
-    },
+        "deconzhack": {
+            "mqtt": {
+                "host": "<mqtt server host name that ha subscribes to - default localhost>",
+                "port": <port number for above - default 1883>,
+                "topicTemplate": <topic to use. If it doesn't contain %deviceid% this will be appended and converted to deviceid_<target> when published
+            },
+            "deconz": {
+                "host": "<deconz instance host name - default localhost>",
+                "port": <port number for above default 8443>
+            },
+            "printMessages": <true or false - use true to determine uniqueId for your device required in the next section>
+            "devices": [
+                { "uniqueId": "<Obtain this from printMessages> ", "target": "<anything to match to an MQTT device that you created>" },
+            ]
+        }
     }
-    Values for daystart and dayend will determine the isDark timespan.
+    The string %deviceid% in the topic will be replaced with the target
+    value.
 \* -------------------------------------------------------------------------- */
 class DeconzHack {
     constructor(_controller) {

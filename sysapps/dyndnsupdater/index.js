@@ -46,9 +46,8 @@ class DynDnsUpdater {
             ['911', 'Bad user name or password'],
         ]);
         this._url = null;
-        // TODO Use a config file
-        this._external_ip = haparentitem_1.SafeItemAssign(controller.items.getItem('var.external_ip'));
-        this._lastUpdate = haparentitem_1.SafeItemAssign(controller.items.getItem('var.last_dns_update'));
+        this._externalIp = haparentitem_1.SafeItemAssign(controller.items.getItem(config.dyndnsupdater.externalIp));
+        this._lastUpdate = haparentitem_1.SafeItemAssign(controller.items.getItem(config.dyndnsupdater.lastUpdate));
         this._user = config.dyndnsupdater.user;
         this._updaterKey = config.dyndnsupdater.updaterKey;
         this._hostname = config.dyndnsupdater.hostname;
@@ -56,10 +55,10 @@ class DynDnsUpdater {
     }
     validate(_config) {
         try {
-            if (this._external_ip == undefined)
-                throw new Error('Could not find externalIp item');
-            if (this._lastUpdate == undefined)
-                throw new Error('Could not find lastUpdate item');
+            if (this._externalIp == undefined || this._externalIp.type != 'var')
+                throw new Error('Config value externalIp is missing or invalid (must be type var)');
+            if (this._lastUpdate == undefined || this._lastUpdate.type != 'var')
+                throw new Error('Config value lastUpdate is missing or invalid (must be type var)');
             if (!this._user)
                 throw new Error('user not found in config file');
             if (!this._updaterKey)
@@ -78,7 +77,7 @@ class DynDnsUpdater {
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                this._external_ip.on('new_state', (item, oldState) => {
+                this._externalIp.on('new_state', (item, oldState) => {
                     let now = new Date();
                     let then = new Date(this._lastUpdate.state);
                     if (isNaN(then.getDate())) {
