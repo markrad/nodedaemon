@@ -31,8 +31,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const haparentitem_1 = require("../../haitems/haparentitem");
 const log4js_1 = require("log4js");
 const https = __importStar(require("https"));
+const dayjs_1 = require("dayjs");
 const CATEGORY = 'DynDnsUpdater';
-const ONE_DAY = 86400;
+const ONE_DAY = 24; // Just simple hours
 var logger = log4js_1.getLogger(CATEGORY);
 class DynDnsUpdater {
     constructor(controller, config) {
@@ -78,13 +79,13 @@ class DynDnsUpdater {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 this._externalIp.on('new_state', (item, oldState) => {
-                    let now = new Date();
-                    let then = new Date(this._lastUpdate.state);
-                    if (isNaN(then.getDate())) {
-                        then = new Date(0);
+                    let now = new dayjs_1.Dayjs();
+                    let then = new dayjs_1.Dayjs(this._lastUpdate.state);
+                    if (isNaN(then.year())) {
+                        then = new dayjs_1.Dayjs(0);
                     }
                     // Update when IP address changes or at least once every 24 hours
-                    if (now.valueOf() / 1000 - then.valueOf() / 1000 > ONE_DAY || item.state != oldState.state) {
+                    if (now.diff(then, 'hours') >= ONE_DAY || item.state != oldState.state) {
                         logger.info(`Updating DynDNS IP address to ${item.state}`);
                         let allchunks = '';
                         let options = {
@@ -101,14 +102,7 @@ class DynDnsUpdater {
                                 switch (rc) {
                                     case 'good':
                                     case 'nochg':
-                                        // HACK Must be a better way to do this
-                                        let nowString = now.getFullYear() + '-' +
-                                            (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
-                                            now.getDate().toString().padStart(2, '0') + ' ' +
-                                            now.getHours().toString().padStart(2, '0') + ':' +
-                                            now.getMinutes().toString().padStart(2, '0') + ':' +
-                                            now.getSeconds().toString().padStart(2, '0');
-                                        this._lastUpdate.updateState(nowString);
+                                        this._lastUpdate.updateState(now.format('YYYY-MM-DD HH:mm:ss'));
                                         logger.info(`DynDns IP address successfully updated to ${item.state}`);
                                         break;
                                     default:

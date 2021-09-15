@@ -19,6 +19,7 @@
   "dependencies": {
     "aedes": "^0.44.1",
     "commander": "^6.2.0",
+    "dayjs": "^1.10.7",
     "express": "^4.17.1",
     "hound": "^1.0.5",
     "log4js": "^6.3.0",
