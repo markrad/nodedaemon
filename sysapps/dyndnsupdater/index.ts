@@ -4,6 +4,7 @@ import { HaMain, State } from "../../hamain";
 import { getLogger, Logger } from "log4js";
 import * as https from 'https';
 import { Dayjs } from "dayjs";
+import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'DynDnsUpdater';
 const ONE_DAY: number = 24;                     // Just simple hours
@@ -107,6 +108,21 @@ class DynDnsUpdater implements IApplication {
 
     public async stop(): Promise<void> {
 
+    }
+
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 }
 

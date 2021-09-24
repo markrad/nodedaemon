@@ -9,10 +9,11 @@ var logger = getLogger(CATEGORY);
 
 export class CommandApp extends CommandBase {
     public constructor() {
-        super('app', ['start', 'stop', 'list']);
+        super('app', ['start', 'stop', 'list', 'log']);
     }
 
     public get helpText(): string {
+        // TODO Fix help string
         return `${this.commandName}\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)`;
     }
 
@@ -48,7 +49,7 @@ export class CommandApp extends CommandBase {
         return new Promise(async (resolve, reject) => {
             logger.debug('app stop called');
             let appName: string = inputArray[2];
-            let aps: AppInfo[] = that.controller.apps.filter((item) =>item.name == appName);
+            let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
             try {
                 if (aps.length != 1) {
                     return reject(new Error(`App ${inputArray[2]} does not exist`));
@@ -79,6 +80,33 @@ export class CommandApp extends CommandBase {
         });
     }
 
+    private _applog(inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
+        logger.debug('app log called');
+        let appName: string = inputArray[2];
+        let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
+        try {
+            if (aps.length != 1) {
+                throw new Error(`App ${inputArray[2]} does not exist`);
+            }
+            if (aps[0].status != 'running') {
+                throw new Error(`Cannot view or modify logging for ${aps[0].name} - status is ${aps[0].status}\r\n`);
+            }
+            else {
+                if (inputArray.length == 3) {
+                    sock.write(`App ${aps[0].name} has log level ${aps[0].instance.logging}\r\n`);
+                }
+                else {
+                    aps[0].instance.logging = inputArray[3];
+                    sock.write(`App ${aps[0].name} has log level ${aps[0].instance.logging}\r\n`);
+                }
+            }
+        }
+        catch (err: any) {
+            logger.debug(`Failed to get or set logging for ${appName}: ${err.message}`);
+            throw err;
+        }
+}
+
     public tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[] = that.controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
         
@@ -105,6 +133,12 @@ export class CommandApp extends CommandBase {
                         throw new Error('Missing or invalid arguments');
                     }
                     await this._appStop(inputArray, that, sock);
+                break;
+                case "log":
+                    if (inputArray.length < 3 || inputArray.length > 4) {
+                        throw new Error('Missing or invalid arguments');
+                    }
+                    this._applog(inputArray, that, sock);
                 break;
                 case "list":
                     if (inputArray.length != 2) {

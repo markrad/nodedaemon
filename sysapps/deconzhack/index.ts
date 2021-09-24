@@ -3,6 +3,7 @@ import mqtt from 'mqtt';
 import { getLogger } from 'log4js';
 import { HaMain } from '../../hamain';
 import { IApplication } from '../../common/IApplication';
+import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 const CATEGORY = 'DeconzHack';
 var logger = getLogger(CATEGORY);
@@ -133,6 +134,21 @@ class DeconzHack implements IApplication {
             await this._ws.close();
             this._client.end(false, null, resolve);
         });
+    }
+
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 }
 

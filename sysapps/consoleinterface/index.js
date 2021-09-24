@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConsoleInterface = void 0;
 const log4js_1 = require("log4js");
+const loglevelvalidator_1 = require("../../common/loglevelvalidator");
 const CATEGORY = 'ConsoleInterface';
 var logger = log4js_1.getLogger(CATEGORY);
 /* -------------------------------------------------------------------------- *\
@@ -116,6 +117,19 @@ class ConsoleInterface {
                     .catch((err) => reject(err));
             });
         });
+    }
+    get logging() {
+        return logger.level;
+    }
+    set logging(value) {
+        if (!loglevelvalidator_1.LogLevelValidator(value)) {
+            let err = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 }
 exports.ConsoleInterface = ConsoleInterface;

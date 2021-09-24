@@ -6,6 +6,7 @@ import { HaMain } from '../../hamain';
 import { EventEmitter } from 'events';
 import { getLogger } from 'log4js';
 import { IApplication } from '../../common/IApplication';
+import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'Astro'
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
@@ -91,6 +92,21 @@ class Astro extends EventEmitter implements IApplication
     public stop() {
         this._midnightSched.cancel();
         this._moonSched.cancel();
+    }
+
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 
     private _setupTimes(times1: GetTimesResult, times2: GetTimesResult): void

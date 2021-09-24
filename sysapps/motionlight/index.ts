@@ -4,6 +4,7 @@ import { IHaItem, IHaItemSwitch } from "../../haitems/haparentitem";
 import { HaMain, State } from "../../hamain";
 import { getLogger } from 'log4js'
 import { IApplication } from "../../common/IApplication";
+import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 interface Trip {
     sensor: IHaItem;
@@ -94,6 +95,21 @@ class MotionLight implements IApplication {
         this._actioners.forEach(actioner => {
             actioner.stop();
         });
+    }
+
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 }
 

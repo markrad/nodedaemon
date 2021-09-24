@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const haparentitem_1 = require("../../haitems/haparentitem");
 const http_1 = __importDefault(require("http"));
 const log4js_1 = require("log4js");
+const loglevelvalidator_1 = require("../../common/loglevelvalidator");
 const CATEGORY = 'UpdateExternalIP';
 var logger = log4js_1.getLogger(CATEGORY);
 // TODO: This needs to use the config
@@ -53,6 +54,19 @@ class UpdateExternalIP {
         return __awaiter(this, void 0, void 0, function* () {
             clearInterval(this._interval);
         });
+    }
+    get logging() {
+        return logger.level;
+    }
+    set logging(value) {
+        if (!loglevelvalidator_1.LogLevelValidator(value)) {
+            let err = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
     _whatsMyIP() {
         return __awaiter(this, void 0, void 0, function* () {

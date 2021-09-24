@@ -32,6 +32,7 @@ const haparentitem_1 = require("../../haitems/haparentitem");
 const log4js_1 = require("log4js");
 const https = __importStar(require("https"));
 const dayjs_1 = require("dayjs");
+const loglevelvalidator_1 = require("../../common/loglevelvalidator");
 const CATEGORY = 'DynDnsUpdater';
 const ONE_DAY = 24; // Just simple hours
 var logger = log4js_1.getLogger(CATEGORY);
@@ -127,6 +128,19 @@ class DynDnsUpdater {
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
         });
+    }
+    get logging() {
+        return logger.level;
+    }
+    set logging(value) {
+        if (!loglevelvalidator_1.LogLevelValidator(value)) {
+            let err = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 }
 module.exports = DynDnsUpdater;

@@ -3,6 +3,7 @@ import { HaMain } from "../../hamain";
 import http from 'http';
 import { getLogger } from "log4js";
 import { IApplication } from "../../common/IApplication";
+import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 const CATEGORY = 'UpdateExternalIP';
 var logger = getLogger(CATEGORY);
@@ -47,6 +48,21 @@ class UpdateExternalIP implements IApplication {
 
     public async stop() {
         clearInterval(this._interval);
+    }
+
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 
     private async _whatsMyIP(): Promise<string> {

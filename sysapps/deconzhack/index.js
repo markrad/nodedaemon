@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const wswrapper_1 = require("../../common/wswrapper");
 const mqtt_1 = __importDefault(require("mqtt"));
 const log4js_1 = require("log4js");
+const loglevelvalidator_1 = require("../../common/loglevelvalidator");
 const CATEGORY = 'DeconzHack';
 var logger = log4js_1.getLogger(CATEGORY);
 /* -------------------------------------------------------------------------- *\
@@ -111,6 +112,19 @@ class DeconzHack {
                 this._client.end(false, null, resolve);
             }));
         });
+    }
+    get logging() {
+        return logger.level;
+    }
+    set logging(value) {
+        if (!loglevelvalidator_1.LogLevelValidator(value)) {
+            let err = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
     }
 }
 module.exports = DeconzHack;
