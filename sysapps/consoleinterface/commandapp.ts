@@ -3,6 +3,7 @@ import { AppInfo } from "../../hamain";
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase';
 import { IChannel } from "./ichannel";
+import { LogLevels } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'CommandApp';
 var logger = getLogger(CATEGORY);
@@ -14,7 +15,14 @@ export class CommandApp extends CommandBase {
 
     public get helpText(): string {
         // TODO Fix help string
-        return `${this.commandName}\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)`;
+        let help: string = 
+`${this.commandName}     start appname           start the specified app\r
+        stop appname            stop the specified app\r
+        list                    list apps\r
+        log appname <level>     get log level or set log level to <level>\r
+                                where <level> = ${LogLevels().join(' | ').toLowerCase()}`;
+        return help;                                        
+        // return `${this.commandName}\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)`;
     }
 
     private async _appStart(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
@@ -108,7 +116,13 @@ export class CommandApp extends CommandBase {
 }
 
     public tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
-        let possibles: string[] = that.controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
+        let possibles: string[];
+        if (parameters.length == 3) {
+            possibles = that.controller.apps.filter((app) => app.name.startsWith(parameters[2])).map((app) => app.name);
+        }
+        else if (parameters.length == 4) {
+            possibles = LogLevels().join('|').toLowerCase().split('|').filter((item) => item.startsWith(parameters[3]));
+        }
         
         if (possibles.length == 0 || (tabCount < 2 && possibles.length > 1)) {
             return [];

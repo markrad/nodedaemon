@@ -1,7 +1,14 @@
 import { levels} from 'log4js';
 
+export function LogLevels(): string[] {
+    const ignoreLevels: string[] = [ 'ALL', 'OFF', 'MARK' ];
+    return levels.levels
+        .filter(item => !ignoreLevels.includes(item.levelStr))
+        .map(item => item.levelStr);
+}
+
 export function LogLevelValidator(value: string): boolean {
-    if (levels.getLevel(value) == levels.MARK) {
+    if (levels.getLevel(value) == undefined) {
         return false;
     }
 
