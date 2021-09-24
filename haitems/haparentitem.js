@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaParentItem = exports.SafeItemAssign = void 0;
 const events_1 = __importDefault(require("events"));
 const log4js_1 = require("log4js");
+const loglevelvalidator_1 = require("../common/loglevelvalidator");
 // Super slow for debugging
 // const RESPONSE_TIMEOUT: number = 30 * 1000
 const RESPONSE_TIMEOUT = 3 * 1000;
@@ -96,6 +97,19 @@ class HaParentItem extends events_1.default {
         this._lastUpdated = new Date(newState.last_updated);
         this._lastChanged = new Date(newState.last_changed);
         this.emit('new_state', this, oldState);
+    }
+    get logging() {
+        return this.logger.level;
+    }
+    set logging(value) {
+        if (!loglevelvalidator_1.LogLevelValidator(value)) {
+            let err = new Error(`Invalid level passed: ${value}`);
+            this.logger.error(err.message);
+            throw err;
+        }
+        else {
+            this.logger.level = value;
+        }
     }
     _callService(domain, service, state) {
         this.emit('callservice', domain, service, state);

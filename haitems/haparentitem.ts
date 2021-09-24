@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import { Logger, getLogger } from 'log4js';
 import { State } from '../hamain';
+import { LogLevelValidator } from '../common/loglevelvalidator';
 
 // Super slow for debugging
 // const RESPONSE_TIMEOUT: number = 30 * 1000
@@ -30,6 +31,8 @@ export interface IHaItem {
     get category(): string;
     get isSwitch(): boolean;
     get isEditable(): boolean;
+    get logging(): string;
+    set logging(value: string);
     setReceivedState(newState: State): void;
     on(eventName: string | symbol, listener: (...args: any[]) => void): void;
     off(eventName: String | symbol, listener: (...args: any[]) => void): void;
@@ -157,6 +160,21 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this._lastUpdated = new Date(newState.last_updated);
         this._lastChanged = new Date(newState.last_changed);
         this.emit('new_state', this, oldState);
+    }
+
+    public get logging(): string {
+        return this.logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            this.logger.error(err.message);
+            throw err;
+        }
+        else {
+            this.logger.level = value;
+        }
     }
 
     protected _callService(domain: string, service: string, state: ServiceTarget): void {
