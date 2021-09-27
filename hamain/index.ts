@@ -11,6 +11,7 @@ import { IHaItem } from '../haitems/ihaitem';
 import { ServiceTarget } from '../haitems/haparentitem';
 import { Dir } from 'node:fs';
 import { IApplication } from '../common/IApplication';
+import { LogLevelValidator } from '../common/loglevelvalidator';
 //import * as hound  from 'hound';
 var reload = require('require-reload');
 
@@ -202,6 +203,21 @@ export class HaMain extends EventEmitter {
             : false;
     }
 
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
+    }
+
     public async restartHA(): Promise<void> {
         await this._haInterface.callService('homeassistant', 'restart', {});
     }
@@ -228,11 +244,6 @@ export class HaMain extends EventEmitter {
         });
     }
 
-/*
-    private async _wait(seconds: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-    }
-*/
     private _setWatcher(_item: unknown) {
 /*        
         hound.watch(item)

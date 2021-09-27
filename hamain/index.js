@@ -46,6 +46,7 @@ const fs_1 = __importDefault(require("fs"));
 const log4js_1 = require("log4js");
 const hainterface_1 = require("../hainterface");
 const haitems_1 = require("../haitems");
+const loglevelvalidator_1 = require("../common/loglevelvalidator");
 //import * as hound  from 'hound';
 var reload = require('require-reload');
 const CATEGORY = 'HaMain';
@@ -188,6 +189,19 @@ class HaMain extends events_1.default {
             ? this._haInterface.isConnected
             : false;
     }
+    get logging() {
+        return logger.level;
+    }
+    set logging(value) {
+        if (!loglevelvalidator_1.LogLevelValidator(value)) {
+            let err = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
+    }
     restartHA() {
         return __awaiter(this, void 0, void 0, function* () {
             yield this._haInterface.callService('homeassistant', 'restart', {});
@@ -215,11 +229,6 @@ class HaMain extends events_1.default {
             }
         });
     }
-    /*
-        private async _wait(seconds: number): Promise<void> {
-            return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-        }
-    */
     _setWatcher(_item) {
         /*
                 hound.watch(item)
