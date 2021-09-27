@@ -13,18 +13,23 @@ exports.CommandSet = void 0;
 const log4js_1 = require("log4js");
 const commandbase_1 = require("./commandbase");
 const haparentitem_1 = require("../../haitems/haparentitem");
+const loglevelvalidator_1 = require("../../common/loglevelvalidator");
 const CATEGORY = 'CommandSet';
 var logger = log4js_1.getLogger(CATEGORY);
 class CommandSet extends commandbase_1.CommandBase {
     constructor() {
-        super('set', ['state', 'logging', 'on', 'off', 'toggle']);
+        super('set', ['state', 'log', 'on', 'off', 'toggle']);
     }
     get helpText() {
         return `${this.commandName}\tstate\r\n\ton\r\n\toff\r\n\ttoggle\t\t\tManipulate properties of item`;
     }
     tabParameters(that, tabCount, parameters) {
         let possibles;
-        if (parameters.length == 3) {
+        // TODO Exclude items that are not addressable by the command such as on returns switches only
+        if (parameters.length == 4) {
+            possibles = loglevelvalidator_1.LogLevels().join('|').toLowerCase().split('|').filter((item) => item.startsWith(parameters[3]));
+        }
+        else if (parameters.length == 3) {
             possibles = [...that.controller.items.items]
                 .filter((item) => item[1].entityId.startsWith(parameters[2]))
                 .map((item) => item[1].entityId)
@@ -49,12 +54,21 @@ class CommandSet extends commandbase_1.CommandBase {
                 if (item.length != 1) {
                     throw new Error(`Item ${inputArray[2]} was not found`);
                 }
-                if (!item[0].isEditable) {
+                if (!item[0].isEditable && inputArray[1] != 'log') {
                     throw new Error(`Specified item ${inputArray[2]} is not editable`);
                 }
                 let target = haparentitem_1.SafeItemAssign(item[0]);
                 let rc;
                 switch (inputArray[1]) {
+                    case "log":
+                        if (inputArray.length == 3) {
+                            sock.write(`Item ${item[0].name} has log level ${item[0].logging}\r\n`);
+                        }
+                        else {
+                            item[0].logging = inputArray[3];
+                            sock.write(`Item ${item[0].name} has log level ${item[0].logging}\r\n`);
+                        }
+                        break;
                     case "state":
                         if (inputArray.length < 4) {
                             throw new Error(`set state requires a new state be provided`);
@@ -83,9 +97,6 @@ class CommandSet extends commandbase_1.CommandBase {
                         else {
                             sock.write(`Command complete - new state ${target.state}\r\n`);
                         }
-                        break;
-                    case "logging":
-                        sock.write('Not implemented\r\n');
                         break;
                     default:
                         throw new Error(`Command ${inputArray[1]} is invalid`);
