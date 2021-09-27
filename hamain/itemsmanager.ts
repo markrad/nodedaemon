@@ -4,7 +4,6 @@ import { IHaItem } from '../haitems/ihaitem';
 
 export class ItemsManager {
     private _items: Map<string, IHaItem>;
-    // private _items: any;
     public constructor() {
         this._items = new Map();
     }

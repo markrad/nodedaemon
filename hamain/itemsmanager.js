@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ItemsManager = void 0;
 class ItemsManager {
-    // private _items: any;
     constructor() {
         this._items = new Map();
     }
