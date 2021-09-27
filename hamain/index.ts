@@ -46,14 +46,13 @@ export type StateChange = {
 }
 
 export class HaMain extends EventEmitter {
-    _haInterface: HaInterface;
-    _items: ItemsManager;
-    _config: any;
-    _apps: Array<AppInfo>;
-    _haItemFactory: HaItemFactory;
-    _stopping: boolean;
-    _haConfig: any;
-    _starttime: Date;
+    private _haInterface: HaInterface;
+    private _items: ItemsManager;
+    private _config: any;
+    private _apps: Array<AppInfo>;
+    private _haItemFactory: HaItemFactory;
+    private _haConfig: any;
+    private _starttime: Date;
     constructor(config: any) {
         super();
         this._haInterface = null;
@@ -61,7 +60,6 @@ export class HaMain extends EventEmitter {
         this._apps = new Array<AppInfo>();
         this._haItemFactory = null;
         this._config = config;
-        this._stopping = false;
         this._haConfig = null;
         this._starttime = new Date();
     }
@@ -154,8 +152,6 @@ export class HaMain extends EventEmitter {
 
     public async stop() {
         return new Promise<void>(async (resolve, reject) => {
-            this._stopping = true;
-
             this._apps.forEach(async (app) => {
                 try {
                     await app.instance.stop();
@@ -231,31 +227,7 @@ export class HaMain extends EventEmitter {
             }
         });
     }
-/*
-    private async _reconnect(err: Error): Promise<void> {
-        return new Promise(async (resolve, _reject) => {
-            if (this._stopping || err) {
-                let connected = false;
 
-                while (!connected) {
-
-                    try {
-                        await this._haInterface.start();
-                        logger.info('Reconnecton complete');
-                        connected = true;
-                    }
-                    catch (err) {
-                        logger.error(`Reconnection failed: ${err} - retrying`);
-                    }
-                    
-                    await this._wait(5);
-                }
-
-                resolve();
-            }
-        });
-    }
-*/
 /*
     private async _wait(seconds: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));

@@ -61,7 +61,6 @@ class HaMain extends events_1.default {
         this._apps = new Array();
         this._haItemFactory = null;
         this._config = config;
-        this._stopping = false;
         this._haConfig = null;
         this._starttime = new Date();
     }
@@ -145,7 +144,6 @@ class HaMain extends events_1.default {
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                this._stopping = true;
                 this._apps.forEach((app) => __awaiter(this, void 0, void 0, function* () {
                     try {
                         yield app.instance.stop();
@@ -217,31 +215,6 @@ class HaMain extends events_1.default {
             }
         });
     }
-    /*
-        private async _reconnect(err: Error): Promise<void> {
-            return new Promise(async (resolve, _reject) => {
-                if (this._stopping || err) {
-                    let connected = false;
-    
-                    while (!connected) {
-    
-                        try {
-                            await this._haInterface.start();
-                            logger.info('Reconnecton complete');
-                            connected = true;
-                        }
-                        catch (err) {
-                            logger.error(`Reconnection failed: ${err} - retrying`);
-                        }
-                        
-                        await this._wait(5);
-                    }
-    
-                    resolve();
-                }
-            });
-        }
-    */
     /*
         private async _wait(seconds: number): Promise<void> {
             return new Promise(resolve => setTimeout(resolve, seconds * 1000));
