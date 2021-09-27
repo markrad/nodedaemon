@@ -1,8 +1,9 @@
 "use strict";
 
-import { IHaItem, IHaItemSwitch } from "../../haitems/haparentitem";
+import { IHaItem } from "../../haitems/ihaitem";
+import { IHaItemSwitch } from "../../haitems/haparentitem";
 import { HaMain, State } from "../../hamain";
-import { getLogger } from 'log4js'
+import { getLogger } from 'log4js';
 import { IApplication } from "../../common/IApplication";
 import { LogLevelValidator } from '../../common/loglevelvalidator';
 

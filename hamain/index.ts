@@ -7,7 +7,8 @@ import fs from 'fs';
 import { Logger, getLogger } from 'log4js';
 import { HaInterface } from '../hainterface';
 import { HaItemFactory } from '../haitems'
-import { IHaItem, ServiceTarget } from '../haitems/haparentitem';
+import { IHaItem } from '../haitems/ihaitem';
+import { ServiceTarget } from '../haitems/haparentitem';
 import { Dir } from 'node:fs';
 import { IApplication } from '../common/IApplication';
 //import * as hound  from 'hound';

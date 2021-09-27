@@ -1,7 +1,7 @@
 import fs from 'fs';
 import log4js from 'log4js';
 import { HaInterface } from '../hainterface';
-import { IHaItem } from './haparentitem';
+import { IHaItem } from './ihaitem';
 
 const CATEGORY: string = 'HaItemFactory';
 var logger: any = log4js.getLogger(CATEGORY);

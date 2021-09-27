@@ -5,7 +5,8 @@ import { ConsoleInterface } from '.';
 import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
-import { IHaItem, IHaItemEditable, IHaItemSwitch, SafeItemAssign, ServicePromise } from '../../haitems/haparentitem';
+import { IHaItemEditable, IHaItemSwitch, SafeItemAssign, ServicePromise } from '../../haitems/haparentitem';
+import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'CommandSet';

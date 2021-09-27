@@ -1,6 +1,6 @@
 "use strict";
 
-import { IHaItem } from '../haitems/haparentitem';
+import { IHaItem } from '../haitems/ihaitem';
 
 export class ItemsManager {
     private _items: Map<string, IHaItem>;
