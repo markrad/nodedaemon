@@ -7,15 +7,10 @@ import { getLogger, Logger } from "log4js";
 import { ICommand } from "./icommand";
 import { IChannel } from "./ichannel";
 import { LogLevelValidator } from '../../common/loglevelvalidator';
+import { ITransport } from "./itransport";
 
 const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
-
-// TODO put exported interfaces into their own files
-export interface ITransport {
-    start(): Promise<void>;
-    stop(): Promise<void>;
-}
 
 /* -------------------------------------------------------------------------- *\
     Two transports are provided and specified in the sample below. Either one

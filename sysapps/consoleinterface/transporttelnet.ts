@@ -1,4 +1,5 @@
-import { ConsoleInterface, ITransport } from ".";
+import { ConsoleInterface } from ".";
+import { ITransport } from "./itransport";
 import net from 'net';
 import { getLogger } from 'log4js';
 
