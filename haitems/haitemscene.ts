@@ -1,5 +1,5 @@
-import { State } from '../hamain/index.js';
-import { HaParentItem, ServicePromise } from './haparentitem.js';
+import { State } from '../hamain/State'
+import { HaParentItem, ServicePromise } from './haparentitem';
 
 class HaItemScene extends HaParentItem {
     public constructor(item: State) {

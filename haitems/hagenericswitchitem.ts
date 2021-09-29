@@ -1,7 +1,7 @@
 // import { resolve } from 'path/posix';
-import { State } from '../hamain/index.js';
-import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
-import { ActionAndNewState, IHaItemEditable, ServicePromise } from './haparentitem.js';
+import { State } from '../hamain/State'
+import { HaGenericUpdateableItem } from './hagenericupdatableitem';
+import { ActionAndNewState, IHaItemEditable, ServicePromise } from './haparentitem';
 
 export enum SUPPORT {
     SUPPORT_BRIGHTNESS = 1,

@@ -14,7 +14,6 @@ export class CommandApp extends CommandBase {
     }
 
     public get helpText(): string {
-        // TODO Fix help string
         let help: string = 
 `${this.commandName}     start appname           start the specified app\r
         stop appname            stop the specified app\r

@@ -1,5 +1,5 @@
-import { State } from '../hamain/index.js';
-import { HaParentItem } from './haparentitem.js';
+import { State } from '../hamain/State'
+import { HaParentItem } from './haparentitem';
 
 class HaItemSensor extends HaParentItem {
     public constructor(item: State) {

@@ -20,7 +20,6 @@ class CommandApp extends commandbase_1.CommandBase {
         super('app', ['start', 'stop', 'list', 'log']);
     }
     get helpText() {
-        // TODO Fix help string
         let help = `${this.commandName}     start appname           start the specified app\r
         stop appname            stop the specified app\r
         list                    list apps\r

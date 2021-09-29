@@ -1,7 +1,8 @@
 import { IApplication } from "../../common/IApplication";
 import { IHaItem } from "../../haitems/ihaitem";
 import { IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
-import { HaMain, State } from "../../hamain";
+import { HaMain } from "../../hamain";
+import { State } from '../../hamain/State';
 import { getLogger, Logger } from "log4js";
 import * as https from 'https';
 import { Dayjs } from "dayjs";

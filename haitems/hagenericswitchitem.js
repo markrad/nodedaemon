@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaGenericSwitchItem = exports.SUPPORT = void 0;
-const hagenericupdatableitem_js_1 = require("./hagenericupdatableitem.js");
+const hagenericupdatableitem_1 = require("./hagenericupdatableitem");
 var SUPPORT;
 (function (SUPPORT) {
     SUPPORT[SUPPORT["SUPPORT_BRIGHTNESS"] = 1] = "SUPPORT_BRIGHTNESS";
@@ -21,7 +21,7 @@ var SUPPORT;
     SUPPORT[SUPPORT["SUPPORT_TRANSITION"] = 32] = "SUPPORT_TRANSITION";
     SUPPORT[SUPPORT["SUPPORT_WHITE_VALUE"] = 128] = "SUPPORT_WHITE_VALUE";
 })(SUPPORT = exports.SUPPORT || (exports.SUPPORT = {}));
-class HaGenericSwitchItem extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
+class HaGenericSwitchItem extends hagenericupdatableitem_1.HaGenericUpdateableItem {
     constructor(item) {
         var _a, _b;
         super(item);

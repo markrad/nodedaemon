@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const hagenericswitchitem_js_1 = require("./hagenericswitchitem.js");
-class HaItemGroup extends hagenericswitchitem_js_1.HaGenericSwitchItem {
+const hagenericswitchitem_1 = require("./hagenericswitchitem");
+class HaItemGroup extends hagenericswitchitem_1.HaGenericSwitchItem {
     constructor(item) {
         super(item);
         this._children = item.attributes.entity_id;

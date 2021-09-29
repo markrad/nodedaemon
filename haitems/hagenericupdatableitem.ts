@@ -1,5 +1,5 @@
-import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem.js';
-import { State } from '../hamain/index.js';
+import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem';
+import { State } from '../hamain/State'
 
 export abstract class HaGenericUpdateableItem extends HaParentItem implements IHaItemEditable {
     public constructor(item: State) {

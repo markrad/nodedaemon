@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import { Logger, getLogger } from 'log4js';
-import { State } from '../hamain';
+import { State } from '../hamain/State';
 import { IHaItem } from './ihaitem';
 import { LogLevelValidator } from '../common/loglevelvalidator';
 

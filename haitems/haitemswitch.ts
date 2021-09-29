@@ -1,5 +1,5 @@
-import { State } from '../hamain/index.js';
-import { HaGenericSwitchItem } from './hagenericswitchitem.js';
+import { State } from '../hamain/State'
+import { HaGenericSwitchItem } from './hagenericswitchitem';
 
 class HaItemSwitch extends HaGenericSwitchItem {
     public constructor(item: State) {

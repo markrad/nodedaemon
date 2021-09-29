@@ -1,6 +1,6 @@
-import { State } from '../hamain/index.js';
-import { HaGenericUpdateableItem } from './hagenericupdatableitem.js';
-import { ActionAndNewState, ServicePromise } from './haparentitem.js';
+import { State } from '../hamain/State'
+import { HaGenericUpdateableItem } from './hagenericupdatableitem';
+import { ActionAndNewState, ServicePromise } from './haparentitem';
 
 class HaItemVar extends HaGenericUpdateableItem {
     public constructor(item: State) {

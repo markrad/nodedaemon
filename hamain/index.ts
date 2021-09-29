@@ -1,17 +1,20 @@
 "use strict";
 
 import EventEmitter from 'events';
-import { ItemsManager } from './itemsmanager';
 import * as path from 'path';
 import fs from 'fs';
+import { Dir } from 'node:fs';
+
+import { State, StateChange } from './State';
+import { ItemsManager } from './itemsmanager';
 import { Logger, getLogger } from 'log4js';
 import { HaInterface } from '../hainterface';
 import { HaItemFactory } from '../haitems'
 import { IHaItem } from '../haitems/ihaitem';
 import { ServiceTarget } from '../haitems/haparentitem';
-import { Dir } from 'node:fs';
 import { IApplication } from '../common/IApplication';
 import { LogLevelValidator } from '../common/loglevelvalidator';
+
 //import * as hound  from 'hound';
 var reload = require('require-reload');
 
@@ -28,22 +31,6 @@ var logger: Logger = getLogger(CATEGORY);
 
 if (process.env.HAMAIN_LOGGING) {
     logger.level = process.env.HAMAIN_LOGGING;
-}
-
-//TODO Own file?
-export type State = {
-    entity_id: string;
-    last_changed: string;
-    last_updated: string;
-    state: string | number | boolean;
-    attributes: any;
-    context: any;
-}
-
-export type StateChange = {
-    entity_id: string;
-    old_state: State;
-    new_state: State;
 }
 
 export class HaMain extends EventEmitter {

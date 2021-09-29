@@ -1,5 +1,5 @@
-import { State } from '../hamain/index.js';
-import { HaGenericSwitchItem } from './hagenericswitchitem.js';
+import { State } from '../hamain/State'
+import { HaGenericSwitchItem } from './hagenericswitchitem';
 // TODO Add mechanism to activate it?
 export class HaItemAutomation extends HaGenericSwitchItem {
     public constructor(item: State) {

@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const hagenericupdatableitem_js_1 = require("./hagenericupdatableitem.js");
-class HaItemVar extends hagenericupdatableitem_js_1.HaGenericUpdateableItem {
+const hagenericupdatableitem_1 = require("./hagenericupdatableitem");
+class HaItemVar extends hagenericupdatableitem_1.HaGenericUpdateableItem {
     constructor(item) {
         super(item);
         this.on('new_state', (that, _oldstate) => {

@@ -1,5 +1,5 @@
 import { Logger } from 'log4js';
-import { State } from '../hamain';
+import { State } from '../hamain/State';
 
 export interface IHaItem {
     get logger(): Logger;

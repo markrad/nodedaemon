@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HaItemAutomation = void 0;
-const hagenericswitchitem_js_1 = require("./hagenericswitchitem.js");
+const hagenericswitchitem_1 = require("./hagenericswitchitem");
 // TODO Add mechanism to activate it?
-class HaItemAutomation extends hagenericswitchitem_js_1.HaGenericSwitchItem {
+class HaItemAutomation extends hagenericswitchitem_1.HaGenericSwitchItem {
     constructor(item) {
         super(item);
     }
@@ -17,5 +17,5 @@ class HaItemAutomation extends hagenericswitchitem_js_1.HaGenericSwitchItem {
     }
 }
 exports.HaItemAutomation = HaItemAutomation;
-module.exports = hagenericswitchitem_js_1.HaGenericSwitchItem;
+module.exports = hagenericswitchitem_1.HaGenericSwitchItem;
 //# sourceMappingURL=haitemautomation.js.map

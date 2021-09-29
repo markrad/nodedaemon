@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const hagenericswitchitem_js_1 = require("./hagenericswitchitem.js");
-class HaItemInputBoolean extends hagenericswitchitem_js_1.HaGenericSwitchItem {
+const hagenericswitchitem_1 = require("./hagenericswitchitem");
+class HaItemInputBoolean extends hagenericswitchitem_1.HaGenericSwitchItem {
     constructor(item) {
         super(item);
         this.logger.level = 'debug';
