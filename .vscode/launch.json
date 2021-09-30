@@ -11,9 +11,9 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/nodedaemon.js",
+            "program": "${workspaceFolder}/output/nodedaemon.js",
             "outputCapture": "std",
-            "args": ["-D", "debug", "--appsdir", "./sysapps", "--appsdir", "./apps"],
+            "args": ["-D", "debug", "--appsdir", "./output/sysapps", "--appsdir", "./output/apps"],
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "debug",
