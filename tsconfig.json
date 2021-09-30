@@ -11,5 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": false,
     "checkJs": false,
+    "outDir": "./output"
   }
 }
