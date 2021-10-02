@@ -22,7 +22,7 @@ var reload = require('require-reload');
 export type AppInfo = {
     name: string;
     path: string;
-    instance: any;
+    instance: IApplication;
     status: string;
 }
 
@@ -172,7 +172,7 @@ export class HaMain extends EventEmitter {
         return this._apps;
     }
 
-    public getApp(name: string) {
+    public getApp(name: string): AppInfo {
         return this.apps.find(item => item.name == name);
     }
 
