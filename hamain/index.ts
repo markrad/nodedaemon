@@ -41,13 +41,15 @@ export class HaMain extends EventEmitter {
     private _haItemFactory: HaItemFactory;
     private _haConfig: any;
     private _starttime: Date;
-    constructor(config: any) {
+    private _configPath;
+    constructor(config: any, configPath: string) {
         super();
         this._haInterface = null;
         this._items = new ItemsManager();
         this._apps = new Array<AppInfo>();
         this._haItemFactory = null;
         this._config = config;
+        this._configPath = configPath;
         this._haConfig = null;
         this._starttime = new Date();
     }
@@ -162,6 +164,10 @@ export class HaMain extends EventEmitter {
                 reject(err);
             }
             });
+    }
+
+    public get configPath(): string {
+        return this._configPath;
     }
 
     public get items(): ItemsManager {

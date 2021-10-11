@@ -6,7 +6,7 @@ import { HaMain } from './hamain';
 
 const CATEGORY: string = 'main';
 
-async function main(version: string, config: any) {
+async function main(version: string, config: any, configPath: string) {
     const LOGO: string = `
                                                   
              |         |                         
@@ -19,7 +19,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     logger.info(`${LOGO}`);
 
     try {
-        var haMain: HaMain = new HaMain(config);
+        var haMain: HaMain = new HaMain(config, configPath);
 
         process.stdin.resume();
         ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
@@ -44,6 +44,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
 }
 
 var defaultLogger: Logger; 
+let configFile: string = '';
 
 try {
     const program = new Command();
@@ -61,7 +62,7 @@ try {
         .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
         .parse(process.argv);
 
-    let configFile: string = program.opts().config || './config.json';
+    configFile = program.opts().config || './config.json';
 
     if (!fs.existsSync(configFile)) {
         defaultLogger = getLogger();
@@ -205,4 +206,4 @@ catch (err) {
     process.exit(4);
 }
 
-main(packageJSON.version, config);
+main(packageJSON.version, config, configFile);
