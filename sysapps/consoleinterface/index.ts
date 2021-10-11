@@ -44,7 +44,33 @@ export class ConsoleInterface implements IApplication {
     }
 
     public validate(config: any): boolean {
+        let validTransports: any  = { ssh: './transportssh', telnet: './transporttelnet' };
+        let locName: string = this.controller.haConfig.location_name;
         this._config = config;
+        if (this._config.transports) {
+            if (!Array.isArray(this._config.transports)) {
+                logger.error('Transports must be an array');
+                return false;
+            }
+            this._config.transports.forEach((element: string) => {
+                let work = validTransports[element];
+                if (work) {
+                    this._transports.push(new (require(work))(locName, this, this._config));
+                }
+                else {
+                    logger.warn(`Transport ${element} does not exist`);
+                }
+            });
+
+            if (this._transports.length == 0) {
+                logger.error('No valid transports were specified');
+                return false;
+            }
+        }
+        else {
+            logger.error('No transports specified');
+            return false;
+        }
         logger.info('Validated successfully');
         return true;
     }
@@ -79,7 +105,6 @@ export class ConsoleInterface implements IApplication {
     }
 
     public async run(): Promise<boolean> {
-        let name: string = this.controller.haConfig.location_name;
         this._cmds = [
             new (require('./commandhelp')).CommandHelp(),
             new (require('./commandgetconfig')).CommandGetConfig(),
@@ -91,26 +116,6 @@ export class ConsoleInterface implements IApplication {
             new (require('./commandapp')).CommandApp(),
             new (require('./commandha')).CommandHa(),
         ];
-
-        if (this._config?.transports) {
-            try {
-                this._config.transports.forEach((transport: string) => {
-                    try {
-                        this._transports.push(new (require(transport))(name, this, this._config));
-                    }
-                    catch (err) {
-                        logger.error(`Failed to create transport ${transport}: ${err}`);
-                    }
-                });
-            }
-            catch (err) {
-                logger.error(`Failed to interate transports ${err}`);
-            }
-        }
-        else {
-            logger.warn('No transports specified');
-        }
-
         this._transports.forEach(async (transport) => await transport.start());
 
         return true;
