@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { getLogger, configure, Logger } from 'log4js';
 import { Command } from 'commander';
-import path from 'path';
+import Path from 'path';
 import { HaMain } from './hamain';
 
 const CATEGORY: string = 'main';
@@ -62,7 +62,7 @@ try {
         .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
         .parse(process.argv);
 
-    configFile = program.opts().config || './config.json';
+    configFile = Path.resolve(program.opts().config || './config.json');
 
     if (!fs.existsSync(configFile)) {
         defaultLogger = getLogger();
@@ -158,7 +158,7 @@ try {
             defaultLogger.fatal(`appsDir ${item} is invalid`);
             process.exit(4);
         }
-        return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
+        return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
     });
 
     config.main.appsDir = Array.from(new Set(config.main.appsDir));
@@ -189,7 +189,7 @@ try {
             defaultLogger.fatal(`ignoreApps ${item} is invalid`);
             process.exit(4);
         }
-        return path.normalize((!path.isAbsolute(item))? path.join(process.cwd(), item) : item);
+        return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
     });
 
     defaultLogger.level = config.main.debugLevel;
@@ -206,4 +206,4 @@ catch (err) {
     process.exit(4);
 }
 
-main(packageJSON.version, config, configFile);
+main(packageJSON.version, config, Path.dirname(configFile));
