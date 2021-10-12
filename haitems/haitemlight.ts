@@ -1,4 +1,4 @@
-import { State } from '../hamain/State'
+import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 import { ServiceTarget } from './haparentitem';
 

@@ -1,4 +1,4 @@
-import { State } from '../hamain/State'
+import { State } from '../hamain/state'
 import { HaParentItem, ServicePromise } from './haparentitem';
 
 class HaItemScene extends HaParentItem {

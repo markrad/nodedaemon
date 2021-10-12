@@ -1,4 +1,4 @@
-import { State } from '../hamain/State'
+import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, ServicePromise } from './haparentitem';
 

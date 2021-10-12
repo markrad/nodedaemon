@@ -1,5 +1,5 @@
 // import { resolve } from 'path/posix';
-import { State } from '../hamain/State'
+import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, IHaItemEditable, ServicePromise } from './haparentitem';
 

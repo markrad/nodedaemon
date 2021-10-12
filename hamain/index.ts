@@ -5,7 +5,7 @@ import * as path from 'path';
 import fs from 'fs';
 import { Dir } from 'node:fs';
 
-import { State, StateChange } from './State';
+import { State, StateChange } from './state';
 import { ItemsManager } from './itemsmanager';
 import { Logger, getLogger } from 'log4js';
 import { HaInterface } from '../hainterface';
@@ -14,17 +14,10 @@ import { IHaItem } from '../haitems/ihaitem';
 import { ServiceTarget } from '../haitems/haparentitem';
 import { IApplication } from '../common/IApplication';
 import { LogLevelValidator } from '../common/loglevelvalidator';
+import { AppInfo } from './appinfo';
 
 //import * as hound  from 'hound';
 var reload = require('require-reload');
-
-// TODO - put in own file
-export type AppInfo = {
-    name: string;
-    path: string;
-    instance: IApplication;
-    status: string;
-}
 
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);

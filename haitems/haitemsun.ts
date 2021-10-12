@@ -1,4 +1,4 @@
-import { State } from '../hamain/State'
+import { State } from '../hamain/state'
 import { HaParentItem } from './haparentitem';
 
 class HaItemSun extends HaParentItem {

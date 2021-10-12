@@ -3,7 +3,7 @@
 import { IHaItem } from "../../haitems/ihaitem";
 import { IHaItemSwitch } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
-import { State } from '../../hamain/State';
+import { State } from '../../hamain/state';
 import { getLogger } from 'log4js';
 import { IApplication } from "../../common/IApplication";
 import { LogLevelValidator } from '../../common/loglevelvalidator';
