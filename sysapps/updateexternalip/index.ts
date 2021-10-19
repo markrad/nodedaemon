@@ -8,7 +8,6 @@ import { LogLevelValidator } from '../../common/loglevelvalidator';
 const CATEGORY = 'UpdateExternalIP';
 var logger = getLogger(CATEGORY);
 
-// TODO: This needs to use the config
 class UpdateExternalIP implements IApplication {
     private _external_ip: IHaItemEditable;
     private _interval: NodeJS.Timer = null;
