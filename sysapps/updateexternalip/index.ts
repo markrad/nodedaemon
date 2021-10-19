@@ -10,18 +10,22 @@ var logger = getLogger(CATEGORY);
 
 // TODO: This needs to use the config
 class UpdateExternalIP implements IApplication {
-    _external_ip: IHaItemEditable;
-    _interval: NodeJS.Timer = null;
-    _config: any;
+    private _external_ip: IHaItemEditable;
+    private _interval: NodeJS.Timer = null;
     private _multiplier: number = 24;
     private _delay: number = 5;
+    private _controller: HaMain;
     public constructor(controller: HaMain, _config: any) {
-        this._external_ip = SafeItemAssign(controller.items.getItem('var.external_ip'));
-        // this._config = config;
+        this._controller = controller;
         logger.info('Constructed');
     }
 
-    public validate(_config: any): boolean {
+    public validate(config: any): boolean {
+        if (!config.ip) throw new Error('External IP variable is missing');
+        this._external_ip = SafeItemAssign(this._controller.items.getItem(config.ip));   
+        if (!this._external_ip) throw new Error(`Unable to find ip variable ${config.ip}`);
+        if (this._external_ip.type != 'var') throw new Error(`IP variable ${config.ip} is not a type var`);
+        logger.info('Validated successfully');
         return true;
     }
 
