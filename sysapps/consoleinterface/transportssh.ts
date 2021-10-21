@@ -418,6 +418,15 @@ class TransportSSH implements ITransport {
                                         }
                                     },
                                     { name: 'escape', value: Buffer.from([27]), action: () => { } },
+                                    {
+                                        name: 'ctrl-c', value: Buffer.from([3]), action: () => {
+                                            stream.write('^C\r\n$ ');
+                                            len = 0;
+                                            cursor = 0;
+                                            sig = false;
+                                            historyPointer = -1;
+                                        }
+                                    },
                                 ];
                                 const tab = Buffer.from([9]);
                                 stream.on('data', (data: Buffer) => {
