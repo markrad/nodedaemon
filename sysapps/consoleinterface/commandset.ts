@@ -18,7 +18,7 @@ export class CommandSet extends CommandBase {
     }
 
     public get helpText(): string {
-        return `${this.commandName}\tstate\r\n\ton\r\n\toff\r\n\ttoggle\t\t\tManipulate properties of item`;
+        return `${this.commandName}\tstate <item>\r\n\ton <item>\r\n\toff <item>\r\n\ttoggle <item>\t\t\tManipulate properties of item`;
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
