@@ -23,13 +23,13 @@ export class CommandSet extends CommandBase {
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[];
-        // TODO Exclude items that are not addressable by the command such as on returns switches only
         if (parameters.length == 4) {
             possibles = LogLevels().join('|').toLowerCase().split('|').filter((item) => item.startsWith(parameters[3]));
         }
         else if (parameters.length == 3) {
             possibles = [ ...that.controller.items.items ]
                 .filter((item) => item[1].entityId.startsWith(parameters[2]))
+                .filter((item) => parameters[1] == 'state'? item[1].isEditable : parameters[1] == 'on' || parameters[1] == 'off'? item[1].isSwitch : false)
                 .map((item) => item[1].entityId)
                 .sort((l, r) => l < r? -1 : 1);
         }
