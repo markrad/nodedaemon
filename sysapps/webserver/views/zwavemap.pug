@@ -1,0 +1,37 @@
+extends layout
+
+block layout-content
+  div.View
+    h1.Banner ZWave Map <Deprecated>
+  div.Container#container
+  script(type='text/javascript').
+      window.addEventListener('load', () => {
+        var xmlhttp = new XMLHttpRequest();
+        var url = 'zwavedata';
+
+        xmlhttp.onreadystatechange = () => {
+          //- document.getElementById('message').innerHTML = `readyState = ${xmlhttp.readyState} state = ${xmlhttp.status}`
+          if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var response = JSON.parse(xmlhttp.responseText);
+            var nodes = new vis.DataSet(response.nodes);
+            var edges = new vis.DataSet(response.edges);
+            var data = { nodes: nodes, edges: edges };
+            var container = document.getElementById('container');
+            var options = { 
+              physics: { 
+                enabled: false 
+              }, 
+              nodes: { 
+                color: 'lightgreen',
+                shape: 'box'
+              } 
+            };
+            var network = new vis.Network(container, data, options);
+          }
+        };
+
+        xmlhttp.open('GET', url, true);
+        xmlhttp.send();
+      });
+  script(src='https://unpkg.com/vis-network/standalone/umd/vis-network.min.js')
+  //- script(src='https://visjs.github.io/vis-network/standalone/umd/vis-network.min.js')

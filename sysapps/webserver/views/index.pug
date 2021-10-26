@@ -1,0 +1,33 @@
+extends layout
+
+block layout-content
+  div.View
+    h1.Banner | RadRealm |
+    div.Message
+      div.Intro
+        p.Middle 
+        | A list of useful local 
+        | websites.
+    div.NavButtons
+      ol.Sites
+        li
+          a(href="http://rr-hass.home.radrealm.com:8123")
+            div.NavButton Home Assistant (rr-hass)
+        li
+          a(href="http://rr-hass.home.radrealm.com:3000")
+            div.NavButton Grafana
+        li
+          a(href="http://rr-hass.home.radrealm.com")
+            div.NavButton Phoscon-GW
+        li
+          a(href="https://rr-synol1.home.radrealm.com:5001")
+            div.NavButton Synology
+        li
+          a(href="http://rr-hass.home.radrealm.com:8091")
+            div.NavButton ZWaveJS2MQTT
+        //- li
+        //-   a(href="zwavemap")
+        //-     div.NavButton ZWave Map
+        li
+          a(href="routerredir")
+            div.NavButton WiFi Router

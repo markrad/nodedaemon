@@ -1,0 +1,141 @@
+"use strict"
+import * as schedule from 'node-schedule';
+import { IApplication } from '../../common/IApplication';
+import { IHaItemEditable, SafeItemAssign } from '../../haitems/haparentitem';
+import { HaMain } from '../../hamain';
+import { LogLevelValidator } from '../../common/loglevelvalidator';
+
+const CATEGORY = 'AstroHelper';
+
+const logger = require('log4js').getLogger(CATEGORY);
+
+class AstroHelper implements IApplication {
+    private _controller: HaMain = null;
+    private _astro: any = null;
+    private _lastEvent: IHaItemEditable = null;
+    private _lastUpdate: IHaItemEditable = null;
+    private _dark: IHaItemEditable = null;
+    private _moon: IHaItemEditable = null;
+    private _sunrise: IHaItemEditable = null;
+    private _sunset: IHaItemEditable = null;
+    private _midnight: schedule.Job = null;
+    constructor(controller: HaMain) {
+        this._controller = controller;
+        logger.info('Constructed');
+    }
+
+    validate(config: any): boolean {
+        if (!(this._lastEvent = SafeItemAssign(this._controller.items.getItem(config.lastevent)))) {
+            logger.error(`Last Event variable does not exist or is not updatable: ${config.lastEvent}`);
+            return false;
+        }
+        if (!(this._lastUpdate = SafeItemAssign(this._controller.items.getItem(config.lastupdate)))) {
+            logger.error(`Last Update variable does not exist or is not updateable: ${config.lastupdate}`);
+            return false;
+        }
+        if (!(this._dark = SafeItemAssign(this._controller.items.getItem(config.dark)))) {
+            logger.error(`Is It dark variable does not exist or is not updatable: ${config.dark}`);
+            return false;
+        }
+        if (!(this._moon = SafeItemAssign(this._controller.items.getItem(config.moon)))) {
+            logger.error(`Moon phase variable does not exist or is not updatable: ${config.moon}`);
+            return false;
+        }
+        if (!(this._sunrise = SafeItemAssign(this._controller.items.getItem(config.sunrise)))) {
+            logger.error(`Sunrise variable does not exist : ${config.sunrise}`);
+            return false;
+        }
+        if (!(this._sunset = SafeItemAssign(this._controller.items.getItem(config.sunset)))) {
+            logger.error(`Sunset variable does not exist : ${config.sunset}`);
+            return false;
+        }
+
+        logger.info('Validated successfully');
+
+        return true;
+    }
+
+    async run(): Promise<boolean> {
+
+        if (!(this._astro = this._controller.getApp('Astro')?.instance)) {
+            logger.error('Astro module has not been loaded - cannot continue');
+            return false;
+        }
+
+        this._astro.on('astroevent', (event: string) => {
+            let now: Date = new Date();
+            this._lastEvent.updateState(event);
+            let nowString: string = now.getFullYear() + '-' +
+                (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                now.getDate().toString().padStart(2, '0') + ' ' +
+                now.getHours().toString().padStart(2, '0') + ':' +
+                now.getMinutes().toString().padStart(2, '0') + ':' +
+                now.getSeconds().toString().padStart(2, '0');
+            this._lastUpdate.updateState(nowString);
+        });
+        this._astro.on('moonphase', (phase: any) => this._moon.updateState(phase));
+        this._astro.on('isLight', () => this._dark.updateState(false));
+        this._astro.on('isDark', () => this._dark.updateState(true))
+        this._lastEvent.updateState(this._astro.lastEvent);
+        let now = new Date();
+        let nowString = now.getFullYear() + '-' +
+            (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+            now.getDate().toString().padStart(2, '0') + ' ' +
+            now.getHours().toString().padStart(2, '0') + ':' +
+            now.getMinutes().toString().padStart(2, '0') + ':' +
+            now.getSeconds().toString().padStart(2, '0');
+        this._lastUpdate.updateState(nowString);
+        this._moon.updateState(this._astro.lastMoonPhase)
+        this._dark.updateState(this._astro.isDark);
+        this._setsuntimes();
+        this._midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._setsuntimes());
+        return true;
+    }
+
+    private _setsuntimes(): void {
+        if (this._sunrise) {
+            let sr = this._astro.getEvent('sunrise');
+            let srstr = 
+                sr.getFullYear() + '-' +
+                (sr.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                sr.getDate().toString().padStart(2, '0') + ' ' +
+                sr.getHours().toString().padStart(2, '0') + ':' +
+                sr.getMinutes().toString().padStart(2, '0') + ':' +
+                sr.getSeconds().toString().padStart(2, '0');
+            this._sunrise.updateState(srstr);
+        }
+
+        if (this._sunset) {
+            let ss = this._astro.getEvent('sunset');
+            let ssstr = 
+                ss.getFullYear() + '-' +
+                (ss.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                ss.getDate().toString().padStart(2, '0') + ' ' +
+                ss.getHours().toString().padStart(2, '0') + ':' +
+                ss.getMinutes().toString().padStart(2, '0') + ':' +
+                ss.getSeconds().toString().padStart(2, '0');
+            this._sunset.updateState(ssstr);
+        }
+    }
+
+    stop(): void {
+        this._midnight.cancel();
+    }
+
+    public get logging(): string {
+        return logger.level;
+    }
+
+    public set logging(value: string) {
+        if (!LogLevelValidator(value)) {
+            let err: Error = new Error(`Invalid level passed: ${value}`);
+            logger.error(err.message);
+            throw err;
+        }
+        else {
+            logger.level = value;
+        }
+    }
+}
+
+module.exports = AstroHelper;
