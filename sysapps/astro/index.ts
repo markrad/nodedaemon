@@ -60,6 +60,15 @@ class Astro extends EventEmitter implements IApplication
     }
 
     public validate(config: any): boolean {
+        if (config.logLevel) {
+            try {
+                this.logging = config.logLevel;
+            }
+            catch (err: any) {
+                logger.error(`Failed to set log level to ${config.logLevel}`);
+            }
+        }
+
         if (!this._longitude || !this._latitude) {
             logger.error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
             return false;
