@@ -54,8 +54,6 @@ class Astro extends EventEmitter implements IApplication
         super();
         this._longitude = controller.haConfig.longitude;
         this._latitude = controller.haConfig.latitude;
-        this._midnight();
-        this._updateMoon();
         logger.info('Constructed')
     }
 
@@ -63,6 +61,7 @@ class Astro extends EventEmitter implements IApplication
         if (config.logLevel) {
             try {
                 this.logging = config.logLevel;
+                logger.info(`Set log level to ${config.logLevel}`);
             }
             catch (err: any) {
                 logger.error(`Failed to set log level to ${config.logLevel}`);
@@ -92,8 +91,11 @@ class Astro extends EventEmitter implements IApplication
     }
     
     public async run(): Promise<boolean> {
+        this._midnight();
+        this._updateMoon();
         this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
         this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
+        this.emit('initialized');
 
         return true;
     }
@@ -146,10 +148,10 @@ class Astro extends EventEmitter implements IApplication
                 }
             }, Number(this._times[event]) -  Number(now), event, this);
             
-            logger.trace(`astro - Compare ${this._times[event].toString()} to ${latest.toString()}`);
+            logger.trace(`Compare ${this._times[event].toString()} to ${latest.toString()}`);
             if (Number(this._times[event]) > Number(latest))
             {
-                logger.trace('astro - Replacing previous time');
+                logger.trace('Replacing previous time');
                 latest = this._times[event];
                 latestIndex = event;
             }
@@ -222,7 +224,7 @@ class Astro extends EventEmitter implements IApplication
             phase = 'Fuck Knows'
         }
 
-        logger.debug(`astro - Moon Phase = ${phase}`);
+        logger.debug(`Moon Phase = ${phase}`);
         return phase;
     }
     
