@@ -25,6 +25,16 @@ class AstroHelper implements IApplication {
     }
 
     validate(config: any): boolean {
+        if (config.logLevel) {
+            try {
+                this.logging = config.logLevel;
+                logger.info(`Set log level to ${config.logLevel}`);
+            }
+            catch (err: any) {
+                logger.error(`Failed to set log level to ${config.logLevel}`);
+            }
+        }
+
         if (!(this._lastEvent = SafeItemAssign(this._controller.items.getItem(config.lastevent)))) {
             logger.error(`Last Event variable does not exist or is not updatable: ${config.lastEvent}`);
             return false;
@@ -56,65 +66,70 @@ class AstroHelper implements IApplication {
     }
 
     async run(): Promise<boolean> {
-
+        
         if (!(this._astro = this._controller.getApp('Astro')?.instance)) {
             logger.error('Astro module has not been loaded - cannot continue');
             return false;
         }
 
-        this._astro.on('astroevent', (event: string) => {
-            let now: Date = new Date();
-            this._lastEvent.updateState(event);
-            let nowString: string = now.getFullYear() + '-' +
+        this._astro.once('initialized', () => {
+            this._astro.on('astroevent', (event: string) => {
+                let now: Date = new Date();
+                this._lastEvent.updateState(event);
+                let nowString: string = now.getFullYear() + '-' +
+                    (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                    now.getDate().toString().padStart(2, '0') + ' ' +
+                    now.getHours().toString().padStart(2, '0') + ':' +
+                    now.getMinutes().toString().padStart(2, '0') + ':' +
+                    now.getSeconds().toString().padStart(2, '0');
+                this._lastUpdate.updateState(nowString);
+            });
+            this._astro.on('moonphase', (phase: any) => this._moon.updateState(phase));
+            this._astro.on('isLight', () => this._dark.updateState(false));
+            this._astro.on('isDark', () => this._dark.updateState(true))
+            this._lastEvent.updateState(this._astro.lastEvent);
+            let now = new Date();
+            let nowString = now.getFullYear() + '-' +
                 (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
                 now.getDate().toString().padStart(2, '0') + ' ' +
                 now.getHours().toString().padStart(2, '0') + ':' +
                 now.getMinutes().toString().padStart(2, '0') + ':' +
                 now.getSeconds().toString().padStart(2, '0');
             this._lastUpdate.updateState(nowString);
+            this._moon.updateState(this._astro.lastMoonPhase)
+            this._dark.updateState(this._astro.isDark);
+            this._setsuntimes();
+            this._midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._setsuntimes());
         });
-        this._astro.on('moonphase', (phase: any) => this._moon.updateState(phase));
-        this._astro.on('isLight', () => this._dark.updateState(false));
-        this._astro.on('isDark', () => this._dark.updateState(true))
-        this._lastEvent.updateState(this._astro.lastEvent);
-        let now = new Date();
-        let nowString = now.getFullYear() + '-' +
-            (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
-            now.getDate().toString().padStart(2, '0') + ' ' +
-            now.getHours().toString().padStart(2, '0') + ':' +
-            now.getMinutes().toString().padStart(2, '0') + ':' +
-            now.getSeconds().toString().padStart(2, '0');
-        this._lastUpdate.updateState(nowString);
-        this._moon.updateState(this._astro.lastMoonPhase)
-        this._dark.updateState(this._astro.isDark);
-        this._setsuntimes();
-        this._midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._setsuntimes());
         return true;
     }
 
-    private _setsuntimes(): void {
-        if (this._sunrise) {
-            let sr = this._astro.getEvent('sunrise');
-            let srstr = 
-                sr.getFullYear() + '-' +
+    private _getEventTime(event: string): string {
+        let sr = this._astro.getEvent(event)
+
+        if (!sr) {
+            logger.error(`Specified event ${event} was not found`);
+            return null;
+        }
+        else {
+            let ret = sr.getFullYear() + '-' +
                 (sr.getMonth() + 1).toString().padStart(2, '0') + '-' +
                 sr.getDate().toString().padStart(2, '0') + ' ' +
                 sr.getHours().toString().padStart(2, '0') + ':' +
                 sr.getMinutes().toString().padStart(2, '0') + ':' +
                 sr.getSeconds().toString().padStart(2, '0');
-            this._sunrise.updateState(srstr);
+            logger.debug(`Setting ${event} to ${ret}`);
+            return ret;
+        }
+    }
+
+    private _setsuntimes(): void {
+        if (this._sunrise) {
+            this._sunrise.updateState(this._getEventTime('sunrise'));
         }
 
         if (this._sunset) {
-            let ss = this._astro.getEvent('sunset');
-            let ssstr = 
-                ss.getFullYear() + '-' +
-                (ss.getMonth() + 1).toString().padStart(2, '0') + '-' +
-                ss.getDate().toString().padStart(2, '0') + ' ' +
-                ss.getHours().toString().padStart(2, '0') + ':' +
-                ss.getMinutes().toString().padStart(2, '0') + ':' +
-                ss.getSeconds().toString().padStart(2, '0');
-            this._sunset.updateState(ssstr);
+            this._sunrise.updateState(this._getEventTime('sunset'));
         }
     }
 
