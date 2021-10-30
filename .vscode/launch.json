@@ -13,10 +13,10 @@
             ],
             "program": "${workspaceFolder}/output/nodedaemon.js",
             "outputCapture": "std",
-            "args": ["-D", "debug", "--appsdir", "./output/sysapps", "--appsdir", "./output/apps"],
+            "args": [ "-D", "info", "--appsdir", "./output/sysapps" ],
             "env": {
                 "HAINTERFACE_LOGGING": "info",
-                "HAMAIN_LOGGING": "debug",
+                "HAMAIN_LOGGING": "info",
             }
         },
         {
