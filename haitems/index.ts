@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import log4js from 'log4js';
 import { HaInterface } from '../hainterface';
 import { IHaItem } from './ihaitem';
@@ -33,7 +33,7 @@ export class HaItemFactory {
     private async _getItemObjects(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
-                const dir = await fs.promises.opendir(__dirname);
+                const dir = await fs.opendir(__dirname);
 
                 for await (const dirent of dir) {
                     if (dirent.name.startsWith('haitem') && dirent.name.endsWith('.js')) {
