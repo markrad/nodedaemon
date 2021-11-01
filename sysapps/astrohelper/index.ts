@@ -129,7 +129,7 @@ class AstroHelper implements IApplication {
         }
 
         if (this._sunset) {
-            this._sunrise.updateState(this._getEventTime('sunset'));
+            this._sunset.updateState(this._getEventTime('sunset'));
         }
     }
 
