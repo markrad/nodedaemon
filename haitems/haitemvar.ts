@@ -17,6 +17,7 @@ class HaItemVar extends HaGenericUpdateableItem {
                 if (ret.message == 'success') {
                     // Call var.update to update icons etc.
                     this._callService(this.type, 'update', { entity_id: this.entityId });
+                    this.logger.debug(`Set var ${this.entityId} to ${newState}`)
                 }
                 resolve({ message: ret.message, err: ret.err });
             }
