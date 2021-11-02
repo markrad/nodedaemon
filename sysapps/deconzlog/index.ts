@@ -1,16 +1,16 @@
 import { WSWrapper } from '../../common/wswrapper';
 import { getLogger, Logger } from 'log4js';
-import { IApplication } from '../../common/IApplication';
+import { AppParent } from '../../common/appparent';
 import { HaMain } from '../../hamain';
-import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'DeconzLog';
 var logger: Logger = getLogger(CATEGORY);
 
-export class DeconzLog implements IApplication {
+export class DeconzLog extends AppParent {
     _deconz: any;
     _ws: WSWrapper;
     constructor(_controller: HaMain, config: any) {
+        super(logger);
         this._deconz = { ...{ host: '127.0.0.1', port: 8443}, ...(config.deconzlog.deconz ?? {}) };
         this._ws = null;
         logger.info('Constructed');
@@ -43,21 +43,6 @@ export class DeconzLog implements IApplication {
             await this._ws.close();
             resolve();
         });
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 }
 

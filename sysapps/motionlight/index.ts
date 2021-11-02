@@ -4,9 +4,8 @@ import { IHaItem } from "../../haitems/ihaitem";
 import { IHaItemSwitch } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
-import { getLogger } from 'log4js';
-import { IApplication } from "../../common/IApplication";
-import { LogLevelValidator } from '../../common/loglevelvalidator';
+import { getLogger, Logger } from 'log4js';
+import { AppParent } from '../../common/appparent';
 
 interface Trip {
     sensor: IHaItem;
@@ -15,13 +14,14 @@ interface Trip {
 }
 
 const CATEGORY = 'MotionLight';
-var logger = getLogger(CATEGORY);
+var logger: Logger = getLogger(CATEGORY);
 
-class MotionLight implements IApplication {
+class MotionLight extends AppParent {
     private _controller: HaMain;
     private _actioners: actioner[] = [];
     private _trips: Trip[] = null;
     constructor(controller: HaMain) {
+        super(logger);
         this._controller = controller;
         logger.info('Constructed');
     }
@@ -97,21 +97,6 @@ class MotionLight implements IApplication {
         this._actioners.forEach(actioner => {
             actioner.stop();
         });
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 }
 

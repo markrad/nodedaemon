@@ -1,12 +1,11 @@
 "use strict";
 
-import { IApplication } from "../../common/IApplication";
+import { AppParent } from "../../common/appparent";
 import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
 import { getLogger, Logger } from "log4js";
 import { ICommand } from "./icommand";
 import { IChannel } from "./ichannel";
-import { LogLevelValidator } from '../../common/loglevelvalidator';
 import { ITransport } from "./itransport";
 
 const CATEGORY: string = 'ConsoleInterface';
@@ -31,13 +30,14 @@ var logger: Logger = getLogger(CATEGORY);
         }
     }
 \* -------------------------------------------------------------------------- */
-export class ConsoleInterface implements IApplication {
+export class ConsoleInterface extends AppParent {
     private _config: any;
     private _controller: HaMain;
     private _items: ItemsManager;
     private _transports: ITransport[] = [];
     private _cmds: ICommand[] = [];
     public constructor(controller: HaMain) {
+        super(logger);
         this._controller = controller;
         this._items = controller.items;
         logger.info('Constructed');
@@ -129,21 +129,6 @@ export class ConsoleInterface implements IApplication {
                 .then(() => resolve())
                 .catch((err) => reject(err));
         });
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 }
 

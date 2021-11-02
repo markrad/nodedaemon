@@ -1,15 +1,15 @@
 "use strict"
+import { Logger } from 'log4js';
 import * as schedule from 'node-schedule';
-import { IApplication } from '../../common/IApplication';
+import { AppParent } from '../../common/appparent';
 import { IHaItemEditable, SafeItemAssign } from '../../haitems/haparentitem';
 import { HaMain } from '../../hamain';
-import { LogLevelValidator } from '../../common/loglevelvalidator';
 
 const CATEGORY = 'AstroHelper';
 
-const logger = require('log4js').getLogger(CATEGORY);
+const logger: Logger = require('log4js').getLogger(CATEGORY);
 
-class AstroHelper implements IApplication {
+class AstroHelper extends AppParent {
     private _controller: HaMain = null;
     private _astro: any = null;
     private _lastEvent: IHaItemEditable = null;
@@ -20,6 +20,7 @@ class AstroHelper implements IApplication {
     private _sunset: IHaItemEditable = null;
     private _midnight: schedule.Job = null;
     constructor(controller: HaMain) {
+        super(logger);
         this._controller = controller;
         logger.info('Constructed');
     }
@@ -135,21 +136,6 @@ class AstroHelper implements IApplication {
 
     stop(): void {
         this._midnight.cancel();
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 }
 

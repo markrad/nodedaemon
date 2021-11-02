@@ -1,20 +1,20 @@
 import { IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
 import http from 'http';
-import { getLogger } from "log4js";
-import { IApplication } from "../../common/IApplication";
-import { LogLevelValidator } from '../../common/loglevelvalidator';
+import { getLogger, Logger } from "log4js";
+import { AppParent } from '../../common/appparent';
 
 const CATEGORY = 'UpdateExternalIP';
-var logger = getLogger(CATEGORY);
+var logger: Logger = getLogger(CATEGORY);
 
-class UpdateExternalIP implements IApplication {
+class UpdateExternalIP extends AppParent {
     private _external_ip: IHaItemEditable;
     private _interval: NodeJS.Timer = null;
     private _multiplier: number = 24;
     private _delay: number = 5;
     private _controller: HaMain;
     public constructor(controller: HaMain, _config: any) {
+        super(logger);
         this._controller = controller;
         logger.info('Constructed');
     }
@@ -51,21 +51,6 @@ class UpdateExternalIP implements IApplication {
 
     public async stop() {
         clearInterval(this._interval);
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 
     private async _whatsMyIP(): Promise<string> {

@@ -1,12 +1,11 @@
 import { WSWrapper } from '../../common/wswrapper';
 import mqtt from 'mqtt';
-import { getLogger } from 'log4js';
+import { getLogger, Logger } from 'log4js';
 import { HaMain } from '../../hamain';
-import { IApplication } from '../../common/IApplication';
-import { LogLevelValidator } from '../../common/loglevelvalidator';
+import { AppParent } from '../../common/appparent';
 
 const CATEGORY = 'DeconzHack';
-var logger = getLogger(CATEGORY);
+var logger: Logger = getLogger(CATEGORY);
 
 type MqttConfig = {
     host?: string;
@@ -63,7 +62,7 @@ type Config = {
     The string %deviceid% in the topic will be replaced with the target 
     value. 
 \* -------------------------------------------------------------------------- */
-class DeconzHack implements IApplication {
+class DeconzHack extends AppParent {
     private _mqttOptions: mqtt.IClientOptions;
     private _mqttConfig: MqttConfig;
     private _deconzConfig: DeconzConfig;
@@ -72,6 +71,7 @@ class DeconzHack implements IApplication {
     private _client: mqtt.MqttClient;
     private _printMessages: boolean = false;
     constructor(_controller: HaMain) {
+        super(logger);
         this._client = null;
         this._ws = null;
         this._mqttOptions = { clean: true, clientId: "deCONZHack"}
@@ -134,21 +134,6 @@ class DeconzHack implements IApplication {
             await this._ws.close();
             this._client.end(false, null, resolve);
         });
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 }
 

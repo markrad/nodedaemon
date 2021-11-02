@@ -6,20 +6,20 @@ import { HaMain } from "../../hamain";
 import Express from 'express';
 import path from 'path';
 import http from 'http';
-import { IApplication } from "../../common/IApplication";
-import { getLogger } from "log4js";
-import { LogLevelValidator } from '../../common/loglevelvalidator';
+import { getLogger, Logger } from "log4js";
+import { AppParent } from '../../common/appparent';
 
 const CATEGORY = 'WebServer';
 
 const logger = getLogger(CATEGORY);
 
-export class WebServer implements IApplication {
+export class WebServer extends AppParent {
     private _port: number;
     // private _controller: HaMain;
     private _app: Express.Application;
     private _server: http.Server;
     constructor(_controller: HaMain, config: any) {
+        super(logger);
         this._port = config.webserver?.port ?? 4526;
         // this._controller = controller;
         this._app = Express(); 
@@ -150,21 +150,6 @@ export class WebServer implements IApplication {
                 }
             });
         });
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 }
 
