@@ -3,10 +3,8 @@
 import { getMoonIllumination, GetMoonIlluminationResult, getTimes, GetTimesResult } from 'suncalc';
 import * as schedule from 'node-schedule';
 import { HaMain } from '../../hamain';
-import { EventEmitter } from 'events';
 import { getLogger } from 'log4js';
-import { IApplication } from '../../common/IApplication';
-import { LogLevelValidator } from '../../common/loglevelvalidator';
+import { AppParent } from '../../common/appparent';
 
 const CATEGORY: string = 'Astro'
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
@@ -23,7 +21,7 @@ const logger = getLogger(CATEGORY);
     }
     Values for daystart and dayend will determine the isDark timespan.
 \* -------------------------------------------------------------------------- */
-class Astro extends EventEmitter implements IApplication
+class Astro extends AppParent
 {
     private _times: any = {};
     private _events: string[] = [
@@ -51,7 +49,7 @@ class Astro extends EventEmitter implements IApplication
     private _dayStart: string = null;
     private _dayEnd: string = null;
     public constructor(controller: HaMain, _config: any) {
-        super();
+        super(logger);
         this._longitude = controller.haConfig.longitude;
         this._latitude = controller.haConfig.latitude;
         logger.info('Constructed')
@@ -103,21 +101,6 @@ class Astro extends EventEmitter implements IApplication
     public stop() {
         this._midnightSched.cancel();
         this._moonSched.cancel();
-    }
-
-    public get logging(): string {
-        return logger.level;
-    }
-
-    public set logging(value: string) {
-        if (!LogLevelValidator(value)) {
-            let err: Error = new Error(`Invalid level passed: ${value}`);
-            logger.error(err.message);
-            throw err;
-        }
-        else {
-            logger.level = value;
-        }
     }
 
     private _setupTimes(times1: GetTimesResult, times2: GetTimesResult): void
