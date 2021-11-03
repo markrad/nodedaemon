@@ -29,7 +29,13 @@ export class CommandSet extends CommandBase {
         else if (parameters.length == 3) {
             possibles = [ ...that.controller.items.items ]
                 .filter((item) => item[1].entityId.startsWith(parameters[2]))
-                .filter((item) => parameters[1] == 'state'? item[1].isEditable : parameters[1] == 'on' || parameters[1] == 'off'? item[1].isSwitch : false)
+                .filter((item) => parameters[1] == 'state'
+                    ? item[1].isEditable 
+                    : parameters[1] == 'on' || parameters[1] == 'off'
+                    ? item[1].isSwitch
+                    : parameters[1] == 'log'
+                    ? true 
+                    : false)
                 .map((item) => item[1].entityId)
                 .sort((l, r) => l < r? -1 : 1);
         }
