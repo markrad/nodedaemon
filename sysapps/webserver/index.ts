@@ -11,7 +11,7 @@ import { AppParent } from '../../common/appparent';
 
 const CATEGORY = 'WebServer';
 
-const logger = getLogger(CATEGORY);
+const logger: Logger = getLogger(CATEGORY);
 
 export class WebServer extends AppParent {
     private _port: number;
