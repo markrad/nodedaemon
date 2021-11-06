@@ -18,12 +18,12 @@ export class CommandSet extends CommandBase {
     }
 
     public get helpText(): string {
-        return `${this.commandName}\tstate <item>\r\n\ton <item>\r\n\toff <item>\r\n\ttoggle <item>\t\t\tManipulate properties of item`;
+        return `${this.commandName}\tlog <item> <loglevel>\r\n\tstate <item>\r\n\ton <item>\r\n\toff <item>\r\n\ttoggle <item>\t\t\tManipulate properties of item`;
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[];
-        if (parameters.length == 4) {
+        if (parameters.length == 4 && parameters[1] == 'log') {
             possibles = LogLevels().join('|').toLowerCase().split('|').filter((item) => item.startsWith(parameters[3]));
         }
         else if (parameters.length == 3) {
