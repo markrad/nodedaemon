@@ -93,7 +93,7 @@ export class HaMain extends EventEmitter {
                 itemTypes[value.type] += 1;
             });
 
-            Object.keys(itemTypes).forEach((value, _index) => {
+            Object.keys(itemTypes).sort().forEach((value, _index) => {
                 logger.info(`${value}: ${itemTypes[value]}`);
             }); 
 
