@@ -89,9 +89,9 @@ class Astro extends AppParent
     }
     
     public async run(): Promise<boolean> {
-        this._midnight();
+        this._midnight(this);
         this._updateMoon();
-        this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
+        this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight(this));
         this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
         this.emit('initialized');
 
@@ -103,20 +103,20 @@ class Astro extends AppParent
         this._moonSched.cancel();
     }
 
-    private _setupTimes(times1: GetTimesResult, times2: GetTimesResult): void
+    private _setupTimes(times1: GetTimesResult, times2: GetTimesResult, that: Astro): void
     {
         logger.debug('In setupTimes');
         let now: Date = new Date();
         let latest: Date = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2)
         let latestIndex: string = null;
 
-        for (let event of this._events)
+        for (let event of that._events)
         {
-            this._times[event] = (this._isAfter((times1 as any)[event], now))
+            that._times[event] = (that._isAfter((times1 as any)[event], now))
                 ? (times1 as any)[event]
                 : (times2 as any)[event];
 
-            logger.debug(`Firing event ${event} at ${this._times[event].toString()}`);
+            logger.debug(`Firing event ${event} at ${that._times[event].toString()}`);
             setTimeout((myEvent, that) =>
             {
                 logger.debug(`Firing event ${myEvent}`);
@@ -129,27 +129,28 @@ class Astro extends AppParent
                     logger.debug('Firing event isDark');
                     that.emit('isDark');
                 }
-            }, Number(this._times[event]) -  Number(now), event, this);
+            }, Number(that._times[event]) -  Number(now), event, that);
             
-            logger.trace(`Compare ${this._times[event].toString()} to ${latest.toString()}`);
-            if (Number(this._times[event]) > Number(latest))
+            logger.trace(`Compare ${that._times[event].toString()} to ${latest.toString()}`);
+            if (Number(that._times[event]) > Number(latest))
             {
                 logger.trace('Replacing previous time');
-                latest = this._times[event];
+                latest = that._times[event];
                 latestIndex = event;
             }
         }
         
-        this._lastEventSave = latestIndex;
-        logger.debug(`Last event was ${this._lastEventSave}`);
+        that._lastEventSave = latestIndex;
+        logger.debug(`Last event was ${that._lastEventSave}`);
     }
 
-    private _midnight(): void {
+    private _midnight(that: Astro): void {
         var today: Date = new Date();
         var tomorrow: Date = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
         this._setupTimes(
             getTimes(today, this._latitude, this._longitude),
-            getTimes(tomorrow, this._latitude, this._longitude));
+            getTimes(tomorrow, this._latitude, this._longitude),
+            that);
     }
 
     private _updateMoon(): void
