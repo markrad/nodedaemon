@@ -50,7 +50,7 @@ export class HaMain extends EventEmitter {
     public async start(): Promise<void> {
         try {
             this._haInterface = new HaInterface(this._config.main.url, this._config.main.accessToken);
-            this._haItemFactory = new HaItemFactory();
+            this._haItemFactory = new HaItemFactory(this._config);
             await this._haInterface.start();
             this._haConfig = await this._haInterface.getConfig();
             this._processItems(await this._haInterface.getStates());
@@ -216,7 +216,7 @@ export class HaMain extends EventEmitter {
         states.forEach((item) => {
             logger.trace(`Item name: ${item.entity_id}`);
             if (!this.items.getItem(item.entity_id)) {
-                let itemInstance: IHaItem = this._haItemFactory.getItemObject(item, this._haInterface);
+                let itemInstance: IHaItem = this._haItemFactory.getItemObject(item /*, this._haInterface*/);
                 itemInstance.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
                     try {
                         await this._haInterface.callService(domain, service, data)

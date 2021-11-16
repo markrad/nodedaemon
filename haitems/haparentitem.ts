@@ -63,7 +63,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         private _lastUpdated: Date;
         private _state: string | number | boolean;
         private _logger: Logger;
-    public constructor(item: State) {
+    public constructor(item: State, logLevel?: string) {
         super();
         this._attributes = item.attributes;
         this._name = '';
@@ -74,6 +74,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this._lastUpdated = new Date(item.last_updated);
         this._state = item.state;
         this._logger = getLogger(this.category);
+        if (logLevel) this.logging = logLevel;
     }
 
     public get logger(): Logger {

@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import log4js from 'log4js';
-import { HaInterface } from '../hainterface';
+// import { HaInterface } from '../hainterface';
 import { IHaItem } from './ihaitem';
 
 const CATEGORY: string = 'HaItemFactory';
@@ -9,8 +9,10 @@ logger.level = 'info';
 
 export class HaItemFactory {
     private _itemClasses: any;
+    private _config: any;
 
-    public constructor() {
+    public constructor(config: any) {
+        this._config = config;
         this._itemClasses = {};
         this._getItemObjects()
             .then(() => logger.debug('Objects acquired'))
@@ -20,13 +22,15 @@ export class HaItemFactory {
             });
     }
 
-    public getItemObject(item: any, transport: HaInterface): IHaItem {
+    public getItemObject(item: any/*, transport: HaInterface*/): IHaItem {
         let itemType: string = item.entity_id.split('.')[0];
+        let logLevel = this._config.main.loggerLevelOverrides.find((value: any) => value.hasOwnProperty(item.entity_id));
+        if (logLevel) logger.info(`Set logging to ${logLevel[item.entity_id]} for ${item.entity_id}`);
         if (itemType in this._itemClasses) {
-            return new this._itemClasses[itemType](item, transport);
+            return new this._itemClasses[itemType](item, logLevel? logLevel[item.entity_id] : undefined);
         }
         else {
-            return new this._itemClasses['unknown'](item, transport);
+            return new this._itemClasses['unknown'](item , logLevel?.item.entity_id);
         }
     }
 

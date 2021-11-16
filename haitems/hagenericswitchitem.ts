@@ -17,8 +17,8 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
     private _moment: number;
     private _support: SUPPORT;       
     private _timer: NodeJS.Timeout;
-    public constructor(item: State) {
-        super(item);
+    public constructor(item: State, logLevel?: string) {
+        super(item, logLevel);
         this._moment = 0;
         this._timer = null;
         this._support = this.attributes?.supported_features ?? 0;
