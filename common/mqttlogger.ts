@@ -3,20 +3,7 @@
 import { Layout, LoggingEvent } from 'log4js';
 import mqtt from 'mqtt';
 import { os } from 'node-os-utils';
-
-type appender = {
-    (loggingEvent: LoggingEvent): void; 
-}
-
-type appenderConfig = {
-    host?: string;
-    topic?: string;
-    layout?: any;
-    username?: string;
-    password?: string;
-    clientid?: string;
-    otherOptions?: any;
-}
+import { appender, appenderConfig} from "./appender";
 
 function mqttAppender(layout: any, otherOptions: any, client: mqtt.MqttClient, mqttTopic: string): appender {
     const appender = (loggingEvent: LoggingEvent) => {
