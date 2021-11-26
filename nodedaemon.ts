@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { getLogger, configure, Logger } from 'log4js';
+import { getLogger, configure, Logger, Configuration } from 'log4js';
 import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
@@ -81,23 +81,48 @@ try {
         process.exit(4);
     }
 
-    if (config.main.mqttlogger) {
-        configure({
-            appenders: {
-                out: { type: 'stdout' },
-                mqtt: { 
-                    type: 'common/mqttlogger', 
-                    host: config.main.mqttlogger.host,
-                    clientid: config.main.mqttlogger.clientid,
-                    username: config.main.mqttlogger.username,
-                    password: config.main.mqttlogger.password
-                }
-            },
-            categories: {
-                default: { appenders: ['out', 'mqtt'], level: 'debug' }
+    let loggerOptions: Configuration = {
+        appenders: {
+            out: { type: 'stdout' },
+            emitter: {
+                type: 'common/emitlogger'
             }
-        });
+        },
+        categories: {
+            default: { appenders: ['out', 'emitter'], level: 'debug' }
+        }
     }
+
+    if (config.main.mqttlogger) {
+        loggerOptions.appenders.mqtt = { 
+            type: 'common/mqttlogger', 
+            host: config.main.mqttlogger.host,
+            clientid: config.main.mqttlogger.clientid,
+            username: config.main.mqttlogger.username,
+            password: config.main.mqttlogger.password
+        }
+        loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('mqtt');
+    }
+
+    configure(loggerOptions);
+
+    // if (config.main.mqttlogger) {
+    //     configure({
+    //         appenders: {
+    //             out: { type: 'stdout' },
+    //             mqtt: { 
+    //                 type: 'common/mqttlogger', 
+    //                 host: config.main.mqttlogger.host,
+    //                 clientid: config.main.mqttlogger.clientid,
+    //                 username: config.main.mqttlogger.username,
+    //                 password: config.main.mqttlogger.password
+    //             }
+    //         },
+    //         categories: {
+    //             default: { appenders: ['out', 'mqtt'], level: 'debug' }
+    //         }
+    //     });
+    // }
 
     defaultLogger = getLogger();
 
