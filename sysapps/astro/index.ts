@@ -24,7 +24,7 @@ const logger = getLogger(CATEGORY);
 class Astro extends AppParent
 {
     private _times: any = {};
-    private _events: string[] = [
+    private static readonly _events: string[] = [
         "sunrise",
         "sunriseEnd",
         "goldenHourEnd",
@@ -110,7 +110,7 @@ class Astro extends AppParent
         let latest: Date = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2)
         let latestIndex: string = null;
 
-        for (let event of that._events)
+        for (let event of Astro._events)
         {
             that._times[event] = (that._isAfter((times1 as any)[event], now))
                 ? (times1 as any)[event]

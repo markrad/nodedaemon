@@ -7,6 +7,8 @@ import { getLogger, Logger } from "log4js";
 import { ICommand } from "./icommand";
 import { IChannel } from "./ichannel";
 import { ITransport } from "./itransport";
+import { TransportSSH } from "./transportssh";
+import { TransportSSHClient } from "./transportsshclient";
 
 const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
@@ -34,8 +36,9 @@ export class ConsoleInterface extends AppParent {
     private _config: any;
     private _controller: HaMain;
     private _items: ItemsManager;
-    private _transports: ITransport[] = [];
+    private _transport: ITransport = null;
     private _cmds: ICommand[] = [];
+    private _lastCmd: ICommand = null;
     public constructor(controller: HaMain) {
         super(logger);
         this._controller = controller;
@@ -44,31 +47,12 @@ export class ConsoleInterface extends AppParent {
     }
 
     public validate(config: any): boolean {
-        let validTransports: any  = { ssh: './transportssh', telnet: './transporttelnet' };
         let locName: string = this.controller.haConfig.location_name;
         this._config = config;
-        if (this._config.transports) {
-            if (!Array.isArray(this._config.transports)) {
-                logger.error('Transports must be an array');
-                return false;
-            }
-            this._config.transports.forEach((element: string) => {
-                let work = validTransports[element];
-                if (work) {
-                    this._transports.push(new (require(work))(locName, this, this._config));
-                }
-                else {
-                    logger.warn(`Transport ${element} does not exist`);
-                }
-            });
+        this._transport = new TransportSSH(locName, this, this._config);
 
-            if (this._transports.length == 0) {
-                logger.error('No valid transports were specified');
-                return false;
-            }
-        }
-        else {
-            logger.error('No transports specified');
+        if (!this._transport) {
+            logger.error('Could not construct SSH transport');
             return false;
         }
         logger.info('Validated successfully');
@@ -87,7 +71,7 @@ export class ConsoleInterface extends AppParent {
         return this._cmds;
     }
 
-    public async parseAndSend(stream: IChannel, cmd: string): Promise<void> {
+    public async parseAndSend(client: TransportSSHClient, stream: IChannel, cmd: string): Promise<void> {
         return new Promise<void>(async (resolve, _reject) => {
             let words = cmd.trim().split(' ');
 
@@ -97,11 +81,18 @@ export class ConsoleInterface extends AppParent {
                 stream.write(`Unknown command: ${words[0]}\r\n`);
             }
             else {
+                client.lastCommand = command;
                 await command.execute(words, this, stream, this._cmds);
             }
             
             resolve();
         });
+    }
+
+    public async sendTerminate(client: TransportSSHClient, stream: IChannel) {
+        if (this._lastCmd) {
+            await client.lastCommand.terminate(this, stream);
+        }
     }
 
     public async run(): Promise<boolean> {
@@ -115,19 +106,18 @@ export class ConsoleInterface extends AppParent {
             new (require('./commandset')).CommandSet(),
             new (require('./commandapp')).CommandApp(),
             new (require('./commandha')).CommandHa(),
+            new (require('./commandlogs')).CommandLogs(),
         ];
-        this._transports.forEach(async (transport) => await transport.start());
+        await this._transport.start();
 
         return true;
     }
 
     public async stop(): Promise<void> {
         return new Promise((resolve, reject) => {
-            let rets: Promise<void>[] = [];
-            this._transports.forEach(async (transport) => rets.push(transport.stop()));
-            Promise.all(rets)
-                .then(() => resolve())
-                .catch((err) => reject(err));
+            this._transport.stop()
+            .then(() => resolve())
+            .catch((err) => reject(err));
         });
     }
 }
