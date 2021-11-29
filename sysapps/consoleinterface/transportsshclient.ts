@@ -5,6 +5,7 @@ import { TransportSSH, User } from "./transportssh";
 // import { ParsedKey, utils } from 'ssh2-streams';
 import * as Crypto from 'crypto';
 import { ConsoleInterface } from ".";
+import { IChannel } from "./ichannel";
 // import { ITransport } from "./itransport";
 
 type Keys = {
@@ -100,7 +101,7 @@ export class TransportSSHClient {
                     this._canStream = false;
                     let ending: boolean = false;
                     logger.debug(`Executing ${info.command}`);
-                    let stream = accept();
+                    let stream: IChannel = accept();
                     stream.on('error', (err: Error) => {
                         if (!ending) {
                             logger.warn(`Stream failed: ${err}`)
@@ -116,7 +117,7 @@ export class TransportSSHClient {
                 }
             })
             .once('shell', (accept, _reject, _info) => {
-                let stream = accept();
+                let stream: IChannel = accept();
                 this._canStream = true;
                 stream.write("$ ");
                 let len: number = 0;
@@ -339,6 +340,7 @@ export class TransportSSHClient {
                                 else {
                                     stream.write('\r\n');
                                     await this._commander.parseAndSend(this, stream, line.slice(0, len).toString());
+                                    this.lastCommand = null;
                                 }
                                 if (history.length == 0 || cmd != history[0]) {
                                     history.unshift(cmd);
@@ -357,11 +359,16 @@ export class TransportSSHClient {
                     { name: 'escape', value: Buffer.from([27]), action: () => { } },
                     {
                         name: 'ctrl-c', value: Buffer.from([3]), action: () => {
-                            stream.write('^C\r\n$ ');
-                            len = 0;
-                            cursor = 0;
-                            sig = false;
-                            historyPointer = -1;
+                            if (this.lastCommand){
+                                this.lastCommand.terminate(this._commander, stream);
+                            }
+                            else {
+                                stream.write('^C\r\n$ ');
+                                len = 0;
+                                cursor = 0;
+                                sig = false;
+                                historyPointer = -1;
+                            }
                         }
                     },
                 ];
@@ -369,6 +376,9 @@ export class TransportSSHClient {
                 stream.on('data', (data: Buffer) => {
                     if (Buffer.compare(tab, data) != 0) {
                         tabCount = 0;
+                    }
+                    if (this.lastCommand != null && Buffer.compare(Buffer.from([3]), data) != 0) {
+                        return;
                     }
                     let handled = keys.find(key => Buffer.compare(key.value, data) == 0);
                     if (handled) {
