@@ -22,9 +22,14 @@ export class HaItemFactory {
             });
     }
 
-    public getItemObject(item: any/*, transport: HaInterface*/): IHaItem {
+    public getItemObject(item: any): IHaItem {
         let itemType: string = item.entity_id.split('.')[0];
-        let logLevel = this._config.main.loggerLevelOverrides.find((value: any) => value.hasOwnProperty(item.entity_id));
+        let logLevel: any = null;
+
+        if (this._config.main.loggerLevelOverrides){
+            logLevel = this._config.main.loggerLevelOverrides.find((value: any) => value.hasOwnProperty(item.entity_id));
+        }
+        
         if (logLevel) logger.info(`Set logging to ${logLevel[item.entity_id]} for ${item.entity_id}`);
         if (itemType in this._itemClasses) {
             return new this._itemClasses[itemType](item, logLevel? logLevel[item.entity_id] : undefined);
