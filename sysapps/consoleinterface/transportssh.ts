@@ -1,13 +1,12 @@
 import fs from 'fs';
-// import * as Crypto from 'crypto';
 import Path from 'path';
-import { Server, Connection, /* AuthContext, Session, PseudoTtyInfo */ } from 'ssh2';
-import { ParsedKey, utils } from 'ssh2-streams';
+import { Server, Connection } from 'ssh2';
+import { ParsedKey } from 'ssh2-streams';
+import { utils } from 'ssh2';
 import { ConsoleInterface } from './';
 import { ITransport } from './itransport';
 import { TransportSSHClient } from './transportsshclient'
 import { getLogger } from "log4js";
-// import { ICommand } from './icommand';
 import { readFileSync } from 'fs';
 
 let parseKey = utils.parseKey;
@@ -37,10 +36,6 @@ export class TransportSSH implements ITransport {
         this._port = config?.ssh.port || 8822;
         this._configRoot = parent.controller.configPath;
 
-        // if (!config?.ssh.certFile) {
-        //     throw new Error('Required certificate location is missing');
-        // }
-
         if (!config?.ssh.users || typeof (config.ssh.users) != 'object' || Array.isArray(config.ssh.users) == false) {
             throw new Error('No userids were provided');
         }
@@ -52,12 +47,7 @@ export class TransportSSH implements ITransport {
             this._users.push({ userid: Buffer.from(user.userid), password: Buffer.from(user.password) });
         });
 
-        // let cert = config.ssh.certFile;
         let key = config.ssh.keyFile;
-
-        // if (!Path.isAbsolute(cert)) {
-        //     cert = Path.join(this._configRoot, cert);
-        // }
 
         if (!Path.isAbsolute(key)) {
             key = Path.join(this._configRoot, key);
@@ -109,5 +99,3 @@ export class TransportSSH implements ITransport {
         return this._allowedPubKeys;
     }
 }
-
-// module.exports = TransportSSH;
