@@ -106,24 +106,6 @@ try {
 
     configure(loggerOptions);
 
-    // if (config.main.mqttlogger) {
-    //     configure({
-    //         appenders: {
-    //             out: { type: 'stdout' },
-    //             mqtt: { 
-    //                 type: 'common/mqttlogger', 
-    //                 host: config.main.mqttlogger.host,
-    //                 clientid: config.main.mqttlogger.clientid,
-    //                 username: config.main.mqttlogger.username,
-    //                 password: config.main.mqttlogger.password
-    //             }
-    //         },
-    //         categories: {
-    //             default: { appenders: ['out', 'mqtt'], level: 'debug' }
-    //         }
-    //     });
-    // }
-
     defaultLogger = getLogger();
 
     if (!config.main.url) {
