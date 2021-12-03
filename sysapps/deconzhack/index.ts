@@ -129,10 +129,11 @@ class DeconzHack extends AppParent {
         this._ws.send(data);
     }
 
-    async stop() {
-        return new Promise(async (resolve, _reject) => {
+    public async stop(): Promise<void> {
+        return new Promise(async (resolve, reject) => {
             await this._ws.close();
-            this._client.end(false, null, resolve);
+            let cb = (err: Error) => { if (!err) resolve(); else reject(err); };
+            this._client.end(false, null, cb);
         });
     }
 }

@@ -164,7 +164,7 @@ class actioner {
     //     }
     // }
 
-    stop() {
+    public async stop(): Promise<void> {
         this._trip.sensor.off('new_state', this._eventHandler);
     }
 }

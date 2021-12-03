@@ -137,8 +137,10 @@ export class HaMain extends EventEmitter {
         return new Promise<void>(async (resolve, reject) => {
             this._apps.forEach(async (app) => {
                 try {
-                    await app.instance.stop();
-                    app.status = 'stopped';
+                    if (app) {
+                        await app.instance.stop();
+                        app.status = 'stopped';
+                    }
                 }
                 catch (err) {
                     logger.warn(`Failed to stop app ${app}: ${err.message}`);

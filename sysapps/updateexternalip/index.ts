@@ -49,7 +49,7 @@ class UpdateExternalIP extends AppParent {
         return true;
     }
 
-    public async stop() {
+    public async stop(): Promise<void> {
         clearInterval(this._interval);
     }
 

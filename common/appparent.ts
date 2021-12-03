@@ -11,7 +11,7 @@ export abstract class AppParent extends EventEmitter implements IApplication {
     }
     abstract validate(config: any): boolean;
     abstract run(): Promise<boolean>;
-    abstract stop(): void;
+    abstract stop(): Promise<void>;
 
     public get logging(): string {
         return this._logger.level;

@@ -134,7 +134,7 @@ class AstroHelper extends AppParent {
         }
     }
 
-    stop(): void {
+    public async stop(): Promise<void> {
         this._midnight.cancel();
     }
 }

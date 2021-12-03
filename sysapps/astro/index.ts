@@ -98,7 +98,7 @@ class Astro extends AppParent
         return true;
     }
 
-    public stop() {
+    public async stop(): Promise<void> {
         this._midnightSched.cancel();
         this._moonSched.cancel();
     }

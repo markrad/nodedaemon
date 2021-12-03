@@ -18,7 +18,7 @@ export class WebServer extends AppParent {
     // private _controller: HaMain;
     private _app: Express.Application;
     private _server: http.Server;
-    constructor(_controller: HaMain, config: any) {
+    public constructor(_controller: HaMain, config: any) {
         super(logger);
         this._port = config.webserver?.port ?? 4526;
         // this._controller = controller;
@@ -33,12 +33,12 @@ export class WebServer extends AppParent {
         return items;
     }
 */
-    validate(_config: any): boolean {
+    public validate(_config: any): boolean {
         // No validation required
         return true;
     }
     
-    async run(): Promise<boolean> {
+    public async run(): Promise<boolean> {
 
         this._app.set('views', path.join(__dirname, 'views'));
         this._app.set('view engine', 'pug');
@@ -106,7 +106,7 @@ export class WebServer extends AppParent {
         return true;
     }
 
-    async _getadpage() {
+    private async _getadpage() {
         return new Promise((resolve, reject) => {
             // http.get('http://rr-router.home.radrealm.com', (resp) => {
             http.get('http://192.168.1.1', (resp) => {
@@ -135,7 +135,7 @@ export class WebServer extends AppParent {
         });
     }
 
-    async stop(): Promise<void> {
+    public async stop(): Promise<void> {
         return new Promise((resolve, reject) => {
             if (!this._server) {
                 return reject(new Error('Webserver is not running'));
