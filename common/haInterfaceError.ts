@@ -56,14 +56,8 @@ export class DNSError extends HaInterfaceError {
     }
 }
 
-export class WebSocketError extends Error {
-    public constructor(message: string) {
-        super(message);
-    }
-}
-
-export class AuthenticationError extends Error {
-    public constructor(message: string) {
-        super(message);
-    }
-}
+// export class WebSocketError extends Error {
+//     public constructor(message: string) {
+//         super(message);
+//     }
+// }
