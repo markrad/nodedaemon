@@ -1,9 +1,9 @@
 export class EventWaiter {
     private _resolvePtr: Function = null;
     private _promise: Promise<void> = null;
+    private _resolved = false;
     constructor() {
-        this._resolvePtr = null;
-        this._promise = new Promise((resolve, _reject) => this._resolvePtr = resolve);
+        this.EventReset();
     }
 
     async EventWait() {
@@ -14,7 +14,17 @@ export class EventWaiter {
         });
     }
 
+    EventReset(): void {
+        this._resolvePtr = null;
+        this._promise = new Promise((resolve, _reject) => this._resolvePtr = resolve);
+    }
+
     EventSet() {
+        this._resolved = true;
         this._resolvePtr();
+    }
+
+    get EventIsResolved(): boolean {
+        return this._resolved;
     }
 }
