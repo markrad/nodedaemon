@@ -111,7 +111,7 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(this._url, 60)
+                this._client = new WSWrapper(this._url, 0)
 
                 this._client.on('message', async (message: string) => {
                     if (typeof message != 'string') {
