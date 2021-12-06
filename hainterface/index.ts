@@ -69,6 +69,11 @@ interface ServiceAuth extends ServiceParent {
     access_token: string;
 }
 
+interface OutPacket {
+    id: number;
+    type: string;
+}
+
 class AuthenticationError extends Error {
     public constructor(message: string) {
         super(message);
@@ -85,27 +90,21 @@ if (process.env.HAINTERFACE_LOGGING) {
 
 export class HaInterface extends EventEmitter {
     private _accessToken: string;
-    private _client: WSWrapper;
+    private _client: WSWrapper = null;
     private _url: string;
-    private _id: number;
-    private _tracker: Map<number, any>;
+    private _id: number = 0;
+    private _tracker: Map<number, any> = new Map<number, any>();
     private _pingRate: number;
-    private _pingInterval: NodeJS.Timer;
-    private _closing: boolean;
-    private _connected: boolean;
-    private _waitAuth: EventWaiter;
+    private _pingInterval: NodeJS.Timer = null;
+    private _closing: boolean = false;
+    private _connected: boolean = false;
+    private _running: boolean = false;
+    private _waitAuth: EventWaiter = new EventWaiter();
     public constructor(url: string, accessToken: string, pingRate: number = 60000) {
         super();
         this._accessToken = accessToken;
-        this._client = null;
         this._url = url;
-        this._id = 0;
-        this._tracker = new Map<number, any>();
         this._pingRate = pingRate;
-        this._pingInterval = null;
-        this._closing = false;
-        this._connected = false;
-        this._waitAuth = new EventWaiter();
     }
 
     public async start(): Promise<void> {
@@ -169,7 +168,6 @@ export class HaInterface extends EventEmitter {
                 await this._client.open();
                 logger.info(`Connection complete`);
                 this._connected = true;
-                // await this._authenticate();
 
                 var restart = async (that: HaInterface) => {
                     that._kill();
@@ -211,11 +209,6 @@ export class HaInterface extends EventEmitter {
                         });
                 }, this._pingRate);
 
-                while ((await this.getConfig()).state != 'RUNNING') {
-                    logger.info('Waiting for Home Assistant to signal RUNNING');
-                    await this._wait(1);
-                }
-
                 resolve();
             }
             catch (err) {
@@ -254,10 +247,20 @@ export class HaInterface extends EventEmitter {
         return this._waitAuth.EventIsResolved;
     }
 
+    public get isHaRunning() {
+        return this._running;
+    }
+
+    private _makePacket(packetType: string): OutPacket {
+        let packet: OutPacket = { id: ++this._id, type: packetType };
+        logger.trace(`id=${packet.id};type=${packet.type}`);
+        return packet;
+    }
+
     public async subscribe() {
-        return new Promise((resolve, reject) => {
-            let packet = { id: ++this._id, type: 'subscribe_events' };
-            this._sendPacket(packet)
+        return new Promise(async (resolve, reject) => {
+            await this._waitHaRunning();
+            this._sendPacket(this._makePacket('subscribe_events'))
                 .then((response: any) => {
                     logger.info('Subscribed to events');
                     resolve(response.result);
@@ -270,9 +273,9 @@ export class HaInterface extends EventEmitter {
     }
 
     public async getStates(): Promise<any []> {
-        return new Promise<any []>((resolve, reject) => {
-            let packet = { id: ++this._id, type: 'get_states' };
-            this._sendPacket(packet)
+        return new Promise<any []>(async (resolve, reject) => {
+            await this._waitHaRunning();
+            this._sendPacket(this._makePacket('get_states'))
                 .then((response: any) => {
                     logger.info('States acquired');
                     resolve(response.result);
@@ -286,10 +289,10 @@ export class HaInterface extends EventEmitter {
 
     public async getConfig(): Promise<any> {
         return new Promise<any>((resolve, reject) => {
-            let packet = { id: ++this._id, type: 'get_config' };
-            this._sendPacket(packet)
+            this._sendPacket(this._makePacket('get_config'))
                 .then((response: any) => {
                     logger.debug('Config acquired');
+                    this._running = 'RUNNING' == response.result.state;
                     resolve(response.result);
                 })
                 .catch((err) => {
@@ -300,9 +303,9 @@ export class HaInterface extends EventEmitter {
     }
 
     public async getPanels(): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            let packet = { id: ++this._id, type: 'get_panels' };
-            this._sendPacket(packet)
+        return new Promise<string>(async (resolve, reject) => {
+            await this._waitHaRunning();
+            this._sendPacket(this._makePacket('get_panels'))
                 .then((response: any) => {
                     logger.info('Panels acquired');
                     resolve(response.result);
@@ -375,12 +378,28 @@ export class HaInterface extends EventEmitter {
         })
     }
 
-    private async _sendPacket(packet: any, handler?:Function): Promise<ServiceSuccess | ServiceError | ServicePong> {
+    private async _waitHaRunning(): Promise<void> {
+        return new Promise<void>(async (resolve, _reject) => {
+            if (this._running) {
+                resolve();
+            }
+            else {
+                while ('RUNNING' != (await this.getConfig()).state) {
+                    await this._wait(1);
+                }
+
+                resolve();
+            }
+        });
+    }
+
+    private async _sendPacket(packet: OutPacket, handler?:Function): Promise<ServiceSuccess | ServiceError | ServicePong> {
         return new Promise<ServiceSuccess | ServiceError | ServicePong>(async (resolve, reject) => {
             if (this._connected == false) {
                 reject(new Error('Connection to server has failed'));
             }
             await this._waitAuthenticated();
+            logger.trace(`Sending packet id=${packet.id}`);
             let timer = setTimeout((packet) => {
                 logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
                 this._tracker.delete(packet.id);
