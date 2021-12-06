@@ -32,7 +32,12 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
 
         process.on('uncaughtException', (err) => {
             logger.error(`Unhandled error: ${err.message}\n${err.stack}`);
-        })
+        });
+
+        process.on('warning', (e: any) => {
+            let err: Error = e;
+            logger.warn(`Node issued warning: ${err.message }\n${e.stack}`);
+        });
 
         await haMain.start();
     }
