@@ -385,6 +385,7 @@ export class HaInterface extends EventEmitter {
             }
             else {
                 while ('RUNNING' != (await this.getConfig()).state) {
+                    logger.info('Waiting for HA to signal RUNNING');
                     await this._wait(1);
                 }
 
