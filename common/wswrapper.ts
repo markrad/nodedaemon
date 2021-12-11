@@ -48,6 +48,9 @@ export class WSWrapper extends EventEmitter {
                             await this.close();
                             await this.open();
                         }
+                        else {
+                            this.emit('disconnected');
+                        }
                     });
                     this._client.on('error', async (err) => {
                         logger.warn(`Connection error: ${err.message} - reconnecting`);
@@ -58,6 +61,7 @@ export class WSWrapper extends EventEmitter {
                         logger.warn('Unexpected response');
                     });
                     this._runPings();
+                    this.emit('connected');
                     resolve();
                     break;
                 }
