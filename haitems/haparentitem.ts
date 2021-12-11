@@ -171,15 +171,9 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         }
 
         if (this.state != expectedState || this._childOveride(state)) {
-            var timer = setTimeout(() => {
-                var err = new Error('Timeout waiting for state change');
-                this.logger.warn(`${err.message}`);
-                resolve({ message: 'error', err: err });
-            }, RESPONSE_TIMEOUT);
-
-            this.once('new_state', (that, _oldState) => {
+            let timer: NodeJS.Timeout;
+            let newState = (that: HaParentItem, _oldState: string | boolean | number) => {
                 clearTimeout(timer);
-                
                 if (that.state == expectedState) {
                     resolve({ message: 'success', err: null });
                 }
@@ -188,8 +182,14 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
                     this.logger.info(`${err.message}`);
                     resolve({ message: 'warn', err: err });
                 }
-            });
-
+            }                
+            timer = setTimeout(() => {
+                var err = new Error('Timeout waiting for state change');
+                this.logger.warn(`${err.message}`);
+                this.off('new_state', newState);
+                resolve({ message: 'error', err: err });
+            }, RESPONSE_TIMEOUT);
+            this.once('new_state', newState);
             this._callService(domain, service, state);
         }
         else {
