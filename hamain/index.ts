@@ -50,12 +50,6 @@ export class HaMain extends EventEmitter {
     public async start(): Promise<void> {
         try {
             this._haInterface = new HaInterface(this._config.main.url, this._config.main.accessToken);
-            this._haItemFactory = new HaItemFactory(this._config);
-            await this._haInterface.start();
-            this._haConfig = await this._haInterface.getConfig();
-            this._processItems(await this._haInterface.getStates());
-
-            await this._haInterface.subscribe();
             this._haInterface.on('state_changed', async (state: StateChange) => {
                 if (this._items.getItem(state.entity_id)) {
                     if (state.new_state != null) {
@@ -73,14 +67,21 @@ export class HaMain extends EventEmitter {
                 }
             });
 
-            this._haInterface.on('reconnected', async () => {
+            this._haInterface.on('connected', async () => {
                 await this._haInterface.subscribe();
+                logger.info('Subscribed to events');
             });
 
             this._haInterface.on('fatal_error', (err) => {
                 logger.fatal(`Transport layer reports fatal error - ${err.message}`);
                 process.exit(4);
             });
+            this._haItemFactory = new HaItemFactory(this._config);
+            await this._haInterface.start();
+            this._haConfig = await this._haInterface.getConfig();
+            this._processItems(await this._haInterface.getStates());
+
+            //await this._haInterface.subscribe();
 
             logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
 

@@ -84,6 +84,7 @@ const CATEGORY = 'HaInterface';
 
 var logger = getLogger(CATEGORY);
 
+// TODO Figure out why this does not appear to work
 if (process.env.HAINTERFACE_LOGGING) {
     logger.level = process.env.HAINTERFACE_LOGGING;
 }
@@ -96,7 +97,6 @@ export class HaInterface extends EventEmitter {
     private _tracker: Map<number, any> = new Map<number, any>();
     private _pingRate: number;
     private _pingInterval: NodeJS.Timer = null;
-    private _closing: boolean = false;
     private _connected: boolean = false;
     private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
@@ -121,7 +121,7 @@ export class HaInterface extends EventEmitter {
 
                         if (msg.name == PacketTypesIn.ServiceEvent) {
                             let msgEvent = msg as ServiceEvent;
-                            logger.trace(`msg.event.event_type=${msgEvent.event.event_type}`);
+                            logger.trace(`msg.event.event_type=${msgEvent.event.event_type};entity=${msgEvent.event.data.entity_id}`);
                             this.emit(msgEvent.event.event_type, msgEvent.event.data);
                             return;
                         }
@@ -137,7 +137,6 @@ export class HaInterface extends EventEmitter {
                             case PacketTypesIn.ServiceAuthOk:
                                 logger.info('Authentication successful');
                                 this._waitAuth.EventSet();
-                                this._waitAuth.EventReset()
                                 break;
                             case PacketTypesIn.ServiceAuthInvalid:
                                 logger.fatal(`Authentication failed: ${(msg as ServiceAuthInvalid).message}`);
@@ -165,41 +164,14 @@ export class HaInterface extends EventEmitter {
                     }
                 });
 
+                this._client.on('connected', () => {
+                    this._waitAuth.EventReset()
+                    this.emit('connected');
+                });
+
                 await this._client.open();
                 logger.info(`Connection complete`);
                 this._connected = true;
-
-                var restart = async (that: HaInterface) => {
-                    that._kill();
-                    
-                    try {
-                        await that.start();
-                        that._connected = true;
-                        logger.info(`Reconnection complete`);
-                        that.emit('reconnected');
-                    }
-                    catch (err) {
-                        that.emit('fatal_error', err);
-                    }
-                }
-
-                this._client.on('error', async (err: Error) => {
-                    logger.debug(`Connection errored: ${err} - reconnecting`);
-                    restart(this);
-                });
-
-                this._client.on('close', async (reasonCode: Number) => {
-                    logger.info(`Connection closed: ${reasonCode}`);
-
-                    if (!this._closing) {
-                        logger.debug('Assuming service was restarted - reconnecting');
-                        restart(this);
-                    }
-                    else {
-                        this._closing = false;
-                    }
-                });
-
                 this._pingInterval = setInterval(() => {
                     let ping = { id: ++this._id, type: 'ping' };
                     this._sendPacket(ping)
@@ -220,7 +192,6 @@ export class HaInterface extends EventEmitter {
 
     public async stop(): Promise<void> {
         let ret = new Promise<void>((resolve, reject) => {
-            this._closing = true;
             logger.info('Closing');
 
             let timer = setTimeout(() => {
@@ -288,7 +259,7 @@ export class HaInterface extends EventEmitter {
     }
 
     public async getConfig(): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
+        return new Promise<any>(async (resolve, reject) => {
             this._sendPacket(this._makePacket('get_config'))
                 .then((response: any) => {
                     logger.debug('Config acquired');
@@ -368,13 +339,10 @@ export class HaInterface extends EventEmitter {
 
     private async _waitAuthenticated(): Promise<void> {
         return new Promise<void>((resolve, _reject) => {
-            if (this._waitAuth.EventIsResolved) {
-                resolve();
-            }
-            else {
-                this._waitAuth.EventWait()
-                .then(() => resolve());
-            }
+            this._waitAuth.EventWait()
+            .then(() => {
+                resolve()
+            });
         })
     }
 
@@ -396,11 +364,8 @@ export class HaInterface extends EventEmitter {
 
     private async _sendPacket(packet: OutPacket, handler?:Function): Promise<ServiceSuccess | ServiceError | ServicePong> {
         return new Promise<ServiceSuccess | ServiceError | ServicePong>(async (resolve, reject) => {
-            if (this._connected == false) {
-                reject(new Error('Connection to server has failed'));
-            }
             await this._waitAuthenticated();
-            logger.trace(`Sending packet id=${packet.id}`);
+            logger.debug(`Sending packet id=${packet.id}`);
             let timer = setTimeout((packet) => {
                 logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
                 this._tracker.delete(packet.id);
