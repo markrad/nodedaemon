@@ -210,7 +210,7 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
             : action == 'turn_off'
             ? 'off'
             : action == 'toggle'
-            ? ['off', 'on'][(this.isOff? 0 : 1)]
+            ? ['off', 'on'][Number(this.isOff)]
             : 'error';
         return { action: action, expectedNewState: expectedNewState };
     }
