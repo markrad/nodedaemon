@@ -1,5 +1,5 @@
 "use strict";
-
+// TODO Fix toggle autocomplete
 import { getLogger, Logger } from 'log4js';
 import { ConsoleInterface } from '.';
 import { IChannel } from './ichannel';
@@ -8,6 +8,7 @@ import { ICommand } from './icommand';
 import { IHaItemEditable, IHaItemSwitch, SafeItemAssign, ServicePromise } from '../../haitems/haparentitem';
 import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
+import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);
@@ -101,7 +102,7 @@ export class CommandSet extends CommandBase {
                         throw new Error('subcommand can only target a switch');
                     }
                     
-                    rc = await target.updateState(inputArray[1]);
+                    rc = await (target as HaGenericSwitchItem).toggle();
 
                     if (rc.err) {
                         sock.write(`Error: Command ${inputArray[3]} failed for ${target.entityId}: ${rc.err.message}\r\n`);
