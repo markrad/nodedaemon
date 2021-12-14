@@ -32,7 +32,7 @@ export class CommandSet extends CommandBase {
                 .filter((item) => item[1].entityId.startsWith(parameters[2]))
                 .filter((item) => parameters[1] == 'state'
                     ? item[1].isEditable 
-                    : parameters[1] == 'on' || parameters[1] == 'off'
+                    : parameters[1] == 'on' || parameters[1] == 'off' || parameters[1] == 'toggle'
                     ? item[1].isSwitch
                     : parameters[1] == 'log'
                     ? true 
