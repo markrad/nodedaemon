@@ -1,5 +1,4 @@
 "use strict"
-// TODO Minimum conversion
 
 import { HaMain } from "../../hamain";
 
@@ -110,15 +109,15 @@ export class WebServer extends AppParent {
         return new Promise((resolve, reject) => {
             // http.get('http://rr-router.home.radrealm.com', (resp) => {
             http.get('http://192.168.1.1', (resp) => {
-                    let data = '';
+                    let data: string = '';
 
                 resp.on('data', (chunk) => {
                     data += chunk.toString();
                 });
 
                 resp.on('end', () => {
-                    let re = /http-equiv="REFRESH" content=".*;url=\/ui\/([.0-9]*)\/dynamic\//
-                    let result = data.match(re);
+                    let re: RegExp = /http-equiv="REFRESH" content=".*;url=\/ui\/([.0-9]*)\/dynamic\//
+                    let result: RegExpMatchArray = data.match(re);
 
                     if (result == null) {
                         reject(new Error('Unable to find version string in URL'));
