@@ -16,7 +16,17 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
                                                    Version ${version} is starting
 `;
     var logger: Logger = getLogger(CATEGORY);
+    let level: any = (logger.level);
+
+    if (level.level > 20000) {
+        logger.level = 'info';
+    }
+
     logger.info(`${LOGO}`);
+
+    if (level.level > 20000) {
+        logger.level = level.level;
+    }
 
     try {
         var haMain: HaMain = new HaMain(config, configPath);
