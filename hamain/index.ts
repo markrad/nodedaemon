@@ -22,10 +22,6 @@ var reload = require('require-reload');
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);
 
-if (process.env.HAMAIN_LOGGING) {
-    logger.level = process.env.HAMAIN_LOGGING;
-}
-
 export class HaMain extends EventEmitter {
     private _haInterface: HaInterface;
     private _items: ItemsManager;
@@ -45,6 +41,11 @@ export class HaMain extends EventEmitter {
         this._configPath = configPath;
         this._haConfig = null;
         this._starttime = new Date();
+
+        if (process.env.HAMAIN_LOGGING) {
+            logger.level = process.env.HAMAIN_LOGGING;
+            logger.log(logger.level, 'Logging level overridden');
+        }
     }
 
     public async start(): Promise<void> {
