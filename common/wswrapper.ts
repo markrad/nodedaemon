@@ -45,7 +45,7 @@ export class WSWrapper extends EventEmitter {
                     this._client.on('close', async (code, reason) => {
                         if (this._closing == false) {
                             logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
-                            await this.close();
+                            // await this.close();
                             await this.open();
                         }
                         else {
