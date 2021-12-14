@@ -84,11 +84,6 @@ const CATEGORY = 'HaInterface';
 
 var logger = getLogger(CATEGORY);
 
-// TODO Figure out why this does not appear to work
-if (process.env.HAINTERFACE_LOGGING) {
-    logger.level = process.env.HAINTERFACE_LOGGING;
-}
-
 export class HaInterface extends EventEmitter {
     private _accessToken: string;
     private _client: WSWrapper = null;
@@ -105,6 +100,11 @@ export class HaInterface extends EventEmitter {
         this._accessToken = accessToken;
         this._url = url;
         this._pingRate = pingRate;
+
+        if (process.env.HAINTERFACE_LOGGING) {
+            logger.level = process.env.HAINTERFACE_LOGGING;
+            logger.log(logger.level, 'Logging level overridden');
+        }
     }
 
     public async start(): Promise<void> {
@@ -154,6 +154,7 @@ export class HaInterface extends EventEmitter {
 
                         if (msgResponse) {
                             try {
+                                logger.debug(`Response to id=${msgResponse?.id || "none"}`);
                                 this._tracker.get(msgResponse.id).handler(msgResponse);
                                 this._tracker.delete(msgResponse.id);
                             }
