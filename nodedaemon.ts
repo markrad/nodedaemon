@@ -58,13 +58,20 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 }
 
+function fatalExit(message: string, returnCode: number, logger?: Logger) {
+    let defaultLogger = logger? logger : getLogger();
+    defaultLogger.level = 'info';
+    defaultLogger.fatal(message);
+    process.exit(returnCode);
+}
+
 var defaultLogger: Logger; 
 let configFile: string = '';
 
 try {
     const program = new Command();
 
-    const debugLevels: string[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
+    const logLevels: string[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
     const defaultDebug: number = 3;
 
     var packageJSON: any = JSON.parse(fs.readFileSync('package.json').toString());
@@ -74,26 +81,20 @@ try {
         .option('-a, --appsdir <location...>', 'location of apps directory\n(default: if present the value from config.json appsDir otherwise ./apps')
         .option('-r, --replace', 'replace config file appsdir with command line appsdir - default is to merge them')
         .option('-c, --config <locaton>', 'name and location of config.json', './config.json')
-        .option('-D --debug <type>', `logging level [${debugLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${debugLevels[defaultDebug]})`)
+        .option('-l --loglevel <type>', `logging level [${logLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${logLevels[defaultDebug]})`)
         .parse(process.argv);
 
     configFile = Path.resolve(program.opts().config || './config.json');
 
     if (!fs.existsSync(configFile)) {
-        defaultLogger = getLogger();
-        defaultLogger.level = 'info';
-        defaultLogger.fatal(`Config file ${configFile} not found`);
-        process.exit(4);
+        fatalExit(`Config file ${configFile} not found`, 4);
     }
 
     try {
         var config = JSON.parse(fs.readFileSync(configFile).toString());
     }
     catch (err) {
-        defaultLogger = getLogger();
-        defaultLogger.level = 'info';
-        defaultLogger.fatal(`Config file ${program.opts().config} is invalid: ${err}`);
-        process.exit(4);
+        fatalExit(`Config file ${program.opts().config} is invalid: ${err}`, 4);
     }
 
     let loggerOptions: Configuration = {
@@ -124,30 +125,26 @@ try {
     defaultLogger = getLogger();
 
     if (!config.main.url) {
-        defaultLogger.fatal(`Config file ${program.opts().config} is missing the url value`);
-        process.exit(4);
+        fatalExit(`Config file ${program.opts().config} is missing the url value`, 4, defaultLogger);
     }
 
     if (!config.main.accessToken) {
-        defaultLogger.fatal(`Config file ${program.opts().config} is missing the accessToken value`);
-        process.exit(4);
+        fatalExit(`Config file ${program.opts().config} is missing the accessToken value`, 4, defaultLogger);
     }
 
-    if (config.main.debugLevel && !debugLevels.includes(config.main.debugLevel)) {
-        defaultLogger.fatal(`Config file ${program.opts().config} has an invalid debugLevel value of ${config.main.debugLevel}`);
-        process.exit(4);
+    if (config.main.logLevel && !logLevels.includes(config.main.logLevel)) {
+        fatalExit(`Config file ${program.opts().config} has an invalid debugLevel value of ${config.main.logLevel}`, 4, defaultLogger);
     }
 
-    if (program.opts().debug && !debugLevels.includes(program.opts().debug)) {
-        defaultLogger.fatal(`Debug argument is invalid. Must be one of [${debugLevels.join(' | ')}]`);
-        process.exit(4);
+    if (program.opts().debug && !logLevels.includes(program.opts().debug)) {
+        fatalExit(`Debug argument is invalid. Must be one of [${logLevels.join(' | ')}]`, 4, defaultLogger);
     }
 
-    if (program.opts().debug) {
-        config.main.debugLevel = program.opts().debug;
+    if (program.opts().loglevel) {
+        config.main.logLevel = program.opts().loglevel;
     }
-    else if (!config.main.debugLevel) {
-        config.main.debugLevel = debugLevels[defaultDebug];
+    else if (!config.main.logLevel) {
+        config.main.logLevel = logLevels[defaultDebug];
     }
 
     if (!config.main.appsDir) {
@@ -161,8 +158,7 @@ try {
 
     if (!program.opts().appsdir) {
         if (program.opts().replace) {
-            defaultLogger.fatal('--appsdir is required when --replace is specified');
-            process.exit(4);
+            fatalExit('--appsdir is required when --replace is specified', 4, defaultLogger);
         }
     }
     else {
@@ -177,8 +173,7 @@ try {
 
     config.main.appsDir = config.main.appsDir.map((item: string) => {
         if (typeof item != 'string') {
-            defaultLogger.fatal(`appsDir ${item} is invalid`);
-            process.exit(4);
+            fatalExit(`appsDir ${item} is invalid`, 4, defaultLogger);
         }
         return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
     });
@@ -195,8 +190,7 @@ try {
     config.main.appsDir = config.main.appsDir.filter((item: string) => item != null);
 
     if (config.main.appsDir.length == 0) {
-        defaultLogger.fatal('No valid apps directories were found');
-        process.exit(4);
+        fatalExit('No valid apps directories were found', 4, defaultLogger);
     }
 
     if (!config.main.ignoreApps) {
@@ -208,24 +202,18 @@ try {
 
     config.main.ignoreApps = config.main.ignoreApps.map((item: string) => {
         if (typeof item != 'string') {
-            defaultLogger.fatal(`ignoreApps ${item} is invalid`);
-            process.exit(4);
+            fatalExit(`ignoreApps ${item} is invalid`, 4, defaultLogger);
         }
         return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
     });
 
-    defaultLogger.level = config.main.debugLevel;
+    defaultLogger.level = config.main.logLevel;
     defaultLogger.info(`config file = ${configFile}`);
     defaultLogger.info(`apps directory = ${config.main.appsDir}`);
-    defaultLogger.info(`Debug level = ${config.main.debugLevel}`);
+    defaultLogger.info(`Debug level = ${config.main.logLevel}`);
 }
 catch (err) {
-    if (!defaultLogger) {
-        defaultLogger = getLogger();
-        defaultLogger.level = 'info';
-    }
-    defaultLogger.fatal(`Unexpected error ${err}`);
-    process.exit(4);
+    fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
 }
 
 main(packageJSON.version, config, Path.dirname(configFile));
