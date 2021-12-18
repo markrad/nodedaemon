@@ -2,7 +2,7 @@
   "name": "nodedaemon",
   "version": "1.0.3",
   "description": "Connects to Home Assistant to collect states and issue commands.",
-  "main": "harunner.js",
+  "main": "output/nodedaemon.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
