@@ -154,7 +154,7 @@ export class HaInterface extends EventEmitter {
 
                         if (msgResponse) {
                             try {
-                                logger.debug(`Response to id=${msgResponse?.id || "none"}`);
+                                logger.trace(`Response to id=${msgResponse?.id ?? "none"};type=${msgResponse?.type ?? 'none'}${msgResponse?.type == 'result'? ";success=" + msgResponse.success : ''}`);
                                 this._tracker.get(msgResponse.id).handler(msgResponse);
                                 this._tracker.delete(msgResponse.id);
                             }
@@ -366,7 +366,7 @@ export class HaInterface extends EventEmitter {
     private async _sendPacket(packet: OutPacket, handler?:Function): Promise<ServiceSuccess | ServiceError | ServicePong> {
         return new Promise<ServiceSuccess | ServiceError | ServicePong>(async (resolve, reject) => {
             await this._waitAuthenticated();
-            logger.debug(`Sending packet id=${packet.id}`);
+            logger.trace(`Sending packet id=${packet.id};type=${packet?.type || 'none'}`);
             let timer = setTimeout((packet) => {
                 logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
                 this._tracker.delete(packet.id);
