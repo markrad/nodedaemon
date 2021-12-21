@@ -43,14 +43,9 @@ export class WSWrapper extends EventEmitter {
                         this.emit('message', data);
                     });
                     this._client.on('close', async (code, reason) => {
-                        if (this._closing == false) {
-                            logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
-                            // await this.close();
-                            await this.open();
-                        }
-                        else {
-                            this.emit('disconnected');
-                        }
+                        logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
+                        this.emit('disconnected');
+                        await this.open();
                     });
                     this._client.on('error', async (err) => {
                         logger.warn(`Connection error: ${err.message} - reconnecting`);

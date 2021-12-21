@@ -170,16 +170,22 @@ export class HaInterface extends EventEmitter {
                     this.emit('connected');
                 });
 
+                this._client.on('disconnected', () => {
+                    this._kill();
+                });
+
                 await this._client.open();
                 logger.info(`Connection complete`);
                 this._connected = true;
                 this._pingInterval = setInterval(() => {
-                    let ping = { id: ++this._id, type: 'ping' };
-                    this._sendPacket(ping)
-                        .then((_response) => {})
-                        .catch((err) => {
-                            logger.error(`Ping failed ${err}`);
-                        });
+                    if (this._waitAuth.EventIsResolved) {
+                        let ping = { id: ++this._id, type: 'ping' };
+                        this._sendPacket(ping)
+                            .then((_response) => {})
+                            .catch((err) => {
+                                logger.error(`Ping failed ${err}`);
+                            });
+                        }
                 }, this._pingRate);
 
                 resolve();
@@ -335,6 +341,7 @@ export class HaInterface extends EventEmitter {
 
     private _kill() {
         this._connected = false;
+        this._running = false;
         clearTimeout(this._pingInterval);
     }
 
