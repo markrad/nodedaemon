@@ -9,7 +9,7 @@ const CATEGORY = 'AstroHelper';
 
 const logger: Logger = require('log4js').getLogger(CATEGORY);
 
-class AstroHelper extends AppParent {
+export default class AstroHelper extends AppParent {
     private _controller: HaMain = null;
     private _astro: any = null;
     private _lastEvent: IHaItemEditable = null;
@@ -138,5 +138,3 @@ class AstroHelper extends AppParent {
         this._midnight.cancel();
     }
 }
-
-module.exports = AstroHelper;

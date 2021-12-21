@@ -6,7 +6,7 @@ import { HaMain } from '../../hamain';
 const CATEGORY: string = 'DeconzLog';
 var logger: Logger = getLogger(CATEGORY);
 
-export class DeconzLog extends AppParent {
+export default class DeconzLog extends AppParent {
     _deconz: any;
     _ws: WSWrapper;
     constructor(_controller: HaMain, config: any) {
@@ -45,5 +45,3 @@ export class DeconzLog extends AppParent {
         });
     }
 }
-
-module.exports = DeconzLog;

@@ -62,7 +62,7 @@ type Config = {
     The string %deviceid% in the topic will be replaced with the target 
     value. 
 \* -------------------------------------------------------------------------- */
-class DeconzHack extends AppParent {
+export default class DeconzHack extends AppParent {
     private _mqttOptions: mqtt.IClientOptions;
     private _mqttConfig: MqttConfig;
     private _deconzConfig: DeconzConfig;
@@ -137,5 +137,3 @@ class DeconzHack extends AppParent {
         });
     }
 }
-
-module.exports = DeconzHack;

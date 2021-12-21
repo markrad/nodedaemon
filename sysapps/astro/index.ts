@@ -21,7 +21,7 @@ const logger = getLogger(CATEGORY);
     }
     Values for daystart and dayend will determine the isDark timespan.
 \* -------------------------------------------------------------------------- */
-class Astro extends AppParent
+export default class Astro extends AppParent
 {
     private _times: any = {};
     private static readonly _events: string[] = [
@@ -259,5 +259,3 @@ class Astro extends AppParent
         return Number(test) > Number(comparand);
     }
 }
-
-module.exports = Astro;

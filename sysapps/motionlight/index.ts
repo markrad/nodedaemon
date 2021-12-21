@@ -16,7 +16,7 @@ interface Trip {
 const CATEGORY = 'MotionLight';
 var logger: Logger = getLogger(CATEGORY);
 
-class MotionLight extends AppParent {
+export default class MotionLight extends AppParent {
     private _controller: HaMain;
     private _actioners: actioner[] = [];
     private _trips: Trip[] = null;
@@ -168,5 +168,3 @@ class actioner {
         this._trip.sensor.off('new_state', this._eventHandler);
     }
 }
-
-module.exports = MotionLight;

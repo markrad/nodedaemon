@@ -12,7 +12,7 @@ const CATEGORY = 'WebServer';
 
 const logger: Logger = getLogger(CATEGORY);
 
-export class WebServer extends AppParent {
+export default class WebServer extends AppParent {
     private _port: number;
     // private _controller: HaMain;
     private _app: Express.Application;
@@ -151,5 +151,3 @@ export class WebServer extends AppParent {
         });
     }
 }
-
-module.exports = WebServer;

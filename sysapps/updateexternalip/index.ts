@@ -7,7 +7,7 @@ import { AppParent } from '../../common/appparent';
 const CATEGORY = 'UpdateExternalIP';
 var logger: Logger = getLogger(CATEGORY);
 
-class UpdateExternalIP extends AppParent {
+export default class UpdateExternalIP extends AppParent {
     private _external_ip: IHaItemEditable;
     private _interval: NodeJS.Timer = null;
     private _multiplier: number = 24;
@@ -80,5 +80,3 @@ class UpdateExternalIP extends AppParent {
         });
     }
 }
-
-module.exports = UpdateExternalIP;

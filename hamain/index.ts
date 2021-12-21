@@ -324,7 +324,7 @@ export class HaMain extends EventEmitter {
                             let fullname: string = path.join(dir.path, dirent.name, 'index.js');
                             fs.access(fullname, (err) => {
                                 if (!err) {
-                                    let app = reload(fullname);
+                                    let app = reload(fullname).default;
                                     try {
                                         let loc: string = path.join(dir.path, dirent.name);
                                         if (!this._config[dirent.name]) {

@@ -11,7 +11,7 @@ const CATEGORY: string = 'DynDnsUpdater';
 const ONE_DAY: number = 24;                     // Just simple hours
 var logger: Logger = getLogger(CATEGORY);
 
-class DynDnsUpdater extends AppParent {
+export default class DynDnsUpdater extends AppParent {
     private _externalIp: IHaItemEditable;
     private _lastUpdate: IHaItemEditable;
     private _user: string;
@@ -116,5 +116,3 @@ class DynDnsUpdater extends AppParent {
         return logger.level;
     }
 }
-
-module.exports = DynDnsUpdater;
