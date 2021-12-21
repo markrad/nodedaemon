@@ -3,7 +3,7 @@ import Path from 'path';
 import { Server, Connection } from 'ssh2';
 import { ParsedKey } from 'ssh2-streams';
 import { utils } from 'ssh2';
-import { ConsoleInterface } from './';
+import ConsoleInterface from ".";
 import { ITransport } from './itransport';
 import { TransportSSHClient } from './transportsshclient'
 import { getLogger } from "log4js";

@@ -1,4 +1,4 @@
-import { ConsoleInterface } from ".";
+import ConsoleInterface from ".";
 import { AppInfo } from '../../hamain/appinfo'
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase';

@@ -1,4 +1,4 @@
-import { ConsoleInterface } from '.';
+import ConsoleInterface from ".";
 import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
 

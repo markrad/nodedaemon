@@ -32,7 +32,7 @@ var logger: Logger = getLogger(CATEGORY);
         }
     }
 \* -------------------------------------------------------------------------- */
-export class ConsoleInterface extends AppParent {
+export default class ConsoleInterface extends AppParent {
     private _config: any;
     private _controller: HaMain;
     private _items: ItemsManager;
@@ -121,5 +121,3 @@ export class ConsoleInterface extends AppParent {
         });
     }
 }
-
-module.exports = ConsoleInterface;

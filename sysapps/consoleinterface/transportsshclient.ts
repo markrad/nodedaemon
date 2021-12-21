@@ -4,7 +4,7 @@ import { ICommand } from "./icommand";
 import { TransportSSH, User } from "./transportssh";
 // import { ParsedKey, utils } from 'ssh2-streams';
 import * as Crypto from 'crypto';
-import { ConsoleInterface } from ".";
+import ConsoleInterface from ".";
 import { IChannel } from "./ichannel";
 // import { ITransport } from "./itransport";
 

@@ -1,6 +1,6 @@
 import { getLogger, Logger } from "log4js";
 import { CommandBase } from './commandbase'; 
-import { ConsoleInterface } from './';
+import ConsoleInterface from ".";
 import { IChannel } from "./ichannel";
 import { IHaItem } from "../../haitems/ihaitem";
 
