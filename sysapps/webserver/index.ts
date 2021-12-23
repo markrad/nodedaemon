@@ -12,6 +12,7 @@ const CATEGORY = 'WebServer';
 
 const logger: Logger = getLogger(CATEGORY);
 
+// TODO: Broken
 export default class WebServer extends AppParent {
     private _port: number;
     // private _controller: HaMain;
