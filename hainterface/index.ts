@@ -128,6 +128,7 @@ export class HaInterface extends EventEmitter {
                         if (msg.name == PacketTypesIn.ServiceEvent) {
                             let msgEvent = msg as ServiceEvent;
                             logger.trace(`msg.event.event_type=${msgEvent.event.event_type};entity=${msgEvent.event.data.entity_id}`);
+                            // TODO: change event name
                             this.emit(msgEvent.event.event_type, msgEvent.event.data);
                             return;
                         }
