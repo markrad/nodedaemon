@@ -22,25 +22,24 @@ var reload = require('require-reload');
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);
 
+export enum SensorType {
+    normal,
+    binary
+}
+
 export class HaMain extends EventEmitter {
-    private _haInterface: HaInterface;
-    private _items: ItemsManager;
+    private _haInterface: HaInterface = null;
+    private _items: ItemsManager = new ItemsManager();
     private _config: any;
-    private _apps: Array<AppInfo>;
-    private _haItemFactory: HaItemFactory;
-    private _haConfig: any;
-    private _starttime: Date;
+    private _apps: Array<AppInfo> = new Array<AppInfo>();
+    private _haItemFactory: HaItemFactory = null;
+    private _haConfig: any = null;
+    private _starttime: Date = new Date();
     private _configPath;
     constructor(config: any, configPath: string) {
         super();
-        this._haInterface = null;
-        this._items = new ItemsManager();
-        this._apps = new Array<AppInfo>();
-        this._haItemFactory = null;
         this._config = config;
         this._configPath = configPath;
-        this._haConfig = null;
-        this._starttime = new Date();
 
         if (process.env.HAMAIN_LOGGING) {
             logger.level = process.env.HAMAIN_LOGGING;
@@ -50,7 +49,7 @@ export class HaMain extends EventEmitter {
 
     public async start(): Promise<void> {
         try {
-            this._haInterface = new HaInterface(this._config.main.url, this._config.main.accessToken);
+            this._haInterface = new HaInterface(this._config.main.hostname ?? '127.0.0.1', this._config.port ?? 8123, this._config.main.accessToken);
             this._haInterface.on('state_changed', async (state: StateChange) => {
                 if (this._items.getItem(state.entity_id)) {
                     if (state.new_state != null) {
@@ -59,7 +58,9 @@ export class HaMain extends EventEmitter {
                     }
                     else {
                         logger.info(`Item ${state.entity_id} has been dropped`);
+                        let item = this.items.getItem(state.entity_id);
                         this.items.deleteItem(state.entity_id);
+                        this.emit('itemdeleted', item);
                     }
                 }
                 else {
@@ -163,6 +164,47 @@ export class HaMain extends EventEmitter {
             });
     }
 
+    public async addSensor(name: string, type: SensorType, value: boolean | string | number): Promise<void> {
+        return new Promise(async (resolve, reject) => {
+            if (type == SensorType.binary) {
+                value = !!value;
+                name = 'binary_sensor.' + name;
+            }
+            else {
+                name = 'sensor.' + name
+            }
+    
+            if (this.items.getItem(name)) {
+                throw new Error(`${name} already exists`);
+            }
+
+            let addComplete = async (name: string): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    let timer: NodeJS.Timer = setTimeout(() => {
+                        this.off('itemadded', waitadd);
+                        reject(new Error('Timeout awaiting addition of new item'));
+                    }, 5000);
+                    let waitadd = (item: IHaItem) => {
+                        if (item.entityId == name) {
+                            this.off('itemadded', waitadd);
+                            clearTimeout(timer);
+                            resolve();
+                        }
+                    };
+                    this.on('itemadded', waitadd);
+                });
+            };
+            try {
+                await this._haInterface.addSensor(name, value);
+                await addComplete(name);
+                resolve();
+            }
+            catch (err) {
+                reject(err);
+            }
+        });
+    }
+
     public get configPath(): string {
         return this._configPath;
     }
@@ -229,7 +271,16 @@ export class HaMain extends EventEmitter {
                         // Error already logged
                     }
                 });
+                itemInstance.on('callrestservice', async (entityId: string, state: string | boolean | number) => {
+                    try {
+                        await this._haInterface.updateSensor(entityId, state);
+                    }
+                    catch (err) {
+                        logger.error(err.message);
+                    }
+                });
                 this._items.addItem(itemInstance);
+                this.emit('itemadded', this.items.getItem(itemInstance.entityId));
             }
         });
     }

@@ -31,7 +31,10 @@ export class HaItemFactory {
         }
         
         if (logLevel) logger.info(`Set logging to ${logLevel[item.entity_id]} for ${item.entity_id}`);
-        if (itemType in this._itemClasses) {
+        if (item?.attributes?.addedBy == 'nodedaemon') {
+            return new this._itemClasses['usersensor'](item, logLevel? logLevel[item.entity_id] : undefined);
+        }
+        else if (itemType in this._itemClasses) {
             return new this._itemClasses[itemType](item, logLevel? logLevel[item.entity_id] : undefined);
         }
         else {

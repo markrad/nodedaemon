@@ -5,6 +5,7 @@ import { getLogger } from 'log4js';
 import { ServiceTarget } from '../haitems/haparentitem';
 import { WSWrapper } from '../common/wswrapper';
 import { EventWaiter } from '../common/eventwaiter';
+import http from 'http';
 
 enum PacketTypesIn {
     ServiceAuthRequired,
@@ -85,9 +86,12 @@ const CATEGORY = 'HaInterface';
 var logger = getLogger(CATEGORY);
 
 export class HaInterface extends EventEmitter {
+    private static readonly APIPATH = '/api/websocket';
+    private static readonly RESTPATH = '/api';
     private _accessToken: string;
     private _client: WSWrapper = null;
-    private _url: string;
+    private _hostname: string;
+    private _port: number;
     private _id: number = 0;
     private _tracker: Map<number, any> = new Map<number, any>();
     private _pingRate: number;
@@ -95,10 +99,11 @@ export class HaInterface extends EventEmitter {
     private _connected: boolean = false;
     private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
-    public constructor(url: string, accessToken: string, pingRate: number = 60000) {
+    public constructor(hostname: string, port: number,  accessToken: string, pingRate: number = 60000) {
         super();
         this._accessToken = accessToken;
-        this._url = url;
+        this._hostname = hostname;
+        this._port = port;
         this._pingRate = pingRate;
 
         if (process.env.HAINTERFACE_LOGGING) {
@@ -110,7 +115,8 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(this._url, 0)
+                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), 0)
+                logger.info(`Connecting to ${this._client.url}`);
 
                 this._client.on('message', async (message: string) => {
                     if (typeof message != 'string') {
@@ -159,7 +165,7 @@ export class HaInterface extends EventEmitter {
                                 this._tracker.delete(msgResponse.id);
                             }
                             catch (err: any) {
-                                logger.fatal('This should never happen. Send packets should always have a response handler');
+                                logger.error('Message received with no response handler - probably timed out waiting for it');
                             }
                         }
                     }
@@ -307,6 +313,83 @@ export class HaInterface extends EventEmitter {
                     logger.error(`Error calling service ${err}`);
                     reject(err);
                 });
+        });
+    }
+
+    private _getrestparms(entityId: string, value: boolean | string | number): { body: any, options: any } {
+        const body: any = {
+            state: value,
+            attributes: {
+                addedBy: 'nodedaemon'
+            }
+        };
+        const options: any = {
+            hostname: this._hostname,
+            port: this._port.toString(),
+            path: `${HaInterface.RESTPATH}/states/${entityId}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'authorization': `Bearer ${this._accessToken}`
+            }
+        };
+
+        return { body: body, options: options };
+    }
+
+    public async addSensor(entityId: string, value: boolean | string | number): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+
+            const parameters = this._getrestparms(entityId, value);
+
+            const req = http.request(parameters.options, (res) => {
+                if (res.statusCode != 201) {
+                    reject(new Error(`Add sensor failed with ${res.statusCode}`));
+                }
+                else {
+                    resolve();
+                }
+            });
+
+            req.on('error', (e) => reject(e));
+            req.write(JSON.stringify(parameters.body));
+            req.end();
+        });
+    }
+
+    public async updateSensor(entityId: string, value: boolean | string | number): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const body: any = {
+                state: value,
+                attributes: {
+                    addedBy: 'nodedaemon'
+                }
+            };
+            const options: any = {
+                hostname: this._hostname,
+                port: this._port.toString(),
+                path: `${HaInterface.RESTPATH}/states/${entityId}`,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'authorization': `Bearer ${this._accessToken}`
+                }
+            };
+
+            const req = http.request(options, (res) => {
+                if (res.statusCode != 200) {
+                    reject(new Error(`Update sensor failed with ${res.statusCode}`));
+                }
+                else {
+                    resolve();
+                }
+            });
+
+            req.on('error', (e) => reject(e));
+            req.write(JSON.stringify(body));
+            req.end();
         });
     }
 
