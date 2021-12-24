@@ -134,6 +134,10 @@ export class WSWrapper extends EventEmitter {
         return this._connected;
     }
 
+    public get url(): string {
+        return this._url;
+    }
+
     private async _open(url: string): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
             var client = new WebSocket(url);
