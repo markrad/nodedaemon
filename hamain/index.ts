@@ -50,22 +50,31 @@ export class HaMain extends EventEmitter {
     public async start(): Promise<void> {
         try {
             this._haInterface = new HaInterface(this._config.main.hostname ?? '127.0.0.1', this._config.port ?? 8123, this._config.main.accessToken);
-            this._haInterface.on('state_changed', async (state: StateChange) => {
-                if (this._items.getItem(state.entity_id)) {
-                    if (state.new_state != null) {
-                        logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
-                        this.items.getItem(state.entity_id).setReceivedState(state.new_state);
+            this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
+                if (eventType == 'state_changed') {
+                    let state: StateChange = data;
+                    if (this._items.getItem(state.entity_id)) {
+                        if (state.new_state != null) {
+                            logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
+                            this.items.getItem(state.entity_id).setReceivedState(state.new_state);
+                        }
+                        else {
+                            logger.info(`Item ${state.entity_id} has been dropped`);
+                            let item = this.items.getItem(state.entity_id);
+                            this.items.deleteItem(state.entity_id);
+                            this.emit('itemdeleted', item);
+                        }
                     }
                     else {
-                        logger.info(`Item ${state.entity_id} has been dropped`);
-                        let item = this.items.getItem(state.entity_id);
-                        this.items.deleteItem(state.entity_id);
-                        this.emit('itemdeleted', item);
+                        logger.warn(`Item ${state.entity_id} not found - refreshing devices`);
+                        this._processItems(await this._haInterface.getStates());
                     }
                 }
+                else if (eventType == 'call_service') {
+                    logger.debug(`Ignored event "${eventType}"`)
+                }
                 else {
-                    logger.warn(`Item ${state.entity_id} not found - refreshing devices`);
-                    this._processItems(await this._haInterface.getStates());
+                    logger.debug(`Unhandled event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
                 }
             });
 
