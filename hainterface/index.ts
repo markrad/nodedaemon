@@ -173,6 +173,7 @@ export class HaInterface extends EventEmitter {
 
                 this._client.on('connected', () => {
                     this._waitAuth.EventReset()
+                    this._connected = true;
                     this.emit('connected');
                 });
 
@@ -182,7 +183,6 @@ export class HaInterface extends EventEmitter {
 
                 await this._client.open();
                 logger.info(`Connection complete`);
-                this._connected = true;
                 this._pingInterval = setInterval(() => {
                     if (this._waitAuth.EventIsResolved) {
                         let ping = { id: ++this._id, type: 'ping' };
