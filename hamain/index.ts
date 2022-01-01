@@ -74,8 +74,9 @@ export class HaMain extends EventEmitter {
                     logger.debug(`Ignored event "${eventType}"`)
                 }
                 else {
-                    logger.debug(`Unhandled event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
+                    logger.debug(`Event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
                 }
+                this.emit('serviceevent', eventType, data);
             });
 
             this._haInterface.on('connected', async () => {
