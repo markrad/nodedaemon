@@ -73,7 +73,8 @@ export default class AqaraSwitch extends AppParent {
             logger.error(err.message);
             return false;
         }
-
+        
+        logger.info('Validated successfully');
         return true;
     }
     run(): Promise<boolean> {
