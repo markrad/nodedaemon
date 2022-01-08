@@ -1,11 +1,12 @@
 import { AppParent } from '../../common/appparent';
 import { IHaItem } from "../../haitems/ihaitem";
-import { IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
+import { IHaItemEditable } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
 import { getLogger, Logger } from "log4js";
 import * as https from 'https';
 import { Dayjs } from "dayjs";
+import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 
 const CATEGORY: string = 'DynDnsUpdater';
 const ONE_DAY: number = 24;                     // Just simple hours
@@ -29,18 +30,18 @@ export default class DynDnsUpdater extends AppParent {
     private _url: string = null;
     public constructor(controller: HaMain, config: any) {
         super(logger);
-        this._externalIp = SafeItemAssign(controller.items.getItem(config.dyndnsupdater.externalIp));
-        this._lastUpdate = SafeItemAssign(controller.items.getItem(config.dyndnsupdater.lastUpdate));
-        this._user = config.dyndnsupdater.user;
-        this._updaterKey = config.dyndnsupdater.updaterKey;
-        this._hostname = config.dyndnsupdater.hostname;
+        this._externalIp = controller.items.getItemAs(HaGenericUpdateableItem, config.dyndnsupdater.externalIp) as HaGenericUpdateableItem;
+        this._lastUpdate = controller.items.getItemAs(HaGenericUpdateableItem, config.dyndnsupdater.lastUpdate) as HaGenericUpdateableItem;
+        this._user = config.dyndnsupdater?.user;
+        this._updaterKey = config.dyndnsupdater?.updaterKey;
+        this._hostname = config.dyndnsupdater?.hostname;
         logger.info('Constructed');
     }
 
     public validate(_config: any): boolean {
         try {
-            if (this._externalIp == undefined || this._externalIp.type != 'var') throw new Error('Config value externalIp is missing or invalid (must be type var)');
-            if (this._lastUpdate == undefined || this._lastUpdate.type != 'var') throw new Error('Config value lastUpdate is missing or invalid (must be type var)');
+            if (this._externalIp == null || !this._externalIp.isEditable) throw new Error('Config value externalIp is missing or invalid (must be editable)');
+            if (this._lastUpdate == null || !this._lastUpdate.isEditable) throw new Error('Config value lastUpdate is missing or invalid (must be editable)');
             if (!this._user) throw new Error('user not found in config file');
             if (!this._updaterKey) throw new Error('updaterKey not found in config file');
             if (!this._hostname) throw new Error('hostname not found in config file');

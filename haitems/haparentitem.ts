@@ -34,35 +34,20 @@ export interface IHaItemSwitch extends IHaItemEditable {
     get isTimerRunning(): boolean;
 }
 
-export function SafeItemAssign(item: IHaItem, throwOnFailure: boolean = false): IHaItemEditable | IHaItemSwitch {
-    let ret = (item.isSwitch)
-        ? item as IHaItemSwitch
-        : item.isEditable
-        ? item as IHaItemEditable
-        : null;
-
-    if (ret == null && throwOnFailure) {
-        let msg: string = `Unable to convert ${item.entityId} to IHaItemEditable`;
-        throw new Error(msg);
-    }
-
-    return ret;
-}
-
 export type ActionAndNewState = {
     action: string,
     expectedNewState: string
 }
 
 export abstract class HaParentItem extends EventEmitter implements IHaItem {
-        private _attributes: any;
-        private _name: string;
-        private _type: string;
-        private _friendlyName: string;
-        private _lastChanged: Date;
-        private _lastUpdated: Date;
-        private _state: string | number | boolean;
-        private _logger: Logger;
+    private _attributes: any;
+    private _name: string;
+    private _type: string;
+    private _friendlyName: string;
+    private _lastChanged: Date;
+    private _lastUpdated: Date;
+    private _state: string | number | boolean;
+    private _logger: Logger;
     public constructor(item: State, logLevel?: string) {
         super();
         this._attributes = item.attributes;

@@ -2,7 +2,8 @@
 import { Logger } from 'log4js';
 import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
-import { IHaItemEditable, SafeItemAssign } from '../../haitems/haparentitem';
+import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
+import { IHaItemEditable } from '../../haitems/haparentitem';
 import { HaMain } from '../../hamain';
 
 const CATEGORY = 'AstroHelper';
@@ -36,27 +37,27 @@ export default class AstroHelper extends AppParent {
             }
         }
 
-        if (!(this._lastEvent = SafeItemAssign(this._controller.items.getItem(config.lastevent)))) {
+        if (!(this._lastEvent = this._controller.items.getItemAs(HaGenericUpdateableItem, config.lastevent) as HaGenericUpdateableItem)) {
             logger.error(`Last Event variable does not exist or is not updatable: ${config.lastEvent}`);
             return false;
         }
-        if (!(this._lastUpdate = SafeItemAssign(this._controller.items.getItem(config.lastupdate)))) {
+        if (!(this._lastUpdate =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.lastupdate) as HaGenericUpdateableItem)) {
             logger.error(`Last Update variable does not exist or is not updateable: ${config.lastupdate}`);
             return false;
         }
-        if (!(this._dark = SafeItemAssign(this._controller.items.getItem(config.dark)))) {
+        if (!(this._dark =  this._controller.items.getItemAs(HaGenericUpdateableItem,  config.dark) as HaGenericUpdateableItem)) {
             logger.error(`Is It dark variable does not exist or is not updatable: ${config.dark}`);
             return false;
         }
-        if (!(this._moon = SafeItemAssign(this._controller.items.getItem(config.moon)))) {
+        if (!(this._moon =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.moon) as HaGenericUpdateableItem)) {
             logger.error(`Moon phase variable does not exist or is not updatable: ${config.moon}`);
             return false;
         }
-        if (!(this._sunrise = SafeItemAssign(this._controller.items.getItem(config.sunrise)))) {
+        if (!(this._sunrise =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.sunrise) as HaGenericUpdateableItem)) {
             logger.error(`Sunrise variable does not exist : ${config.sunrise}`);
             return false;
         }
-        if (!(this._sunset = SafeItemAssign(this._controller.items.getItem(config.sunset)))) {
+        if (!(this._sunset =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.sunset) as HaGenericUpdateableItem)) {
             logger.error(`Sunset variable does not exist : ${config.sunset}`);
             return false;
         }

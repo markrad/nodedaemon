@@ -5,10 +5,11 @@ import ConsoleInterface from ".";
 import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
-import { IHaItemEditable, IHaItemSwitch, SafeItemAssign, ServicePromise } from '../../haitems/haparentitem';
+import { IHaItemEditable, ServicePromise } from '../../haitems/haparentitem';
 import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
+import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);
@@ -65,7 +66,7 @@ export class CommandSet extends CommandBase {
                 throw new Error(`Specified item ${inputArray[2]} is not editable`);
             }
 
-            let target: IHaItemEditable | IHaItemSwitch = SafeItemAssign(item[0]);
+            let target: IHaItemEditable = item[0] as HaGenericUpdateableItem;
             let rc: ServicePromise;
 
             switch (inputArray[1]) {
@@ -99,13 +100,17 @@ export class CommandSet extends CommandBase {
                 case "off":
                 case "toggle":
                     if (!item[0].isSwitch) {
-                        throw new Error('subcommand can only target a switch');
+                        throw new Error('Subcommand can only target a switch');
                     }
                     
-                    rc = await (target as HaGenericSwitchItem).toggle();
+                    rc = inputArray[1] == 'toggle'
+                        ? await (target as HaGenericSwitchItem).toggle()
+                        : inputArray[1] == 'on'
+                        ? await (target as HaGenericSwitchItem).turnOn()
+                        : await (target as HaGenericSwitchItem).turnOff();
 
                     if (rc.err) {
-                        sock.write(`Error: Command ${inputArray[3]} failed for ${target.entityId}: ${rc.err.message}\r\n`);
+                        sock.write(`Error: Command ${inputArray[1]} failed for ${target.entityId}: ${rc.err.message}\r\n`);
                     }
                     else {
                         sock.write(`Command complete - new state ${target.state}\r\n`);

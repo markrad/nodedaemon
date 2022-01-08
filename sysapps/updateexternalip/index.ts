@@ -1,8 +1,9 @@
-import { IHaItemEditable, SafeItemAssign } from "../../haitems/haparentitem";
+import { IHaItemEditable } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
 import http from 'http';
 import { getLogger, Logger } from "log4js";
 import { AppParent } from '../../common/appparent';
+import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
 
 const CATEGORY = 'UpdateExternalIP';
 var logger: Logger = getLogger(CATEGORY);
@@ -21,9 +22,11 @@ export default class UpdateExternalIP extends AppParent {
 
     public validate(config: any): boolean {
         if (!config.ip) throw new Error('External IP variable is missing');
-        this._external_ip = SafeItemAssign(this._controller.items.getItem(config.ip));   
-        if (!this._external_ip) throw new Error(`Unable to find ip variable ${config.ip}`);
-        if (this._external_ip.type != 'var') throw new Error(`IP variable ${config.ip} is not a type var`);
+        this._external_ip = this._controller.items.getItemAs(HaGenericUpdateableItem, config.ip) as IHaItemEditable;
+        if (null == this._external_ip) {
+            logger.error(`Entity ${config.ip} is missing or not updatable`);
+            return false;
+        }   
         logger.info('Validated successfully');
         return true;
     }

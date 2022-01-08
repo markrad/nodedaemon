@@ -24,6 +24,30 @@ export class ItemsManager {
         return this.items.get(entityId);
     }
 
+    public checkItemIs(type: any, obj: Object): boolean {
+        return !!(type?.prototype?.isPrototypeOf(obj));
+    }
+
+    public convertItemTo(type: any, obj: Object): IHaItem {
+        return this.checkItemIs(type, obj)? obj as typeof type : null;
+    }
+
+    public getItemAs(type: any, entityId: string, throwOnFailure: boolean = false): IHaItem {
+        let obj = this.getItem(entityId);
+
+        if (obj == null) {
+            if (throwOnFailure) throw new Error(`Failed to find item ${entityId}`);
+            return null;
+        }
+
+        if (!this.checkItemIs(type, obj)) {
+            if (throwOnFailure) throw new Error(`Failed to coerce item ${entityId} to ${type}`);
+            return null;
+        }
+
+        return obj;
+    }
+
     public getItemsAsArray(sortFunction?: { (l: any, r: any): number }): Array<IHaItem> {
             return typeof(sortFunction) == 'function'
                 ? [ ...this.items.values() ].sort(sortFunction)

@@ -3,6 +3,7 @@ import { AppParent } from '../../common/appparent';
 import { HaMain, SensorType } from '../../hamain';
 // import { HaItemSensor } from '../../haitems/haitemsensor'
 import { IHaItemEditable } from '../../haitems/haparentitem';
+import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 
 const CATEGORY: string = 'TestBed';
 var logger: Logger = getLogger(CATEGORY);
@@ -17,6 +18,10 @@ export default class TestBed extends AppParent {
 
     validate(_config: any): boolean {
         // Since this is test code we don't do much in here
+        let a: HaGenericSwitchItem = this._controller.items.getItemAs(HaGenericSwitchItem, 'light.marks_light') as HaGenericSwitchItem;
+        let b: HaGenericSwitchItem = this._controller.items.getItemAs(HaGenericSwitchItem, 'sensor.bedroom_nightstand_1_battery_level') as HaGenericSwitchItem;
+        logger.debug(a);
+        logger.debug(b);
         logger.info('Validated successfully')
         return true;
     }
