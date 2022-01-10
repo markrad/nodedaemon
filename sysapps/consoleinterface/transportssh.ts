@@ -39,22 +39,22 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     public constructor(name: string, parent: ConsoleInterface, config: any) {
         this._name = name;
         this._parent = parent;
-        this._host = config?.ssh.host || '0.0.0.0';
-        this._port = config?.ssh.port || 8822;
+        this._host = config?.host || '0.0.0.0';
+        this._port = config?.port || 8822;
         this._configRoot = parent.controller.configPath;
 
-        if (!config?.ssh.users || typeof (config.ssh.users) != 'object' || Array.isArray(config.ssh.users) == false) {
+        if (!config?.users || typeof (config.users) != 'object' || Array.isArray(config.users) == false) {
             throw new Error('No userids were provided');
         }
 
-        config.ssh.users.forEach((user: User) => {
+        config.users.forEach((user: User) => {
             if (!user.userid || !user.password) {
                 throw new Error('Incorrect format for userids');
             }
             this._users.push({ userid: Buffer.from(user.userid), password: Buffer.from(user.password) });
         });
 
-        let key = config.ssh.keyFile;
+        let key = config.keyFile;
 
         if (!Path.isAbsolute(key)) {
             key = Path.join(this._configRoot, key);
@@ -62,12 +62,12 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
 
         this._hostKey = fs.readFileSync(key);
 
-        if (config.ssh.certFiles) {
-            if (!Array.isArray(config.ssh.certFiles)) {
+        if (config.certFiles) {
+            if (!Array.isArray(config.certFiles)) {
                 throw new Error('Option certFiles must be an array');
             }
 
-            config.ssh.certFiles.forEach((element: string) => {
+            config.certFiles.forEach((element: string) => {
                 let work = Path.isAbsolute(element) ? element : Path.join(this._configRoot, element);
                 let pkey: ParsedKey | ParsedKey[] | Error = parseKey(readFileSync(work));
 
