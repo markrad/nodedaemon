@@ -14,23 +14,18 @@ const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
 
 /* -------------------------------------------------------------------------- *\
-    Two transports are provided and specified in the sample below. Either one
-    can be dropped. For example you may not want to use telnet since it is 
-    not encrypted and potentially insecure.
+    Creates an SSH server to enable remote connections.
 
     Config format:
-    {
-        consoleInterface: {
-            transports: ["./transportssh", "./transporttelnet" ],
-        }
-        "ssh": {
-            "certFile": <path to public cert for certificate authentication>,
-            "keyFile": <path to a key which I don't really get yet>,
-            "users": [
-                { "userid": "bob", "password": "bobspassword" }
-            ]
-        }
-    }
+    consoleinterface:
+        keyFile: "<path to host key file>"      # required
+        host: "<host name or IP address"        # defaults to "0.0.0.0"
+        port: <port number>                     # defaults to 8822
+        certFiles:                              # optional
+            - "<path to certfile for key based authentication>"
+            - "<as many as you need>"
+        users:                                  # currently required
+            - { user: "<userid>", password: "<password>"}
 \* -------------------------------------------------------------------------- */
 export default class ConsoleInterface extends AppParent {
     private _config: any;

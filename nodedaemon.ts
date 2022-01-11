@@ -1,8 +1,10 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import { getLogger, configure, Logger, Configuration } from 'log4js';
 import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
+import yaml from 'js-yaml'
+import { LogLevelValidator, LogLevels } from './common/loglevelvalidator';
 
 const CATEGORY: string = 'main';
 
@@ -71,27 +73,26 @@ let configFile: string = '';
 try {
     const program = new Command();
 
-    const logLevels: string[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
-    const defaultDebug: number = 3;
+    const defaultLogLevel: number = 3;
 
     var packageJSON: any = JSON.parse(fs.readFileSync('package.json').toString());
 
     program.version(`Version = ${packageJSON.version}\nAuthor  = ${packageJSON.author}\nLicense = ${packageJSON.license}\nWebpage = ${packageJSON.repository.url}`)
         .name('nodedaemon')
-        .option('-a, --appsdir <location...>', 'location of apps directory\n(default: if present the value from config.json appsDir otherwise ./apps')
+        .option('-a, --appsdir <location...>', 'location of apps directory\n(default: if present the value from config.yaml appsDir otherwise ./apps')
         .option('-r, --replace', 'replace config file appsdir with command line appsdir - default is to merge them')
-        .option('-c, --config <locaton>', 'name and location of config.json', './config.json')
-        .option('-l --loglevel <type>', `logging level [${logLevels.join(' | ')}]\n(default: if present the value from config.json debugLevel otherwise ${logLevels[defaultDebug]})`)
+        .option('-c, --config <locaton>', 'name and location of config.yaml', './config.yaml')
+        .option('-l --loglevel <type>', `logging level [${LogLevels().join(' | ')}]\n(default: if present the value from config.yaml logLevel otherwise ${LogLevels()[defaultLogLevel]})`)
         .parse(process.argv);
 
-    configFile = Path.resolve(program.opts().config || './config.json');
+    configFile = Path.resolve(program.opts().config ?? './config.yaml');
 
     if (!fs.existsSync(configFile)) {
         fatalExit(`Config file ${configFile} not found`, 4);
     }
 
     try {
-        var config = JSON.parse(fs.readFileSync(configFile).toString());
+        var config: any = yaml.load(fs.readFileSync(configFile, 'utf8'));
     }
     catch (err) {
         fatalExit(`Config file ${program.opts().config} is invalid: ${err}`, 4);
@@ -124,27 +125,31 @@ try {
 
     defaultLogger = getLogger();
 
-    if (!config.main.url) {
+    if (!config.main.hostname) {
         fatalExit(`Config file ${program.opts().config} is missing the url value`, 4, defaultLogger);
+    }
+
+    if (!config.main.port) {
+        config.main.port = 8123;
     }
 
     if (!config.main.accessToken) {
         fatalExit(`Config file ${program.opts().config} is missing the accessToken value`, 4, defaultLogger);
     }
 
-    if (config.main.logLevel && !logLevels.includes(config.main.logLevel)) {
-        fatalExit(`Config file ${program.opts().config} has an invalid debugLevel value of ${config.main.logLevel}`, 4, defaultLogger);
+    if (config.main.logLevel && !LogLevelValidator(config.main.logLevel)) {
+        fatalExit(`Config file ${program.opts().config} has an invalid logLevel value of ${config.main.logLevel}`, 4, defaultLogger);
     }
 
-    if (program.opts().debug && !logLevels.includes(program.opts().debug)) {
-        fatalExit(`Debug argument is invalid. Must be one of [${logLevels.join(' | ')}]`, 4, defaultLogger);
+    if (program.opts().logLevel && !LogLevelValidator(program.opts().debug)) {
+        fatalExit(`Debug argument is invalid. Must be one of [${LogLevels().join(' | ')}]`, 4, defaultLogger);
     }
 
     if (program.opts().loglevel) {
         config.main.logLevel = program.opts().loglevel;
     }
     else if (!config.main.logLevel) {
-        config.main.logLevel = logLevels[defaultDebug];
+        config.main.logLevel = LogLevels()[defaultLogLevel];
     }
 
     if (!config.main.appsDir) {
