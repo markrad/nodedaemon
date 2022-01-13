@@ -1,0 +1,63 @@
+main:
+  hostname: "<host name>"
+  port: 8123
+  accessToken: "<home assistant access token>"
+  logLevel: "debug"
+  appsDir: "./output/sysapps"
+  ignoreApps:
+    - "./output/sysapps/deconzlog"
+    - "./output/sysapps/deconzhack"
+    - "./output/sysapps/dyndnsupdater"
+    - "./output/sysapps/updateexternalip"
+    - "./output/sysapps/motionlight"
+    - "./output/sysapps/aqaraswitch"
+    - "./output/sysapps/testbed"
+  mqttlogger:
+    host: 'mqtt://127.0.0.1:1883'
+
+# Application config
+# See each application's index.ts file for further information
+
+testbed:        # example of an application that requires no further information
+
+astro:
+  daystart: 'sunrise'
+  dayend: 'sunset'
+  logLevel: 'debug'
+
+astrohelper:
+  lastevent: "var.last_astro_event"
+  lastupdate : "var.last_astro_update"
+  dark: "var.is_it_dark"
+  moon: "var.moon_phase"
+  sunrise: "var.sunrise"
+  sunset: "var.sunset"
+  logLevel: "debug"
+
+consoleinterface:
+  certFiles: 
+    - "<public certificate for ssh passwordless login>"
+  keyFile: "./sshcerts/ssh.key"         # ssh required key - generate this
+  users: 
+    - { userid: "<user id>", password: "<password>" }
+
+
+motionlight:
+  devices:
+    - { sensor: "binary_sensor.w_c_occupancy", switch: "switch.w_c_light", delay: 1.5 }
+    - { sensor: "binary_sensor.esp_basement_motion", switch: "input_boolean.test_target", delay: 1 }
+
+deconzlog:
+  deconz.host: "<deconz host>"
+  deconz.port: 8443
+
+deconzhack:                                 # this will be deprecated in later releases
+  mqtt:
+    host: "rr-hass.home.radrealm.com"
+    port: 1883
+  deconz:
+    host: "rr-hass.home.radrealm.com"
+    deconz:
+        port: 8443
+  devices:
+    - { uniqueId: "<unique id from deconz", target: "<Anything unique typically a number>" }    # Used to create the MQTT topic
