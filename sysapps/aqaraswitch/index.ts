@@ -47,7 +47,7 @@ export default class AqaraSwitch extends AppParent {
                         throw new Error(`Entity ${subitem.entity} is not a light or switch`);
                     }   
 
-                    if (null == (e = (this._controller.items.getItem(subitem.entity))as HaGenericSwitchItem)) {
+                    if (null == (e = (this._controller.items.getItem(subitem.entity)) as HaGenericSwitchItem)) {
                         throw new Error(`Entity ${subitem.entity} does not exist`);
                     }
 
