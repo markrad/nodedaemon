@@ -215,7 +215,7 @@ try {
     defaultLogger.level = config.main.logLevel;
     defaultLogger.info(`config file = ${configFile}`);
     defaultLogger.info(`apps directory = ${config.main.appsDir}`);
-    defaultLogger.info(`Debug level = ${config.main.logLevel}`);
+    defaultLogger.info(`log level = ${config.main.logLevel}`);
 }
 catch (err) {
     fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
