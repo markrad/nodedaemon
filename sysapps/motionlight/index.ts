@@ -8,10 +8,16 @@ import { getLogger, Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import * as HaItemBinarySensor from "../../haitems/haitembinary_sensor";
 
+interface KillSwitch {
+    entity: IHaItem;
+    op: string;
+    comperand: string | number | boolean;
+}
 interface Trip {
     sensor: IHaItem;
-    lights: IHaItemSwitch[]
+    lights: IHaItemSwitch[];
     timeout: number;
+    killswitch?: KillSwitch;
 }
 
 const CATEGORY = 'MotionLight';
@@ -28,6 +34,7 @@ export default class MotionLight extends AppParent {
     }
 
     public validate(config: any): boolean {
+        const ops: string[] = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
         if (!config) {
             logger.error('No devices specified');
         }
@@ -60,7 +67,20 @@ export default class MotionLight extends AppParent {
                 if (!Array.isArray(value.switch)) {
                     value.switch = [ value.switch ];
                 }
-//----
+                if (value.killswitch) {
+                    if (!ops.includes(value.killswitch.operator)) {
+                        logger.error(`Invalid operator ${value.killswitch.op} passed`);
+                        return null;
+                    }
+                    if (!value.killswitch.entity || null == this._controller.items.getItem(value.killswitch.entity)) {
+                        logger.error(`Killswitch entity ${value.killswitch.entity} does not exist`);
+                        return null;
+                    }
+                    if (!('comperand' in value.killswitch)) {
+                        logger.error('Killswitch is missing comperand');
+                        return null;
+                    }
+                }
                 if (false == value.switch.reduce((flag: boolean, value: string) => {
                     if (!this._controller.items.getItem(value)) {
                         logger.error(`Specified target light does not exist: ${value}`);
@@ -83,6 +103,13 @@ export default class MotionLight extends AppParent {
                         lights: lights,
                         timeout: value.delay
                     };
+                    if (value.killswitch) {
+                        trip.killswitch = {
+                            entity: value.killswitch.entity,
+                            op: value.killswitch.operator,
+                            comperand: value.killswitch.comperand
+                        }
+                    }
                     return trip;
                 }
             }).filter((item: Trip) => item != null);
@@ -121,7 +148,7 @@ class actioner {
 
         this._eventHandler = (that: IHaItem, _oldState: State) => {
             logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
-            if (that.state == 'on') {
+            if (that.state == 'on' && !this.shouldIgnore(this._trip.killswitch)) {
                 this._trip.lights.forEach((light: IHaItemSwitch) => {
                     light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
                 });
@@ -150,5 +177,32 @@ class actioner {
 
     public async stop(): Promise<void> {
         this._trip.sensor.off('new_state', this._eventHandler);
+    }
+
+    private shouldIgnore(killswitch: KillSwitch): boolean {
+        if (!killswitch) {
+            return false;
+        }
+
+        switch (killswitch.op) {
+            case 'eq':
+                return killswitch.entity.state == killswitch.comperand;
+                break;
+            case 'ne':
+                return killswitch.entity.state != killswitch.comperand;
+                break;
+            case 'lt':
+                return killswitch.entity.state < killswitch.comperand;
+                break;
+            case 'le':
+                return killswitch.entity.state <= killswitch.comperand;
+                break;
+            case 'gt':
+                return killswitch.entity.state > killswitch.comperand;
+                break;
+            case 'ge':
+                return killswitch.entity.state >= killswitch.comperand;
+                break;
+        }
     }
 }
