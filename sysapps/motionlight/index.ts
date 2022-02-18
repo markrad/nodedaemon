@@ -105,7 +105,7 @@ export default class MotionLight extends AppParent {
                     };
                     if (value.killswitch) {
                         trip.killswitch = {
-                            entity: value.killswitch.entity,
+                            entity: this._controller.items.getItem(value.killswitch.entity),
                             op: value.killswitch.operator,
                             comperand: value.killswitch.comperand
                         }
