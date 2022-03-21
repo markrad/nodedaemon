@@ -13,7 +13,7 @@ export class CommandLogs extends CommandBase {
     private _isRunning: boolean = false;
     private _sock: IChannel = null;
     private _ew: EventWaiter = null;
-    private messageWriter: any = null;
+    private _messageWriter = (message:string) => { if (this._sock) this._sock.write(`${message}\r\n`); }
     public constructor() {
         super('logs');
     }
@@ -24,9 +24,9 @@ export class CommandLogs extends CommandBase {
 
     public async execute(_inputArray: string[], _that: ConsoleInterface, sock: IChannel): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.messageWriter = (message:string) => { if (this._sock) this._sock.write(`${message}\r\n`); }
+            // this._messageWriter = (message:string) => { if (this._sock) this._sock.write(`${message}\r\n`); }
             try {
-                logEmitter.on('logmessage', this.messageWriter);
+                logEmitter.on('logmessage', this._messageWriter);
                 this._isRunning = true;
                 this._sock = sock;
                 this._ew = new EventWaiter();
@@ -42,7 +42,7 @@ export class CommandLogs extends CommandBase {
 
     public async terminate(_that: ConsoleInterface, _sock: IChannel): Promise<void> {
         if (this._isRunning) {
-            logEmitter.off('logmessage', this.messageWriter);
+            logEmitter.off('logmessage', this._messageWriter);
             this._sock = null;
             this._ew.EventSet();
             this._isRunning = false;
