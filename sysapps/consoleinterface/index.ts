@@ -77,7 +77,13 @@ export default class ConsoleInterface extends AppParent {
             }
             else {
                 client.lastCommand = command;
-                await command.execute(words, this, stream, this._cmds);
+                try {
+                    await command.execute(words, this, stream, this._cmds);
+                }
+                catch (_err) {
+                    // Don't really care about errors thrown here. Command module should handle them
+                    // Here in case it might be useful later
+                }
             }
             
             resolve();
