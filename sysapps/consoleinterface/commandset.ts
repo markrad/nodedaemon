@@ -10,13 +10,15 @@ import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
+// import { HaItemButton } = require('../../haitems/haitembutton');
+import  { HaItemButton } from '../../haitems/haitembutton';
 
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);
 
 export class CommandSet extends CommandBase {
     public constructor() {
-        super('set', ['state', 'log', 'on', 'off', 'toggle']);
+        super('set', ['state', 'log', 'on', 'off', 'toggle', 'press']);
     }
 
     public get helpText(): string {
@@ -35,6 +37,8 @@ export class CommandSet extends CommandBase {
                     ? item[1].isEditable 
                     : parameters[1] == 'on' || parameters[1] == 'off' || parameters[1] == 'toggle'
                     ? item[1].isSwitch
+                    : parameters[1] == 'press'
+                    ? item[1].isButton
                     : parameters[1] == 'log'
                     ? true 
                     : false)
@@ -115,6 +119,12 @@ export class CommandSet extends CommandBase {
                     else {
                         sock.write(`Command complete - new state ${target.state}\r\n`);
                     }
+                break;
+                case "press":
+                    if (!item[0].isButton) {
+                        throw new Error('Subcommand can only target a button');
+                    }
+                    await (target as HaItemButton).press();
                 break;
                 default:
                     throw new Error(`Command ${inputArray[1]} is invalid`);

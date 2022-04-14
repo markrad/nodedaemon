@@ -13,6 +13,7 @@ export interface IHaItem {
     get entityId(): string;
     get category(): string;
     get isSwitch(): boolean;
+    get isButton(): boolean;
     get isEditable(): boolean;
     get logging(): string;
     set logging(value: string);

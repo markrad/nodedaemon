@@ -106,6 +106,10 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         return false;
     }
 
+    public get isButton(): boolean {
+        return false;
+    }
+
     public get isEditable(): boolean {
         return false;
     }
@@ -159,7 +163,8 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
             let timer: NodeJS.Timeout;
             let newState = (that: HaParentItem, _oldState: string | boolean | number) => {
                 clearTimeout(timer);
-                if (that.state == expectedState) {
+                // TODO: Handle button new state which is just a timestamp thus unpredictable
+                if (that.state == expectedState || expectedState == '**') {
                     resolve({ message: 'success', err: null });
                 }
                 else {

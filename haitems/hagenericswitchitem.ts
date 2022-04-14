@@ -1,4 +1,3 @@
-// import { resolve } from 'path/posix';
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, IHaItemEditable, ServicePromise } from './haparentitem';
@@ -199,6 +198,8 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
                     ? 'turn_off'
                     : work == 'turn_off'
                     ? 'turn_off'
+                    : work == 'press'
+                    ? 'press'
                     : 'error';
                 break;
             default:
@@ -211,6 +212,8 @@ export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implem
             ? 'off'
             : action == 'toggle'
             ? ['off', 'on'][Number(this.isOff)]
+            : action == 'press'
+            ? '**'
             : 'error';
         return { action: action, expectedNewState: expectedNewState };
     }
