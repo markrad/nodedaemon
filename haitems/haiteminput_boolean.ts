@@ -5,9 +5,6 @@ import { ServicePromise } from './haparentitem';
 class HaItemInputBoolean extends HaGenericSwitchItem {
     public constructor(item: State, logLevel: string) {
         super(item, logLevel);
-        this.on('new_state', (that, _oldstate) => {
-            this.logger.debug(`Received new state: ${that.state}`);
-        });
     }
 
     public async updateState(newState: string | number | boolean): Promise<ServicePromise> {
