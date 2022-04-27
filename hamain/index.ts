@@ -282,7 +282,7 @@ export class HaMain extends EventEmitter {
         }
     }
 
-    public async (domain: string, service: string, data: ServiceTarget): Promise<string> {
+    public async callService (domain: string, service: string, data: ServiceTarget): Promise<string> {
         return this._haInterface.callService(domain, service, data);
     }
 
