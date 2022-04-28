@@ -1,6 +1,6 @@
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
-import { ActionAndNewState, IHaItemEditable, ServicePromise } from './haparentitem';
+import { ActionAndNewState/*, IHaItemEditable*/, IHaItemSwitch, ServicePromise } from './haparentitem';
 
 export enum SUPPORT {
     SUPPORT_BRIGHTNESS = 1,
@@ -12,7 +12,7 @@ export enum SUPPORT {
     SUPPORT_WHITE_VALUE = 128,
 }
 
-export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemEditable {
+export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemSwitch {
     private _moment: number;
     private _support: SUPPORT;       
     private _timer: NodeJS.Timeout;
