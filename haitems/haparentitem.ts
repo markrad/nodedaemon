@@ -24,10 +24,10 @@ export interface IHaItemEditable extends IHaItem {
 }
 
 export interface IHaItemSwitch extends IHaItemEditable {
-    turnOn(): Promise<ServicePromise>;
-    turnOff(): Promise<ServicePromise>;
-    toggle(): Promise<ServicePromise>;
-    turnOffAt(moment: number): Promise<void>;
+    turnOn: () => Promise<ServicePromise>;
+    turnOff: () => Promise<ServicePromise>;
+    toggle: () => Promise<ServicePromise>;
+    turnOffAt: (moment: number) => Promise<void>;
     get isOn(): boolean;
     get isOff(): boolean;
     get timeBeforeOff(): number;
@@ -163,7 +163,6 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
             let timer: NodeJS.Timeout;
             let newState = (that: HaParentItem, _oldState: string | boolean | number) => {
                 clearTimeout(timer);
-                // TODO: Handle button new state which is just a timestamp thus unpredictable
                 if (that.state == expectedState || expectedState == '**') {
                     resolve({ message: 'success', err: null });
                 }
