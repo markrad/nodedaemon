@@ -75,6 +75,7 @@ export class HaMain extends EventEmitter {
                     }
                 }
                 else if (eventType == 'call_service') {
+                    logger.debug(`Call Service ${JSON.stringify(data, null, 4)}`);
                     logger.debug(`Ignored event "${eventType}"`)
                 }
                 else if (eventType == 'entity_registry_updated') {
@@ -282,10 +283,6 @@ export class HaMain extends EventEmitter {
         }
     }
 
-    public async callService (domain: string, service: string, data: ServiceTarget): Promise<string> {
-        return this._haInterface.callService(domain, service, data);
-    }
-
     public async restartHA(): Promise<void> {
         await this._haInterface.callService('homeassistant', 'restart', {});
     }
@@ -424,6 +421,14 @@ export class HaMain extends EventEmitter {
                                         else {
                                             appobject = new app(this, this._config);
                                             if (appobject.validate == undefined || appobject.validate(this._config[dirent.name])) {
+                                                appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
+                                                    try {
+                                                        await this._haInterface.callService(domain, service, data)
+                                                    }
+                                                    catch (err) {
+                                                        // Error already logged
+                                                    }
+                                                });
                                                 apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'constructed' });
                                             }
                                             else {
