@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { HaParentItem } from './haparentitem';
 
-class HaItemBinarySensor extends HaParentItem {
+export class HaItemBinarySensor extends HaParentItem {
     public constructor(item: State) {
         super(item);
         this.on('new_state', (that, _oldstate) => {

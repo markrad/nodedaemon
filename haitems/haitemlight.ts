@@ -2,7 +2,7 @@ import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 import { ServiceTarget } from './haparentitem';
 
-class HaItemLight extends HaGenericSwitchItem {
+export class HaItemLight extends HaGenericSwitchItem {
     public constructor(item: State) {
         super(item);
     }

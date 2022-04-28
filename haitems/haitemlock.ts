@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
 
-class HaItemLock extends HaParentItem {
+export class HaItemLock extends HaParentItem {
     public constructor(item: State) {
         super(item);
         this.on('new_state', (that, _oldstate) => {
