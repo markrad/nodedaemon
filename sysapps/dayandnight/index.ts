@@ -23,7 +23,7 @@ export default class DayAndNight extends AppParent {
     // private _switches: IHaItemSwitch[] = null;
     private _locks: HaItemLock[] = null;
     private _echos: HaItemMediaPlayer[] = null;
-    private _binarySensors: binarySensors[] = [];
+    private _binarySensors: BinarySensors[] = [];
     private _nightFunc = async (that: IHaItemSwitch, _oldState: State) => {
         this.emit('callservice', 'alexa_media', 'update_last_called');
         let notification: string = '';
@@ -169,7 +169,7 @@ export default class DayAndNight extends AppParent {
                     return false;
                 }
 
-                this._binarySensors.push(new binarySensors(entities, sensor.goodState, sensor.singularName, sensor.pluralName, sensor.states));
+                this._binarySensors.push(new BinarySensors(entities, sensor.goodState, sensor.singularName, sensor.pluralName, sensor.states));
             });
         }
 
@@ -195,7 +195,7 @@ export default class DayAndNight extends AppParent {
     }
 }
 
-class binarySensors {
+class BinarySensors {
     private _entities: HaItemBinarySensor[] = null;
     private readonly _goodState: string;
     private readonly _singlarName: string;
