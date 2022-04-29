@@ -36,6 +36,7 @@ export class HaMain extends EventEmitter {
     private _haConfig: any = null;
     private _starttime: Date = new Date();
     private _configPath;
+    private _reconnect: boolean = false;
     constructor(config: any, configPath: string) {
         super();
         this._config = config;
@@ -103,8 +104,14 @@ export class HaMain extends EventEmitter {
             });
 
             this._haInterface.on('connected', async () => {
-                await this._haInterface.subscribe();
-                logger.info('Subscribed to events');
+                if (this._reconnect) {
+                    this._processItems(await this._haInterface.getStates());
+                }
+                else {
+                    await this._haInterface.subscribe();
+                    logger.info('Subscribed to events');
+                    this._reconnect = false;
+                }
             });
 
             this._haInterface.on('fatal_error', (err) => {
@@ -115,9 +122,6 @@ export class HaMain extends EventEmitter {
             await this._haInterface.start();
             this._haConfig = await this._haInterface.getConfig();
             this._processItems(await this._haInterface.getStates());
-
-            //await this._haInterface.subscribe();
-
             logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
 
             let itemTypes: any = {};
@@ -293,10 +297,13 @@ export class HaMain extends EventEmitter {
 
     private _processItems(states: State[]) {
         states.forEach((item) => {
-            logger.trace(`Item name: ${item.entity_id}`);
-            if (!this.items.getItem(item.entity_id)) {
+            let work: IHaItem;
+            if (!(work = this.items.getItem(item.entity_id))) {
                 let itemInstance: IHaItem = this._haItemFactory.getItemObject(item /*, this._haInterface*/);
                 this._setupItem(itemInstance); 
+            }
+            else {
+                work.setReceivedState({ entity_id: item.entity_id, state: item.state, attributes: item.attributes, context: item.context, last_changed: item.last_changed, last_updated: item.last_updated });
             }
         });
     }
