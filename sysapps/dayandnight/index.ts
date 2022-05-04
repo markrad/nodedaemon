@@ -34,11 +34,11 @@ export default class DayAndNight extends AppParent {
             if (locksUnlocked.length == 0) {
                 notification += 'All locks are secure. '
             }
-            else if (locksUnlocked.length = this._locks.length) {
+            else if (locksUnlocked.length == this._locks.length) {
                 notification += 'All locks are insecure. '
             }
             else {
-                locksUnlocked.forEach((lock) => notification += `${lock.friendlyName} is insecure}`)
+                locksUnlocked.forEach((lock) => notification += `${lock.friendlyName} is insecure. `)
             }
 
             let litLights: HaItemLight[] = this._lights.filter((item) => item.isOn);
@@ -144,7 +144,7 @@ export default class DayAndNight extends AppParent {
 
         this._lights = (this._controller.items.getItemByType('light')) as HaItemLight[];
         // this._switches = (this._controller.items.getItemByType('switch')) as HaItemSwitch[];
-        this._locks = (this._controller.items.getItemByType('lock')) as HaItemLock[];
+        this._locks = ((this._controller.items.getItemByType('lock')) as HaItemLock[]).filter((lock) => !lock.attributes.entity_id);
 
         if (config.binarySensors != null) {
             if (!Array.isArray(config.binarySensors)) {
