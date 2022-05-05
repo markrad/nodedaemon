@@ -13,16 +13,14 @@ export default class UpdateExternalIP extends AppParent {
     private _interval: NodeJS.Timer = null;
     private _multiplier: number = 24;
     private _delay: number = 5;
-    private _controller: HaMain;
     public constructor(controller: HaMain, _config: any) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         logger.info('Constructed');
     }
 
     public validate(config: any): boolean {
         if (!config.ip) throw new Error('External IP variable is missing');
-        this._external_ip = this._controller.items.getItemAs(HaGenericUpdateableItem, config.ip) as IHaItemEditable;
+        this._external_ip = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.ip);
         if (null == this._external_ip) {
             logger.error(`Entity ${config.ip} is missing or not updatable`);
             return false;

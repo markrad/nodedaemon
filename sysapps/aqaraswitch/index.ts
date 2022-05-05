@@ -14,11 +14,9 @@ interface ISwitchInfo {
 }
 
 export default class AqaraSwitch extends AppParent {
-    private _controller: HaMain = null;
     private _groups: Group[] = [];
     constructor(controller: HaMain) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         logger.info('Constructed');
     }
     validate(config: any): boolean {
@@ -39,7 +37,7 @@ export default class AqaraSwitch extends AppParent {
                         throw new Error('All objects in inner arrays must have an entity item');
                     }
 
-                    e = this._controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, subitem.entity, true);
+                    e = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, subitem.entity, true);
 
                     if ('switch' in subitem) {
                         if (null == regex.exec(subitem.switch)) {
@@ -69,13 +67,13 @@ export default class AqaraSwitch extends AppParent {
     }
     run(): Promise<boolean> {
         return new Promise<boolean>((resolve, _reject) => {
-            this._controller.on('serviceevent', this._eventHandler);
+            this.controller.on('serviceevent', this._eventHandler);
             resolve(true);
         });
     }
     stop(): Promise<void> {
         return new Promise<void>((resolve, _reject) => {
-            this._controller.off('serviceevent', this._eventHandler);
+            this.controller.off('serviceevent', this._eventHandler);
             resolve();
         });
     }

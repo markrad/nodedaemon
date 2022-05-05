@@ -70,8 +70,8 @@ export default class DeconzHack extends AppParent {
     private _ws: WSWrapper;
     private _client: mqtt.MqttClient;
     private _printMessages: boolean = false;
-    constructor(_controller: HaMain) {
-        super(logger);
+    constructor(controller: HaMain) {
+        super(controller, logger);
         this._client = null;
         this._ws = null;
         this._mqttOptions = { clean: true, clientId: "deCONZHack"}

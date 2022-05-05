@@ -11,7 +11,6 @@ const CATEGORY = 'AstroHelper';
 const logger: Logger = require('log4js').getLogger(CATEGORY);
 
 export default class AstroHelper extends AppParent {
-    private _controller: HaMain = null;
     private _astro: any = null;
     private _lastEvent: IHaItemEditable = null;
     private _lastUpdate: IHaItemEditable = null;
@@ -21,8 +20,7 @@ export default class AstroHelper extends AppParent {
     private _sunset: IHaItemEditable = null;
     private _midnight: schedule.Job = null;
     constructor(controller: HaMain) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         logger.info('Constructed');
     }
 
@@ -36,29 +34,16 @@ export default class AstroHelper extends AppParent {
                 logger.error(`Failed to set log level to ${config.logLevel}`);
             }
         }
-
-        if (!(this._lastEvent = this._controller.items.getItemAs(HaGenericUpdateableItem, config.lastevent) as HaGenericUpdateableItem)) {
-            logger.error(`Last Event variable does not exist or is not updatable: ${config.lastEvent}`);
-            return false;
+        try {
+            this._lastEvent = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.lastevent, true);
+            this._lastUpdate =  this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.lastupdate, true);
+            this._dark =  this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem,  config.dark, true);
+            this._moon =  this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.moon, true);
+            this._sunrise =  this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.sunrise, true);
+            this._sunset =  this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.sunset, true);
         }
-        if (!(this._lastUpdate =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.lastupdate) as HaGenericUpdateableItem)) {
-            logger.error(`Last Update variable does not exist or is not updateable: ${config.lastupdate}`);
-            return false;
-        }
-        if (!(this._dark =  this._controller.items.getItemAs(HaGenericUpdateableItem,  config.dark) as HaGenericUpdateableItem)) {
-            logger.error(`Is It dark variable does not exist or is not updatable: ${config.dark}`);
-            return false;
-        }
-        if (!(this._moon =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.moon) as HaGenericUpdateableItem)) {
-            logger.error(`Moon phase variable does not exist or is not updatable: ${config.moon}`);
-            return false;
-        }
-        if (!(this._sunrise =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.sunrise) as HaGenericUpdateableItem)) {
-            logger.error(`Sunrise variable does not exist : ${config.sunrise}`);
-            return false;
-        }
-        if (!(this._sunset =  this._controller.items.getItemAs(HaGenericUpdateableItem, config.sunset) as HaGenericUpdateableItem)) {
-            logger.error(`Sunset variable does not exist : ${config.sunset}`);
+        catch (err: any) {
+            logger.error((err as Error).message);
             return false;
         }
 
@@ -69,7 +54,7 @@ export default class AstroHelper extends AppParent {
 
     async run(): Promise<boolean> {
         
-        if (!(this._astro = this._controller.getApp('Astro')?.instance)) {
+        if (!(this._astro = this.controller.getApp('Astro')?.instance)) {
             logger.error('Astro module has not been loaded - cannot continue');
             return false;
         }

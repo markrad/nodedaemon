@@ -24,12 +24,10 @@ const CATEGORY = 'MotionLight';
 var logger: Logger = getLogger(CATEGORY);
 
 export default class MotionLight extends AppParent {
-    private _controller: HaMain;
     private _actioners: actioner[] = [];
     private _trips: Trip[] = null;
     constructor(controller: HaMain) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         logger.info('Constructed');
     }
 
@@ -60,7 +58,7 @@ export default class MotionLight extends AppParent {
                     logger.error('Delay must be a number');
                     return null;
                 }
-                if (null == this._controller.items.getItemAs((HaItemBinarySensor as any).default, value.sensor)) {
+                if (null == this.controller.items.getItemAs((HaItemBinarySensor as any).default, value.sensor)) {
                     logger.error(`Sensor ${value.sensor} is either missing or not a binary_sensor type`);
                     return null;
                 }
@@ -72,7 +70,7 @@ export default class MotionLight extends AppParent {
                         logger.error(`Invalid operator ${value.killswitch.op} passed`);
                         return null;
                     }
-                    if (!value.killswitch.entity || null == this._controller.items.getItem(value.killswitch.entity)) {
+                    if (!value.killswitch.entity || null == this.controller.items.getItem(value.killswitch.entity)) {
                         logger.error(`Killswitch entity ${value.killswitch.entity} does not exist`);
                         return null;
                     }
@@ -82,11 +80,11 @@ export default class MotionLight extends AppParent {
                     }
                 }
                 if (false == value.switch.reduce((flag: boolean, value: string) => {
-                    if (!this._controller.items.getItem(value)) {
+                    if (!this.controller.items.getItem(value)) {
                         logger.error(`Specified target light does not exist: ${value}`);
                         flag = false;
                     }
-                    else if (!this._controller.items.getItem(value).isSwitch) {
+                    else if (!this.controller.items.getItem(value).isSwitch) {
                         logger.error(`Specified target light is not a switch or a light: ${value}`);
                         flag = false;
                     }
@@ -97,15 +95,15 @@ export default class MotionLight extends AppParent {
                     return null;
                 }
                 else {
-                    let lights: IHaItemSwitch[] = value.switch.map((value: string) => this._controller.items.getItem(value));
+                    let lights: IHaItemSwitch[] = value.switch.map((value: string) => this.controller.items.getItem(value));
                     let trip: Trip = { 
-                        sensor: this._controller.items.getItem(value.sensor),
+                        sensor: this.controller.items.getItem(value.sensor),
                         lights: lights,
                         timeout: value.delay
                     };
                     if (value.killswitch) {
                         trip.killswitch = {
-                            entity: this._controller.items.getItem(value.killswitch.entity),
+                            entity: this.controller.items.getItem(value.killswitch.entity),
                             op: value.killswitch.operator,
                             comperand: value.killswitch.comperand
                         }

@@ -28,20 +28,19 @@ export default class DynDnsUpdater extends AppParent {
         [ '911', 'Bad user name or password'],
     ]);
     private _url: string = null;
-    public constructor(controller: HaMain, config: any) {
-        super(logger);
-        this._externalIp = controller.items.getItemAs(HaGenericUpdateableItem, config.dyndnsupdater.externalIp) as HaGenericUpdateableItem;
-        this._lastUpdate = controller.items.getItemAs(HaGenericUpdateableItem, config.dyndnsupdater.lastUpdate) as HaGenericUpdateableItem;
-        this._user = config.dyndnsupdater?.user;
-        this._updaterKey = config.dyndnsupdater?.updaterKey;
-        this._hostname = config.dyndnsupdater?.hostname;
+    public constructor(controller: HaMain) {
+        super(controller, logger);
         logger.info('Constructed');
     }
 
-    public validate(_config: any): boolean {
+    public validate(config: any): boolean {
+        this._user = config?.user;
+        this._updaterKey = config?.updaterKey;
+        this._hostname = config?.hostname;
+
         try {
-            if (this._externalIp == null || !this._externalIp.isEditable) throw new Error('Config value externalIp is missing or invalid (must be editable)');
-            if (this._lastUpdate == null || !this._lastUpdate.isEditable) throw new Error('Config value lastUpdate is missing or invalid (must be editable)');
+            this._externalIp = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.externalIp, true);
+            this._lastUpdate = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.lastUpdate, true);
             if (!this._user) throw new Error('user not found in config file');
             if (!this._updaterKey) throw new Error('updaterKey not found in config file');
             if (!this._hostname) throw new Error('hostname not found in config file');

@@ -13,12 +13,10 @@ const logger = getLogger(CATEGORY);
 
 /* -------------------------------------------------------------------------- *\
     Config format:
-    {
-        astro: {
-            "daystart": "sunrise",
-            "dayend": "sunset"
-        }
-    }
+    astro:
+        daystart: 'sunrise'
+        dayend: 'sunset'
+        logLevel: 'debug'
     Values for daystart and dayend will determine the isDark timespan.
 \* -------------------------------------------------------------------------- */
 export default class Astro extends AppParent
@@ -49,7 +47,7 @@ export default class Astro extends AppParent
     private _dayStart: string = null;
     private _dayEnd: string = null;
     public constructor(controller: HaMain, _config: any) {
-        super(logger);
+        super(controller, logger);
         this._longitude = controller.haConfig.longitude;
         this._latitude = controller.haConfig.latitude;
         logger.info('Constructed')

@@ -9,17 +9,15 @@ const CATEGORY: string = 'TestBed';
 var logger: Logger = getLogger(CATEGORY);
 
 export default class TestBed extends AppParent {
-    private _controller: HaMain;
     constructor(controller: HaMain, _config: any) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         logger.info('Constructed');
     }
 
     validate(_config: any): boolean {
         // Since this is test code we don't do much in here
-        let a: HaGenericSwitchItem = this._controller.items.getItemAs(HaGenericSwitchItem, 'light.marks_light') as HaGenericSwitchItem;
-        let b: HaGenericSwitchItem = this._controller.items.getItemAs(HaGenericSwitchItem, 'sensor.bedroom_nightstand_1_battery_level') as HaGenericSwitchItem;
+        let a: HaGenericSwitchItem = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, 'light.marks_light');
+        let b: HaGenericSwitchItem = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, 'sensor.bedroom_nightstand_1_battery_level');
         logger.debug(a);
         logger.debug(b);
         logger.info('Validated successfully')
@@ -30,8 +28,8 @@ export default class TestBed extends AppParent {
         return new Promise(async (resolve, _reject) => {
             let name: string = 'testbed_' + Math.floor(Math.random() * 10000).toString();
             try {
-                await this._controller.addSensor(name, SensorType.normal, 'testbed1');
-                ((this._controller.items.getItem(`sensor.${name}`)) as IHaItemEditable).updateState('testbed2'); 
+                await this.controller.addSensor(name, SensorType.normal, 'testbed1');
+                ((this.controller.items.getItem(`sensor.${name}`)) as IHaItemEditable).updateState('testbed2'); 
                 resolve(true);
             }
             catch (err) {

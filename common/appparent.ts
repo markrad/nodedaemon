@@ -2,16 +2,23 @@ import { Logger } from "log4js";
 import { IApplication } from "./IApplication";
 import { LogLevelValidator } from './loglevelvalidator';
 import { EventEmitter } from 'events';
+import { HaMain } from "../hamain";
 
 export abstract class AppParent extends EventEmitter implements IApplication {
     private _logger: Logger;
-    constructor(logger: Logger) {
+    private _controller: HaMain;
+    constructor(controller: HaMain, logger: Logger) {
         super();
         this._logger = logger;
+        this._controller = controller;
     }
     abstract validate(config: any): boolean;
     abstract run(): Promise<boolean>;
     abstract stop(): Promise<void>;
+
+    public get controller(): HaMain {
+        return this._controller;
+    }
 
     public get logging(): string {
         return this._logger.level;

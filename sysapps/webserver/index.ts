@@ -15,11 +15,10 @@ const logger: Logger = getLogger(CATEGORY);
 // TODO: Broken
 export default class WebServer extends AppParent {
     private _port: number;
-    // private _controller: HaMain;
     private _app: Express.Application;
     private _server: http.Server;
-    public constructor(_controller: HaMain, config: any) {
-        super(logger);
+    public constructor(controller: HaMain, config: any) {
+        super(controller, logger);
         this._port = config.webserver?.port ?? 4526;
         // this._controller = controller;
         this._app = Express(); 

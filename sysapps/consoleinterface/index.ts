@@ -29,14 +29,12 @@ var logger: Logger = getLogger(CATEGORY);
 \* -------------------------------------------------------------------------- */
 export default class ConsoleInterface extends AppParent {
     private _config: any;
-    private _controller: HaMain;
     private _items: ItemsManager;
     private _transport: ITransport = null;
     private _cmds: ICommand[] = [];
     private _lastCmd: ICommand = null;
     public constructor(controller: HaMain) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         this._items = controller.items;
         logger.info('Constructed');
     }
@@ -56,10 +54,6 @@ export default class ConsoleInterface extends AppParent {
 
     public get items(): ItemsManager {
         return this._items;
-    }
-
-    public get controller(): HaMain {
-        return this._controller;
     }
 
     public get commands(): ICommand[] {

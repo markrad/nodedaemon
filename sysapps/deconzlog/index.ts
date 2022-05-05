@@ -9,8 +9,8 @@ var logger: Logger = getLogger(CATEGORY);
 export default class DeconzLog extends AppParent {
     _deconz: any;
     _ws: WSWrapper;
-    constructor(_controller: HaMain, config: any) {
-        super(logger);
+    constructor(controller: HaMain, config: any) {
+        super(controller, logger);
         this._deconz = { ...{ host: '127.0.0.1', port: 8443}, ...(config.deconzlog.deconz ?? {}) };
         this._ws = null;
         logger.info('Constructed');

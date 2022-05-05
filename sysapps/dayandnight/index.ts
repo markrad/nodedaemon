@@ -16,7 +16,6 @@ const CATEGORY = 'DayAndNight';
 const logger: Logger = require('log4js').getLogger(CATEGORY);
 
 export default class DayAndNight extends AppParent {
-    private _controller: HaMain = null;
     private _dayStart: IHaItemSwitch = null;
     private _nightStart: IHaItemSwitch = null;
     private _lights: HaItemLight[] = null;
@@ -38,7 +37,7 @@ export default class DayAndNight extends AppParent {
                 notification += 'All locks are insecure. '
             }
             else {
-                locksUnlocked.forEach((lock) => notification += `${lock.friendlyName} is insecure. `)
+                locksUnlocked.forEach((lock) => notification += `${lock.friendlyName} is <emphasis level="strong">insecure</emphasis>. `)
             }
 
             let litLights: HaItemLight[] = this._lights.filter((item) => item.isOn);
@@ -50,7 +49,7 @@ export default class DayAndNight extends AppParent {
                 notification += 'All lights are on. ';
             }
             else {
-                notification += 'The following lights are on: ';
+                notification += 'The following lights are <emphasis level="strong">on</emphasis>: ';
                 litLights.forEach((light, index) => notification += (light.friendlyName + (index + 1 < litLights.length? ', ' : '. ')));
             }
 /*
@@ -71,15 +70,25 @@ export default class DayAndNight extends AppParent {
             this._binarySensors.forEach((binarySensor) => {
                 let insecure: HaItemBinarySensor[] = binarySensor.test();
 
-                if (insecure.length == 0) {
-                    notification += `All ${binarySensor.pluralName} are ${binarySensor.states[0]}. `;
-                }
-                else if (insecure.length == binarySensor.length) {
-                    notification += `All ${binarySensor.pluralName} are ${binarySensor.states[0]}. `;
+                if (binarySensor.length == 1) {
+                    if (insecure.length == 0) {
+                        notification += `${binarySensor.singularName} is off. `;
+                    }
+                    else {
+                        notification += `${binarySensor.singularName} is <emphasis level="strong">on</emphasis>. `
+                    }
                 }
                 else {
-                    notification += `The following ${binarySensor.pluralName} are ${binarySensor.states[1]}: `
-                    insecure.forEach((bin, index) => notification += (bin.friendlyName + (index + 1 < insecure.length? ', ' : '. ')));
+                    if (insecure.length == 0) {
+                        notification += `All ${binarySensor.pluralName} are ${binarySensor.states[0]}. `;
+                    }
+                    else if (insecure.length == binarySensor.length) {
+                        notification += `All ${binarySensor.pluralName} are <emphasis level="strong">${binarySensor.states[1]}</emphasis>. `;
+                    }
+                    else {
+                        notification += `The following ${binarySensor.pluralName} are <emphasis level="strong">${binarySensor.states[1]}</emphasis>: `
+                        insecure.forEach((bin, index) => notification += (bin.friendlyName + (index + 1 < insecure.length? ', ' : '. ')));
+                    }
                 }
             });
             logger.debug('Time');
@@ -97,8 +106,7 @@ export default class DayAndNight extends AppParent {
     }
 
     constructor(controller: HaMain) {
-        super(logger);
-        this._controller = controller;
+        super(controller, logger);
         logger.info('Constructed');
     }
 
@@ -114,8 +122,8 @@ export default class DayAndNight extends AppParent {
         }
 
         try {
-            this._dayStart = this._controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.dayStart, true);
-            this._nightStart = this._controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.nightStart, true);
+            this._dayStart = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.dayStart, true);
+            this._nightStart = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.nightStart, true);
         }
         catch (err: any) {
             logger.error((err as Error).message);
@@ -128,12 +136,12 @@ export default class DayAndNight extends AppParent {
 
         if (!Array.isArray(config.echos)) config.echos = [config.echos];
 
-        this._echos = config.echos.map((echo: string) => this._controller.items.getItem('media_player.' + echo))
+        this._echos = config.echos.map((echo: string) => this.controller.items.getItem('media_player.' + echo))
             .filter((item: HaItemMediaPlayer) => item != null && 'last_called' in item.attributes);
 
-        this._lights = (this._controller.items.getItemByType('light')) as HaItemLight[];
+        this._lights = (this.controller.items.getItemByType('light')) as HaItemLight[];
         // this._switches = (this._controller.items.getItemByType('switch')) as HaItemSwitch[];
-        this._locks = ((this._controller.items.getItemByType('lock')) as HaItemLock[]).filter((lock) => !lock.attributes.entity_id);
+        this._locks = ((this.controller.items.getItemByType('lock')) as HaItemLock[]).filter((lock) => !lock.attributes.entity_id);
 
         if (config.binarySensors != null) {
             if (!Array.isArray(config.binarySensors)) {
@@ -151,7 +159,7 @@ export default class DayAndNight extends AppParent {
                     logger.error(`Invalid or missing states at index ${index}`);
                 }
 
-                let entities: HaItemBinarySensor[] = sensor.entities.map((entity: string) => this._controller.items.getItem(('binary_sensor.' + entity)));
+                let entities: HaItemBinarySensor[] = sensor.entities.map((entity: string) => this.controller.items.getItem(('binary_sensor.' + entity)));
 
                 if (entities.length == 0) {
                     logger.error(`No valid enitites found at index ${index}`);
