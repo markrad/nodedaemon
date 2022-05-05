@@ -3,12 +3,12 @@ import { Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { IHaItemSwitch } from '../../haitems/haparentitem';
 import { HaItemLight } from '../../haitems/haitemlight';
-// import { HaItemSwitch } from '../../haitems/haitemswitch';
+import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 import { HaItemLock } from '../../haitems/haitemlock';
 import { HaItemMediaPlayer } from '../../haitems/haitemmedia_player';
 import { HaItemBinarySensor } from '../../haitems/haitembinary_sensor';
 import { HaMain } from '../../hamain';
-import { IHaItem } from '../../haitems/ihaitem';
+// import { IHaItem } from '../../haitems/ihaitem';
 import { State } from '../../hamain/state';
 
 const CATEGORY = 'DayAndNight';
@@ -113,22 +113,13 @@ export default class DayAndNight extends AppParent {
             }
         }
 
-        let work:IHaItem;
-
-        work = this._controller.items.getItem(config.dayStart);
-
-        if (work == null || !work.isSwitch) {
-            logger.error(`Day Switch does not exist or is the incorrect type ${config.dayStart}`);
-            return false;
+        try {
+            this._dayStart = this._controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.dayStart, true);
+            this._nightStart = this._controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.nightStart, true);
         }
-        
-        this._dayStart = work as IHaItemSwitch;
-
-        work = this._controller.items.getItem(config.nightStart);
-        if (work == null || !work.isSwitch) {
-            logger.error(`Day Switch does not exist or is the incorrect type ${config.nightStart}`);
-            return false;
-        }
+        catch (err: any) {
+            logger.error((err as Error).message);
+        }        
 
         if (!config.echos) {
             logger.error('List of echo devices is required')
@@ -139,8 +130,6 @@ export default class DayAndNight extends AppParent {
 
         this._echos = config.echos.map((echo: string) => this._controller.items.getItem('media_player.' + echo))
             .filter((item: HaItemMediaPlayer) => item != null && 'last_called' in item.attributes);
-
-        this._nightStart = work as IHaItemSwitch;
 
         this._lights = (this._controller.items.getItemByType('light')) as HaItemLight[];
         // this._switches = (this._controller.items.getItemByType('switch')) as HaItemSwitch[];
