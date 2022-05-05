@@ -32,8 +32,8 @@ export class ItemsManager {
         return this.checkItemIs(type, obj)? obj as typeof type : null;
     }
 
-    public getItemAs(type: any, entityId: string, throwOnFailure: boolean = false): IHaItem {
-        let obj = this.getItem(entityId);
+    public getItemAs<T>(type: any, entityId: string, throwOnFailure: boolean = false): T {
+        let obj: IHaItem = this.getItem(entityId);
 
         if (obj == null) {
             if (throwOnFailure) throw new Error(`Failed to find item ${entityId}`);
@@ -45,7 +45,7 @@ export class ItemsManager {
             return null;
         }
 
-        return obj;
+        return obj as unknown as T;
     }
 
     public getItemsAsArray(sortFunction?: { (l: any, r: any): number }): Array<IHaItem> {

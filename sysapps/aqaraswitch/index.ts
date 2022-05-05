@@ -2,7 +2,6 @@
 import { Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
-// import { IHaItemEditable, SafeItemAssign } from '../../haitems/haparentitem';
 import { HaMain } from '../../hamain';
 
 const CATEGORY = 'AqaraSwitch';
@@ -35,21 +34,12 @@ export default class AqaraSwitch extends AppParent {
                 let entities: HaGenericSwitchItem[] = [];
                 let switches: ISwitchInfo[] = [];
                 item.forEach((subitem) => {
-                    var e: HaGenericSwitchItem;
+                    let e: HaGenericSwitchItem;
                     if (!('entity' in subitem)) {
                         throw new Error('All objects in inner arrays must have an entity item');
                     }
 
-                    let target: string = subitem.entity;
-
-                    // TODO Find some mechanism to see if the entity is derived from HaItemGenericSwitch
-                    if (!target.startsWith('light.') && !target.startsWith('switch.')) {
-                        throw new Error(`Entity ${subitem.entity} is not a light or switch`);
-                    }   
-
-                    if (null == (e = (this._controller.items.getItem(subitem.entity)) as HaGenericSwitchItem)) {
-                        throw new Error(`Entity ${subitem.entity} does not exist`);
-                    }
+                    e = this._controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, subitem.entity, true);
 
                     if ('switch' in subitem) {
                         if (null == regex.exec(subitem.switch)) {
