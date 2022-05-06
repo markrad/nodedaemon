@@ -1,4 +1,4 @@
-import { Logger } from 'log4js';
+import { Level, Logger } from 'log4js';
 import { State } from '../hamain/state';
 
 export interface IHaItem {
@@ -15,8 +15,8 @@ export interface IHaItem {
     get isSwitch(): boolean;
     get isButton(): boolean;
     get isEditable(): boolean;
-    get logging(): string;
-    set logging(value: string);
+    get logging(): string | Level;
+    set logging(value: string | Level);
     setReceivedState(newState: State): void;
     on(eventName: string | symbol, listener: (...args: any[]) => void): void;
     off(eventName: String | symbol, listener: (...args: any[]) => void): void;

@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { Logger, getLogger } from 'log4js';
+import { Logger, getLogger, Level } from 'log4js';
 import { State } from '../hamain/state';
 import { IHaItem } from './ihaitem';
 import { LogLevelValidator } from '../common/loglevelvalidator';
@@ -131,11 +131,11 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('new_state', this, oldState);
     }
 
-    public get logging(): string {
+    public get logging(): string | Level {
         return this.logger.level;
     }
 
-    public set logging(value: string) {
+    public set logging(value: string | Level) {
         if (!LogLevelValidator(value)) {
             let err: Error = new Error(`Invalid level passed: ${value}`);
             this.logger.error(err.message);

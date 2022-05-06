@@ -3,6 +3,9 @@
 import { HaMain } from "../../hamain";
 
 import Express from 'express';
+// import serveFavicon.default as serveFavicon from 'serve-favicon';
+// import * as serveFavicon from 'serve-favicon';
+import serveFavicon = require('serve-favicon');
 import path from 'path';
 import http from 'http';
 import { getLogger, Logger } from "log4js";
@@ -17,12 +20,14 @@ export default class WebServer extends AppParent {
     private _port: number;
     private _app: Express.Application;
     private _server: http.Server;
+    private _root: string;
     public constructor(controller: HaMain, config: any) {
         super(controller, logger);
         this._port = config.webserver?.port ?? 4526;
         // this._controller = controller;
         this._app = Express(); 
         this._server = null;
+        logger.info('Constructed');
     }
 /*
     getZWaveList() {
@@ -32,14 +37,23 @@ export default class WebServer extends AppParent {
         return items;
     }
 */
-    public validate(_config: any): boolean {
-        // No validation required
+    public validate(config: any): boolean {
+        this._root = config.webdataroot;
+
+        if (!this._root) {
+            logger.error('Missing webdataroot');
+            return false;
+        }
+
+        this._root = path.normalize(this._root);
+        logger.info('Validated successfully');
+
         return true;
     }
     
     public async run(): Promise<boolean> {
 
-        this._app.set('views', path.join(__dirname, 'views'));
+        this._app.set('views', path.join(this._root, 'views'));
         this._app.set('view engine', 'pug');
 
         this._app.use((req, _res, next) => {
@@ -47,8 +61,10 @@ export default class WebServer extends AppParent {
             next();
         });
 
-        this._app.use(Express.static(path.join(__dirname, "styles")));
-        this._app.use('/styles', Express.static(path.join(__dirname, 'styles')));
+        this._app.use(serveFavicon(path.join(this._root, "icons/server.ico")));
+        this._app.use(Express.static(path.join(this._root, "styles")));
+        this._app.use('/styles', Express.static(path.join(this._root, 'styles')));
+        this._app.use('/icons', Express.static(path.join(this._root, 'icons')))
 
         this._app.get('/', (_req, res) => {
             res.status(200).render('index', { title: 'Useful Links'});

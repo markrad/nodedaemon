@@ -1,4 +1,4 @@
-import { Logger } from "log4js";
+import { Level, Logger } from "log4js";
 import { IApplication } from "./IApplication";
 import { LogLevelValidator } from './loglevelvalidator';
 import { EventEmitter } from 'events';
@@ -20,11 +20,11 @@ export abstract class AppParent extends EventEmitter implements IApplication {
         return this._controller;
     }
 
-    public get logging(): string {
+    public get logging(): string | Level {
         return this._logger.level;
     }
 
-    public set logging(value: string) {
+    public set logging(value: string | Level) {
         if (!LogLevelValidator(value)) {
             let err: Error = new Error(`Invalid level passed: ${value}`);
             this._logger.error(err.message);

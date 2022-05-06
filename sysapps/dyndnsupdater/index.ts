@@ -3,7 +3,7 @@ import { IHaItem } from "../../haitems/ihaitem";
 import { IHaItemEditable } from "../../haitems/haparentitem";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
-import { getLogger, Logger } from "log4js";
+import { getLogger, Level, Logger } from "log4js";
 import * as https from 'https';
 import { Dayjs } from "dayjs";
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
@@ -112,7 +112,7 @@ export default class DynDnsUpdater extends AppParent {
 
     }
 
-    public get logging(): string {
+    public get logging(): string | Level {
         return logger.level;
     }
 }

@@ -7,7 +7,7 @@ import { Dir } from 'node:fs';
 
 import { State, StateChange } from './state';
 import { ItemsManager } from './itemsmanager';
-import { Logger, getLogger } from 'log4js';
+import { Logger, getLogger, Level } from 'log4js';
 import { HaInterface } from '../hainterface';
 import { HaItemFactory } from '../haitems'
 import { IHaItem } from '../haitems/ihaitem';
@@ -272,11 +272,11 @@ export class HaMain extends EventEmitter {
             : false;
     }
 
-    public get logging(): string {
+    public get logging(): string | Level {
         return logger.level;
     }
 
-    public set logging(value: string) {
+    public set logging(value: string | Level) {
         if (!LogLevelValidator(value)) {
             let err: Error = new Error(`Invalid level passed: ${value}`);
             logger.error(err.message);
