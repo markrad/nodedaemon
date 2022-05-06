@@ -44,6 +44,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
 
         process.on('uncaughtException', (err) => {
             logger.error(`Unhandled error: ${err.message}\n${err.stack}`);
+            logger.debug(`Error content:\n${JSON.stringify(err, null, 4)}`);
         });
 
         process.on('warning', (e: any) => {
