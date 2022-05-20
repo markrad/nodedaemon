@@ -204,23 +204,23 @@ export class HaInterface extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        let ret = new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve, _reject) => {
             logger.info('Closing');
 
-            let timer = setTimeout(() => {
-                logger.warn('Failed to close before timeout')
-                reject(new Error('Failed to close connection'));
-            }, 5000);
-            this._client.once('close', (_reason, _description) => {
-                logger.info('Closed');
-                clearTimeout(timer);
-                resolve();
-            });
+            // let timer = setTimeout(() => {
+            //     logger.warn('Failed to close before timeout')
+            //     reject(new Error('Failed to close connection'));
+            // }, 500000000);
+            // this._client.once('close', (_reason, _description) => {
+            //     logger.info('Closed');
+            //     clearTimeout(timer);
+            //     resolve();
+            // });
             this._kill();
             this._client.close();
+            logger.info('Closed');
+            resolve();
         });
-
-        return ret;
     }
 
     public get isConnected() {

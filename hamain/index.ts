@@ -183,7 +183,7 @@ export class HaMain extends EventEmitter {
                     }
                 }
                 catch (err) {
-                    logger.warn(`Failed to stop app ${app}: ${err.message}`);
+                    logger.warn(`Failed to stop app ${app.name}: ${err.message}`);
                     app.status = 'failed';
                 }
             });

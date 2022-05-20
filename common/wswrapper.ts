@@ -86,6 +86,7 @@ export class WSWrapper extends EventEmitter {
                     }
                     else {
                         logger.fatal(`Unhandled error ${err.message}`);
+                        logger.debug(JSON.stringify(err));
                         reject(err);
                     }
                 }
@@ -114,16 +115,17 @@ export class WSWrapper extends EventEmitter {
             logger.info('Closing');
             this._connected = false;
             let timer: NodeJS.Timeout = null;
-            await new Promise((resolve, _reject) => {
-                timer = setTimeout(() => {
-                    logger.warn('Failed to close before timeout')
-                    resolve(new Error('Failed to close connection'));
-                }, 5000);
-                this._client.once('close', (_reason, _description) => {
-                    logger.info('Closed');
-                });
+            // await new Promise((resolve, _reject) => {
+                // timer = setTimeout(() => {
+                //     logger.warn('Failed to close before timeout')
+                //     resolve(new Error('Failed to close connection'));
+                // }, 5000);
+                // this._client.once('close', (_reason, _description) => {
+                //     logger.info('Closed');
+                //     this.emit('close');
+                // });
                 this._client.close();
-            });
+            // });
             clearTimeout(timer);
             this._client.removeAllListeners();
             resolve();

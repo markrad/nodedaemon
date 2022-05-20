@@ -36,9 +36,14 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
         process.stdin.resume();
         ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
             process.on(eventType, async (signal) => {
-                logger.fatal(`Clean up after event ${signal}`);
-                await haMain.stop();
-                process.exit(eventType == 'SIGTERM'? 0 : 4);
+                try {
+                    logger.fatal(`Clean up after event ${signal}`);
+                    await haMain.stop();
+                    process.exit(eventType == 'SIGTERM'? 0 : 4);
+                } 
+                catch (err) {
+                    logger.fatal(`Failed to close down cleanly: ${err.message}`);
+                }
             });
         });
 
