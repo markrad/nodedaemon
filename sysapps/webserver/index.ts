@@ -139,7 +139,7 @@ export default class WebServer extends AppParent {
                         reject(new Error('Unable to find version string in URL'));
                     }
                     else {
-                        resolve(`http://rr-router/ui/${result[1]}/dynamic/login.html`);
+                        resolve(`http://192.168.1.1/ui/${result[1]}/dynamic/login.html`);
                     }
                 });
 

@@ -7,13 +7,18 @@ h1.Banner {
  font-family: Verdana, Geneva, Tahoma, sans-serif;
  font-weight: lighter;
  color: brown;
+ border-radius: 25px;
+ border: 3px solid green;
+ padding: 10px;
 }
 
 div.NavButton {
   /*padding-left: 3cm;*/
   padding-top: 5px;
   font-size: larger;
-}
+  border-radius: 5%;
+  /* border: 5px solid rgb(242, 13, 32); */
+ }
 
 ol.Sites {
   padding-left: 2cm;
@@ -30,14 +35,28 @@ div.Intro {
 }
 
 div.NavButtons {
- border: 3pt solid green;
+ border: 3px solid green;
+ border-radius: 25px;
 }
 
-#container {
+.column {
+  float: left;
+  padding: 10px;
+}
+
+.left, .right {
+  width: 25%;
+}
+
+.middle, .View {
+  width: 50%;
+}
+
+#rootx {
   width: 100%;
   /* height: 800px; */
   display: block;
   height: 85vh;
-  border: 1px solid lightgray;
+  border: 10px solid lightgray;
   background-color: cornsilk;
 }

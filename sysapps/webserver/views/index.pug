@@ -1,7 +1,8 @@
 extends layout
 
 block layout-content
-  div.View
+  div(class='left column')
+  div(class='View column')
     h1.Banner | RadRealm |
     div.Message
       div.Intro
@@ -18,13 +19,19 @@ block layout-content
             div.NavButton Grafana
         li
           a(href="http://rr-hass.home.radrealm.com")
-            div.NavButton Phoscon-GW
+            div.NavButton Phoscon-GW 
         li
           a(href="http://rr-synol1.home.radrealm.com:5000")
             div.NavButton Synology
         li
           a(href="http://rr-hass.home.radrealm.com:8091")
             div.NavButton ZWaveJS2MQTT
+        li 
+          a(href="http://rr-cyan.home.radrealm.com:32400")
+            div.NavButton Plex
+        li 
+          a(href="http://rr-hyperion1.home.radrealm.com:8090")
+            div.NavButton Living Room Ambient TV
         //- li
         //-   a(href="zwavemap")
         //-     div.NavButton ZWave Map
