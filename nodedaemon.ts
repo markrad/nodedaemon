@@ -31,7 +31,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 
     try {
-        var haMain: HaMain = new HaMain(config, configPath);
+        var haMain: HaMain = new HaMain(config, configPath, version);
 
         process.stdin.resume();
         ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {

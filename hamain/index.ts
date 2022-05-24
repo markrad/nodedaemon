@@ -37,10 +37,12 @@ export class HaMain extends EventEmitter {
     private _starttime: Date = new Date();
     private _configPath;
     private _reconnect: boolean = false;
-    constructor(config: any, configPath: string) {
+    private _version: string = null;
+    constructor(config: any, configPath: string, version: string) {
         super();
         this._config = config;
         this._configPath = configPath;
+        this._version = version;
 
         if (process.env.HAMAIN_LOGGING) {
             logger.level = process.env.HAMAIN_LOGGING;
@@ -264,6 +266,10 @@ export class HaMain extends EventEmitter {
 
     public get startTime(): Date {
         return this._starttime;
+    }
+
+    public get version(): string {
+        return this._version;
     }
 
     public get isConnected(): boolean {
