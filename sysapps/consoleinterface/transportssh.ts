@@ -81,7 +81,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 
     public async start(): Promise<void> {
-        this._server = new Server({ hostKeys: [this._hostKey], banner: TransportSSH.LOGO }, (connection: Connection) => {
+        this._server = new Server({ hostKeys: [this._hostKey], banner: TransportSSH.LOGO + `\nVersion: ${this._parent.controller.version}` }, (connection: Connection) => {
             logger.info('New client connected');
             let sshclient = new TransportSSHClient(connection);
             sshclient.start(this, this._parent);
