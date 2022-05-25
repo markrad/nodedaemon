@@ -15,7 +15,7 @@ export class CommandHelp extends CommandBase {
     public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<void> {
         try {
             this._validateParameters(inputArray);
-            sock.write('Available commands:\r\n');
+            sock.write(`Version: ${_that.controller.version} - Available commands:\r\n`);
             commands.forEach((item: ICommand) => sock.write(`${item.helpText}\r\n`));
         }
         catch (err) {
