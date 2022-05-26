@@ -7,7 +7,9 @@ import { appender, appenderConfig} from "./appender";
 
 function mqttAppender(layout: any, otherOptions: any, client: mqtt.MqttClient, mqttTopic: string): appender {
     const appender = (loggingEvent: LoggingEvent) => {
-        client.publish(mqttTopic, `${layout(loggingEvent, otherOptions)}`);
+        if (client.connected) {
+            client.publish(mqttTopic, `${layout(loggingEvent, otherOptions)}`);
+        }
     };
 
     appender.shutdown = (_done: any) => {
@@ -27,6 +29,14 @@ function config(config: appenderConfig, layouts: any): appender {
     if (config.password != null) mqttOptions.password = config.password;
 
     let client: mqtt.MqttClient = mqtt.connect(mqttHost, mqttOptions);
+
+    // client.on('connect', () => console.log('mqtt logger connected'));
+    client.on('error', (err: any) => { 
+        if (err.errno = -111) {
+            client.end();
+        }        
+        console.error((err as Error).message);      // Can't use the logger here
+    });
     
     return mqttAppender(layout, config.otherOptions, client, mqttTopic);
 }
