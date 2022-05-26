@@ -35,7 +35,7 @@ function config(config: appenderConfig, layouts: any): appender {
         if (err.errno = -111) {
             client.end();
         }        
-        console.error((err as Error).message);      // Can't use the logger here
+        console.error(`MQTT logger connection failed: ${(err as Error).message}`);      // Can't use the logger here
     });
     
     return mqttAppender(layout, config.otherOptions, client, mqttTopic);
