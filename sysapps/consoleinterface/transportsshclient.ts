@@ -18,6 +18,12 @@ const CATEGORY: string = 'TransportSSHClient';
 const logger = getLogger(CATEGORY);
 
 export class TransportSSHClient {
+    static LOGO: string = `
+             |         |\r
+___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
+|   )|   )|   )|___)|   )|   )|___)| | )|   )|   )\r
+|  / |__/ |__/ |__  |__/ |__/||__  |  / |__/ |  /\r
+`;
     private _client: Connection = null;
     private _canStream: boolean = false;
     private _lastCommand: ICommand = null;
@@ -108,7 +114,7 @@ export class TransportSSHClient {
                         }
                     });
                     commander.parseAndSend(this, stream, info.command);
-                    stream.exit(0);
+                    stream.exit(0);     // TODO: Set a meaningful return code for exec processing
                     ending = true;
                     stream.end();
                 }
@@ -119,6 +125,7 @@ export class TransportSSHClient {
             .once('shell', (accept, _reject, _info) => {
                 let stream: IChannel = accept();
                 this._canStream = true;
+                stream.write(TransportSSHClient.LOGO + `\nVersion: ${this._commander.controller.version}\r\n`);
                 stream.write("$ ");
                 let len: number = 0;
                 let cursor: number = 0;

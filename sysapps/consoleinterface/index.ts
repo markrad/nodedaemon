@@ -60,14 +60,15 @@ export default class ConsoleInterface extends AppParent {
         return this._cmds;
     }
 
-    public async parseAndSend(client: TransportSSHClient, stream: IChannel, cmd: string): Promise<void> {
-        return new Promise<void>(async (resolve, _reject) => {
+    public async parseAndSend(client: TransportSSHClient, stream: IChannel, cmd: string): Promise<number> {
+        return new Promise<number>(async (resolve, _reject) => {
             let words = cmd.trim().split(' ');
 
             let command = this._cmds.find((entry) => entry.commandName == words[0].toLowerCase());
     
             if (!command) {
                 stream.write(`Unknown command: ${words[0]}\r\n`);
+                return -1;
             }
             else {
                 client.lastCommand = command;
@@ -80,7 +81,7 @@ export default class ConsoleInterface extends AppParent {
                 }
             }
             
-            resolve();
+            resolve(0);
         });
     }
 
@@ -93,6 +94,7 @@ export default class ConsoleInterface extends AppParent {
     public async run(): Promise<boolean> {
         this._cmds = [
             new (require('./commandhelp')).CommandHelp(),
+            new (require('./commandversion')).CommandVersion(),
             new (require('./commandgetconfig')).CommandGetConfig(),
             new (require('./commanduptime')).CommandUptime(),
             new (require('./commandinspect')).CommandInspect(),

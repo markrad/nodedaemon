@@ -20,13 +20,6 @@ export type User = {
 }
 
 export class TransportSSH implements ITransport {
-    static LOGO: string = `
-                                                  
-             |         |                         
-___  ___  ___| ___  ___| ___  ___  _ _  ___  ___ 
-|   )|   )|   )|___)|   )|   )|___)| | )|   )|   )
-|  / |__/ |__/ |__  |__/ |__/||__  |  / |__/ |  / 
-`;
     _name: string;
     _parent: ConsoleInterface;
     _host: string;
@@ -81,7 +74,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 
     public async start(): Promise<void> {
-        this._server = new Server({ hostKeys: [this._hostKey], banner: TransportSSH.LOGO + `\nVersion: ${this._parent.controller.version}` }, (connection: Connection) => {
+        this._server = new Server({ hostKeys: [this._hostKey] }, (connection: Connection) => {
             logger.info('New client connected');
             let sshclient = new TransportSSHClient(connection);
             sshclient.start(this, this._parent);
