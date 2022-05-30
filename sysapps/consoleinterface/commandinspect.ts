@@ -15,13 +15,13 @@ export class CommandInspect extends CommandBase {
     }
 
     public get helpText(): string {
-        return `${this.commandName} <optional regex>\tInspect items optionally filtered by a regex query`;
+        return `${this.commandName} <optional regex>\tInspect items optionally filtered by a regex query of entity id`;
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
         let possibles: string[] = [ ...that.controller.items.items ]
-            .filter((item) => item[1].name.startsWith(parameters[1]))
-            .map((item) => item[1].name)
+            .filter((item) => item[1].entityId.startsWith(parameters[1]))       // TODO: Make this resolve regex expressions
+            .map((item) => item[1].entityId)
             .sort((l, r) => l < r? -1 : 1);
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
