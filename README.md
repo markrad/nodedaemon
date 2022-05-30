@@ -1,5 +1,5 @@
 # nodedaemon
-This was inspired by Home Assistant's appdaemon but, rather than using Python, this uses JavaScript running under Node JS. It's not that I dont' like Python (or C# for that matter) I've just happen to have written way more JavaScript so it seemed to be an obvious choice.
+This was inspired by Home Assistant's appdaemon but, rather than using Python, this uses JavaScript running under Node JS. It's not that I dont' like Python (or C# for that matter) I just happen to have written way more JavaScript so it seemed to be an obvious choice.
 
 ## Installation
 At this time, I have not pushed this to npm since it is still very much a work in progress. Currently you will need to clone the repo, create a config file, and execute it by passing nodedaemno.js as the parameter to node.
@@ -15,4 +15,4 @@ Entering _node nodedeamon.js --help_ will display command line parameter help.
 Provided are a number of applications that demonstrate how one can subscribe to entity events and modify their state such as turning on lights etc. Also notice that the config file is passed to the applications so you can add any additional configuration to that file that is specific to your applications. The sample config file has some of these. 
 
 ## Bottom Line
-Not really ready for primetime but, if you prefer JavaScript, watch this space.
+It's pretty useable now. Has a cool ssh interface that lets you look at your entities directly. I'll admit that I can do most of what I need in HA yaml or from the UI but I still like having this option for something more or just debugging.
