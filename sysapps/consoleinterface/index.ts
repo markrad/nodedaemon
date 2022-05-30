@@ -62,13 +62,14 @@ export default class ConsoleInterface extends AppParent {
 
     public async parseAndSend(client: TransportSSHClient, stream: IChannel, cmd: string): Promise<number> {
         return new Promise<number>(async (resolve, _reject) => {
+            let rc: number = 0;
             let words = cmd.trim().split(' ');
 
             let command = this._cmds.find((entry) => entry.commandName == words[0].toLowerCase());
     
             if (!command) {
                 stream.write(`Unknown command: ${words[0]}\r\n`);
-                return -1;
+                rc = -1;
             }
             else {
                 client.lastCommand = command;
@@ -81,7 +82,7 @@ export default class ConsoleInterface extends AppParent {
                 }
             }
             
-            resolve(0);
+            resolve(rc);
         });
     }
 
