@@ -1,5 +1,5 @@
 # nodedaemon
-This was inspired by Home Assistant's appdaemon but, rather than using Python, this uses JavaScript running under Node JS. It's not that I dont' like Python (or C# for that matter) I just happen to have written way more JavaScript so it seemed to be an obvious choice.
+This was inspired by Home Assistant's appdaemon but, rather than using Python, this uses JavaScript running under Node JS. It's not that I don't like Python (or C# for that matter) I just happen to have written way more JavaScript so it seemed to be an obvious choice.
 
 ## Installation
 At this time, I have not pushed this to npm since it is still very much a work in progress. Currently you will need to clone the repo, create a config file, and execute it by passing nodedaemno.js as the parameter to node.
