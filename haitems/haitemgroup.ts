@@ -7,9 +7,6 @@ class HaItemGroup extends HaGenericSwitchItem {
     public constructor(item: State) {
         super(item);
         this._children = item.attributes.entity_id;
-        this.on('new_state', (that, _oldstate) => {
-            this.logger.debug(`Received new state: ${that.state}`);
-        });
     }
 
     public async updateState(newState: string | number | boolean): Promise<ServicePromise> {

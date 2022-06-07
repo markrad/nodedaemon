@@ -4,9 +4,6 @@ import { HaParentItem } from './haparentitem';
 class HaItemZone extends HaParentItem {
     public constructor(item: State) {
         super(item);
-        this.on('new_state', (that, _oldstate) => {
-            this.logger.debug(`Received new state: ${that.state}`);
-        });
     }
 
     public get longitude(): number {

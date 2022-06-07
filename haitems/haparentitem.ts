@@ -48,6 +48,8 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
     private _lastUpdated: Date;
     private _state: string | number | boolean;
     private _logger: Logger;
+    private _support: number;
+    protected _stateChangeFn: (item: HaParentItem, state: State) => void;
     public constructor(item: State, logLevel?: string) {
         super();
         this._attributes = item.attributes;
@@ -58,9 +60,12 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this._lastChanged = new Date(item.last_changed);
         this._lastUpdated = new Date(item.last_updated);
         this._state = item.state;
+        this._support = this.attributes?.supported_features ?? 0;
         this._logger = getLogger(this.category);
+        this._stateChangeFn = this._defaultStateChangeFn;
         if (logLevel) this.logging = logLevel;
-    }
+        this.on('new_state', (that, _oldstate) => this._stateChangeFn(that, _oldstate));
+   }
 
     public get logger(): Logger {
         return this._logger;
@@ -113,6 +118,10 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
     public get isEditable(): boolean {
         return false;
     }
+    
+    public get support(): number {
+        return this._support;
+    }
 
     public setReceivedState(newState: State): void {
         let oldState: State = {
@@ -144,6 +153,10 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         else {
             this.logger.level = value;
         }
+    }
+
+    protected _defaultStateChangeFn(item: HaParentItem, _oldState: State) {
+        this.logger.debug(`Received new state: ${item.state}`);
     }
 
     protected _callService(domain: string, service: string, state: ServiceTarget): void {

@@ -5,9 +5,6 @@ import { ActionAndNewState, ServicePromise } from './haparentitem';
 class HaItemVar extends HaGenericUpdateableItem {
     public constructor(item: State) {
         super(item);
-        this.on('new_state', (that, _oldstate) => {
-            this.logger.debug(`Received new state: ${that.state}`);
-        });
     }
 
     public async updateState(newState: string | boolean | number): Promise<ServicePromise> {

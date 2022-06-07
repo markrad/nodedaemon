@@ -4,9 +4,6 @@ import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem'
 class HaItemInputNumber extends HaParentItem {
     public constructor(item: State) {
         super(item);
-        this.on('new_state', (that, _oldstate) => {
-            this.logger.debug(`Received new state: ${that.state}`);
-        });
     }
 
     public async updateState(newState: string | number | boolean): Promise<ServicePromise> {

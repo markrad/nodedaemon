@@ -15,6 +15,7 @@ export interface IHaItem {
     get isSwitch(): boolean;
     get isButton(): boolean;
     get isEditable(): boolean;
+    get support(): number;
     get logging(): string | Level;
     set logging(value: string | Level);
     setReceivedState(newState: State): void;
