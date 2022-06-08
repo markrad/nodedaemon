@@ -1,6 +1,6 @@
 {
   "name": "nodedaemon",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Connects to Home Assistant to collect states and issue commands.",
   "main": "output/nodedaemon.js",
   "scripts": {
