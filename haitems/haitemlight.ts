@@ -45,12 +45,12 @@ export class HaItemLight extends HaGenericSwitchItem {
     }
 
     // This function will be replaced if brightness is supported
-    async updateBrightness(_newValue: number | string) { 
+    public async updateBrightness(_newValue: number | string) { 
         return new Promise(resolve => resolve(new Error('Brightness is not supported')));
     }
 
     // This function will be replaced if temperature is supported
-    async updateTemperature(_newValue: number | string) {
+    public async updateTemperature(_newValue: number | string) {
         return new Promise(resolve => resolve(new Error('Temperature is not supported')));
     }
 
