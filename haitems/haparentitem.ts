@@ -6,7 +6,7 @@ import { LogLevelValidator } from '../common/loglevelvalidator';
 
 // Super slow for debugging
 // const RESPONSE_TIMEOUT: number = 30 * 1000
-const RESPONSE_TIMEOUT: number = 3 * 1000
+const RESPONSE_TIMEOUT: number = 10 * 1000
 
 export type ServiceTarget = {
     entity_id?: string;
