@@ -16,7 +16,7 @@ export class CommandLogs extends CommandBase {
     private _ew: EventWaiter = null;
     private _messageWriter = (message:string) => { 
         if (this._regex == null || this._regex.exec(message) != null) {
-            if (this._sock) this._sock.write(`${message}\r\n`); 
+            if (this._sock) this._sock.write(`${message.replace(/\n/g, '\r\n')}\r\n`); 
         }
     }
     public constructor() {
