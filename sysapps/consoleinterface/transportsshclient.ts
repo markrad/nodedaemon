@@ -7,6 +7,7 @@ import * as Crypto from 'crypto';
 import ConsoleInterface from ".";
 import { IChannel } from "./ichannel";
 // import { ITransport } from "./itransport";
+import { TERMCOLOR } from ".";
 
 type Keys = {
     name: string;
@@ -18,12 +19,12 @@ const CATEGORY: string = 'TransportSSHClient';
 const logger = getLogger(CATEGORY);
 
 export class TransportSSHClient {
-    static LOGO: string = `
+    static LOGO: string = TERMCOLOR.GREEN +`
              |         |\r
 ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
 |   )|   )|   )|___)|   )|   )|___)| | )|   )|   )\r
 |  / |__/ |__/ |__  |__/ |__/||__  |  / |__/ |  /\r
-`;
+` + TERMCOLOR.DEFAULT;
     private _client: Connection = null;
     private _canStream: boolean = false;
     private _lastCommand: ICommand = null;

@@ -27,6 +27,15 @@ var logger: Logger = getLogger(CATEGORY);
         users:                                  # currently required
             - { user: "<userid>", password: "<password>"}
 \* -------------------------------------------------------------------------- */
+
+export const enum TERMCOLOR {
+    RED = '\x1b[31m',
+    GREEN = '\1b[32m',
+    BLUE= '\x1b[34m',
+    LIGHT_BLUE = '\x1b[94m',
+    DEFAULT = '\x1b[39m'
+};
+
 export default class ConsoleInterface extends AppParent {
     private _config: any;
     private _items: ItemsManager;
@@ -68,13 +77,15 @@ export default class ConsoleInterface extends AppParent {
             let command = this._cmds.find((entry) => entry.commandName == words[0].toLowerCase());
     
             if (!command) {
-                stream.write(`Unknown command: ${words[0]}\r\n`);
+                stream.write(TERMCOLOR.RED + `Unknown command: ${words[0]}\r\n` + TERMCOLOR.DEFAULT);
                 rc = -1;
             }
             else {
                 client.lastCommand = command;
                 try {
+                    stream.write(TERMCOLOR.LIGHT_BLUE);
                     await command.execute(words, this, stream, this._cmds);
+                    stream.write(TERMCOLOR.DEFAULT);
                 }
                 catch (_err) {
                     // Don't really care about errors thrown here. Command module should handle them
