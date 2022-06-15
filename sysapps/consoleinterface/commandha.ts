@@ -1,8 +1,12 @@
 "use strict";
 
 import ConsoleInterface from ".";
-import { IChannel } from "./ichannel";
 import { CommandBase } from './commandbase'; 
+import { getLogger, Logger } from "log4js";
+import { IChannelWrapper } from "./ichannelwrapper";
+
+const CATEGORY: string = 'CommandHa';
+var logger: Logger = getLogger(CATEGORY);
 
 export class CommandHa extends CommandBase {
     public constructor() {
@@ -13,7 +17,7 @@ export class CommandHa extends CommandBase {
         return `${this.commandName} \tstatus\t\t\tGet Home Assistant Status\r\n\trestart\t\t\tRestart Home Assistant\r\n\tstop\t\t\tStop Home Assistant`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         try {
             this._validateParameters(inputArray);
 
@@ -38,10 +42,7 @@ export class CommandHa extends CommandBase {
             }
         }
         catch (err: any) {
-            sock.write(`${err}\r\n`);
-            sock.write('Usage:\r\n');
-            sock.write(this.helpText);
-            sock.write('\r\n');
+            this._displayError(logger, sock, err);
         }
     }
 }

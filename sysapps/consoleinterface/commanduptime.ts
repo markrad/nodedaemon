@@ -1,6 +1,10 @@
 import ConsoleInterface from ".";
-import { IChannel } from "./ichannel";
 import { CommandBase } from "./commandbase";
+import { IChannelWrapper } from './ichannelwrapper';
+import { getLogger, Logger } from 'log4js';
+
+const CATEGORY: string = 'CommandUptime';
+var logger: Logger = getLogger(CATEGORY);
 
 export class CommandUptime extends CommandBase {
     public constructor() {
@@ -11,7 +15,7 @@ export class CommandUptime extends CommandBase {
         return `${this.commandName}\t\t\t\tTime since last restart`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         try {
             this._validateParameters(inputArray);
             let millis: number = (new Date().getTime() - that.controller.startTime.getTime());
@@ -26,7 +30,7 @@ export class CommandUptime extends CommandBase {
             sock.write(`${days} ${hours} ${minutes} ${seconds}\r\n`);
         }
         catch (err) {
-            sock.write(`${err}\r\n`);
+            this._displayError(logger, sock, err);
         }
     }
 }

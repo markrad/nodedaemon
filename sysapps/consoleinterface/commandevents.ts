@@ -1,15 +1,15 @@
 import ConsoleInterface from ".";
-import { IChannel } from "./ichannel";
+import { IChannelWrapper } from "./ichannelwrapper";
 import { CommandBase } from "./commandbase";
-// import { getLogger, Logger } from "log4js";
+import { getLogger, Logger } from "log4js";
 import { EventWaiter } from "../../common/eventwaiter";
 
-// const CATEGORY: string = 'CommandEvents';
-// var logger: Logger = getLogger(CATEGORY);
+const CATEGORY: string = 'CommandEvents';
+var logger: Logger = getLogger(CATEGORY);
 
 export class CommandEvents extends CommandBase {
     private _isRunning: boolean = false;
-    private _sock: IChannel = null;
+    private _sock: IChannelWrapper = null;
     private _ew: EventWaiter = null;
     private messageWriter: any = null;
     public constructor() {
@@ -17,11 +17,10 @@ export class CommandEvents extends CommandBase {
     }
 
     public get helpText(): string {
-        // TODO: Fix help
         return `${this.commandName}\t<not> <optional regex>\tFollow events that match <optional regex> or <not> match\r\n\t\t\t\tFor example events not state`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         return new Promise((resolve, _reject) => {
             var regex: RegExp = null;
             var nonegator: boolean;
@@ -50,13 +49,13 @@ export class CommandEvents extends CommandBase {
             }
             catch (err) {
                 this._isRunning = false;
-                sock.write(`${err}\r\n`);
+                this._displayError(logger, sock, err);
                 resolve();
             }
             });
     }
 
-    public async terminate(that: ConsoleInterface, _sock: IChannel): Promise<void> {
+    public async terminate(that: ConsoleInterface, _sock: IChannelWrapper): Promise<void> {
         if (this._isRunning) {
             that.controller.off('serviceevent', this.messageWriter);
             this._sock = null;

@@ -1,5 +1,5 @@
 import ConsoleInterface from ".";
-import { IChannel } from "./ichannel";
+import { IChannelWrapper } from "./ichannelwrapper";
 
 export interface ICommand {
     get commandName(): string;
@@ -8,6 +8,6 @@ export interface ICommand {
     tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[]
     tabParameters(that: any, tabCount: any, parameters: any): string[];
     get helpText(): string;
-    execute(inputArray: string[], that: any, sock: IChannel, commands: ICommand[]): Promise<void>;
-    terminate(that: ConsoleInterface, sock: IChannel): Promise<void>;
+    execute(inputArray: string[], that: any, sock: IChannelWrapper, commands: ICommand[]): Promise<void>;
+    terminate(that: ConsoleInterface, sock: IChannelWrapper): Promise<void>;
 }

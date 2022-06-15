@@ -2,7 +2,7 @@
 // TODO Fix toggle autocomplete
 import { getLogger, Logger } from 'log4js';
 import ConsoleInterface from ".";
-import { IChannel } from './ichannel';
+import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
 import { IHaItemEditable, ServicePromise } from '../../haitems/haparentitem';
@@ -10,7 +10,6 @@ import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
-// import { HaItemButton } = require('../../haitems/haitembutton');
 import  { HaItemButton } from '../../haitems/haitembutton';
 
 const CATEGORY: string = 'CommandSet';
@@ -53,7 +52,7 @@ export class CommandSet extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, _commands: ICommand[]): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<void> {
         try {
             this._validateParameters(inputArray);
             if (inputArray.length < 3) {
@@ -131,10 +130,7 @@ export class CommandSet extends CommandBase {
             }
         }
         catch (err: any) {
-            sock.write(`${err}\r\n`);
-            sock.write('Usage:\r\n');
-            sock.write(this.helpText);
-            sock.write('\r\n');
+            this._displayError(logger, sock, err);
         }
     }
 }

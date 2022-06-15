@@ -1,12 +1,12 @@
 import ConsoleInterface from ".";
 import { AppInfo } from '../../hamain/appinfo'
-import { getLogger } from "log4js";
+import { getLogger, Logger } from "log4js";
 import { CommandBase } from './commandbase';
-import { IChannel } from "./ichannel";
+import { IChannelWrapper } from "./ichannelwrapper";
 import { LogLevels } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'CommandApp';
-var logger = getLogger(CATEGORY);
+var logger: Logger = getLogger(CATEGORY);
 
 export class CommandApp extends CommandBase {
     public constructor() {
@@ -24,7 +24,7 @@ export class CommandApp extends CommandBase {
         // return `${this.commandName}\tstart appname\r\n\tstop appname\r\n\tlist\t\t\tStart or stop the specified app or list all apps (same as list apps)`;
     }
 
-    private async _appStart(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    private async _appStart(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         return new Promise(async (resolve, reject) => {
             logger.debug('app start called');
             let appName: string = inputArray[2];
@@ -52,7 +52,7 @@ export class CommandApp extends CommandBase {
         });
     }
 
-    private async _appStop(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    private async _appStop(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         return new Promise(async (resolve, reject) => {
             logger.debug('app stop called');
             let appName: string = inputArray[2];
@@ -80,14 +80,16 @@ export class CommandApp extends CommandBase {
         });
     }
 
-    private _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
+    private _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): void {
         logger.debug('app list called');
+        let maxNameLen = 2 + Math.max(...that.controller.apps.map((item) => item.name.length));
+        let maxPathLen = 2 + Math.max(...that.controller.apps.map((item) => item.path.length));
         that.controller.apps.forEach((app: AppInfo) => {
-            sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
+            sock.write(`${app.name}${' '.repeat(maxNameLen - app.name.length)}${app.path}${' '.repeat(maxPathLen - app.path.length)}${app.status}\r\n`);
         });
     }
 
-    private _applog(inputArray: string[], that: ConsoleInterface, sock: IChannel): void {
+    private _applog(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): void {
         logger.debug('app log called');
         let appName: string = inputArray[2];
         let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
@@ -131,7 +133,7 @@ export class CommandApp extends CommandBase {
         }
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         try {
             this._validateParameters(inputArray);
             switch (inputArray[1]) {
@@ -162,11 +164,7 @@ export class CommandApp extends CommandBase {
             }
         }
         catch (err: any) {
-            logger.error(`${err}`);
-            sock.write(`${err}\r\n`);
-            sock.write('Usage:\r\n');
-            sock.write(this.helpText);
-            sock.write('\r\n');
+            this._displayError(logger, sock, err);
         }
     }
 }

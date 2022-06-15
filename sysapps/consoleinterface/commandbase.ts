@@ -1,6 +1,7 @@
 import ConsoleInterface from ".";
-import { IChannel } from './ichannel';
+import { IChannelWrapper } from "./ichannelwrapper";
 import { ICommand } from './icommand';
+import { Logger } from "log4js";
 
 export abstract class CommandBase implements ICommand {
     private _commandName: string;
@@ -11,9 +12,9 @@ export abstract class CommandBase implements ICommand {
     }
 
     public abstract get helpText(): string;
-    public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<void>;
+    public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, commands: ICommand[]): Promise<void>;
 
-    public terminate(_that: ConsoleInterface, _sock: IChannel): Promise<void> {
+    public terminate(_that: ConsoleInterface, _sock: IChannelWrapper): Promise<void> {
         return;
     }
 
@@ -36,7 +37,7 @@ export abstract class CommandBase implements ICommand {
             }
         }
         else if (this.parameters.indexOf(parameters[1]) == -1) {
-            throw new Error(`Command ${this.commandName} passed invalid parameter ${parameters[1]}`);
+            throw new Error(`Command ${this.commandName} passed invalid parameter ${parameters[1]?? '<missing>'}`);
         }
     }
 
@@ -76,5 +77,13 @@ export abstract class CommandBase implements ICommand {
         }
 
         return Array.isArray(parameters) ? parameters : [ parameters ];
+    }
+
+    protected _displayError(logger: Logger, sock: IChannelWrapper, err: Error) {
+        logger.debug(`${err.message}`);
+        sock.writeRed(`${err}\r\n`);
+        sock.write('Usage:\r\n');
+        sock.write(this.helpText);
+        sock.write('\r\n');
     }
 }

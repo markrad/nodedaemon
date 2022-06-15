@@ -1,5 +1,5 @@
 import ConsoleInterface from ".";
-import { IChannel } from "./ichannel";
+import { IChannelWrapper } from "./ichannelwrapper";
 
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase'; 
@@ -16,7 +16,7 @@ export class CommandStop extends CommandBase {
         return `${this.commandName}\t\t\t\tStops the service`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         try {
             this._validateParameters(inputArray);
             logger.debug('Stop called');
@@ -27,7 +27,7 @@ export class CommandStop extends CommandBase {
             }, 5000);
             }
         catch (err: any) {
-            sock.write(`${err}\r\n`);
+            this._displayError(logger, sock, err);
         }
     }
 }

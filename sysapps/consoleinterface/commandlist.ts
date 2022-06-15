@@ -3,6 +3,8 @@ import { CommandBase } from './commandbase';
 import ConsoleInterface from ".";
 import { IChannel } from "./ichannel";
 import { IHaItem } from "../../haitems/ihaitem";
+import { IChannelWrapper } from "./ichannelwrapper";
+import { AppInfo } from '../../hamain/appinfo'
 
 const CATEGORY: string = 'CommandList';
 var logger: Logger = getLogger(CATEGORY);
@@ -50,7 +52,7 @@ export class CommandList extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         try {
             this._validateParameters(inputArray);
             let items: IHaItem[];
@@ -85,6 +87,7 @@ export class CommandList extends CommandBase {
                 break;
                 case 'names':
                     logger.debug(`listnames called with ${inputArray.join(' ')}`);
+                    // BUG: Names can be more than one word
                     if (inputArray.length > 3) {
                         throw new Error(`Too many parameters passed`);
                     }
@@ -96,10 +99,7 @@ export class CommandList extends CommandBase {
             }
         }
         catch (err) {
-            sock.write(`${err}\r\n`);
-            sock.write('Usage:\r\n');
-            sock.write(this.helpText);
-            sock.write('\r\n');
+            this._displayError(logger, sock, err);
         }
     }
 
@@ -120,8 +120,10 @@ export class CommandList extends CommandBase {
 
     private _listapps(that: ConsoleInterface, sock: IChannel): void {
         logger.debug('listapps called');
-        that.controller.apps.forEach((app) => {
-            sock.write(`${app.name} ${app.path} ${app.status}\r\n`);
+        let maxNameLen = 2 + Math.max(...that.controller.apps.map((item) => item.name.length));
+        let maxPathLen = 2 + Math.max(...that.controller.apps.map((item) => item.path.length));
+        that.controller.apps.forEach((app: AppInfo) => {
+            sock.write(`${app.name}${' '.repeat(maxNameLen - app.name.length)}${app.path}${' '.repeat(maxPathLen - app.path.length)}${app.status}\r\n`);
         });
     }
 }

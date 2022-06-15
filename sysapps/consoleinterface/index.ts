@@ -5,10 +5,10 @@ import { HaMain } from "../../hamain";
 import { ItemsManager } from "../../hamain/itemsmanager";
 import { getLogger, Logger } from "log4js";
 import { ICommand } from "./icommand";
-import { IChannel } from "./ichannel";
 import { ITransport } from "./itransport";
 import { TransportSSH } from "./transportssh";
 import { TransportSSHClient } from "./transportsshclient";
+import { IChannelWrapper } from "./ichannelwrapper";
 
 const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
@@ -30,7 +30,7 @@ var logger: Logger = getLogger(CATEGORY);
 
 export const enum TERMCOLOR {
     RED = '\x1b[31m',
-    GREEN = '\1b[32m',
+    GREEN = '\x1b[32m',
     BLUE= '\x1b[34m',
     LIGHT_BLUE = '\x1b[94m',
     DEFAULT = '\x1b[39m'
@@ -69,7 +69,7 @@ export default class ConsoleInterface extends AppParent {
         return this._cmds;
     }
 
-    public async parseAndSend(client: TransportSSHClient, stream: IChannel, cmd: string): Promise<number> {
+    public async parseAndSend(client: TransportSSHClient, stream: IChannelWrapper, cmd: string): Promise<number> {
         return new Promise<number>(async (resolve, _reject) => {
             let rc: number = 0;
             let words = cmd.trim().split(' ');
@@ -83,9 +83,9 @@ export default class ConsoleInterface extends AppParent {
             else {
                 client.lastCommand = command;
                 try {
-                    stream.write(TERMCOLOR.LIGHT_BLUE);
+                    stream.setColor(TERMCOLOR.LIGHT_BLUE);
                     await command.execute(words, this, stream, this._cmds);
-                    stream.write(TERMCOLOR.DEFAULT);
+                    stream.setColor(TERMCOLOR.DEFAULT);
                 }
                 catch (_err) {
                     // Don't really care about errors thrown here. Command module should handle them
@@ -97,7 +97,7 @@ export default class ConsoleInterface extends AppParent {
         });
     }
 
-    public async sendTerminate(client: TransportSSHClient, stream: IChannel) {
+    public async sendTerminate(client: TransportSSHClient, stream: IChannelWrapper) {
         if (this._lastCmd) {
             await client.lastCommand.terminate(this, stream);
         }

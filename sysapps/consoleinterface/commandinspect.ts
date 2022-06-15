@@ -1,10 +1,10 @@
 "use strict";
 
-import { getLogger, Logger } from 'log4js';
 import ConsoleInterface from ".";
-import { IChannel } from './ichannel';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
+import { IChannelWrapper } from './ichannelwrapper';
+import { getLogger, Logger } from 'log4js';
 
 const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);
@@ -26,7 +26,7 @@ export class CommandInspect extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannel, _commands: ICommand[]): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<void> {
         try {
             this._validateParameters(inputArray.slice(0, inputArray.length - 1));
             if (inputArray.length != 2) {
@@ -45,10 +45,7 @@ export class CommandInspect extends CommandBase {
             });
         }
         catch (err: any) {
-            sock.write(`${err}\r\n`);
-            sock.write('Usage:\r\n');
-            sock.write(this.helpText);
-            sock.write('\r\n');
+            this._displayError(logger, sock, err);
         }
     }
 }

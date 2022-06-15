@@ -5,9 +5,8 @@ import { TransportSSH, User } from "./transportssh";
 // import { ParsedKey, utils } from 'ssh2-streams';
 import * as Crypto from 'crypto';
 import ConsoleInterface from ".";
-import { IChannel } from "./ichannel";
-// import { ITransport } from "./itransport";
-import { TERMCOLOR } from ".";
+import { IChannelWrapper } from "./ichannelwrapper";
+import { ChannelWrapper } from "./channelwrapper";
 
 type Keys = {
     name: string;
@@ -19,12 +18,12 @@ const CATEGORY: string = 'TransportSSHClient';
 const logger = getLogger(CATEGORY);
 
 export class TransportSSHClient {
-    static LOGO: string = TERMCOLOR.GREEN +`
+    static LOGO: string = `
              |         |\r
 ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
 |   )|   )|   )|___)|   )|   )|___)| | )|   )|   )\r
 |  / |__/ |__/ |__  |__/ |__/||__  |  / |__/ |  /\r
-` + TERMCOLOR.DEFAULT;
+`;
     private _client: Connection = null;
     private _canStream: boolean = false;
     private _lastCommand: ICommand = null;
@@ -108,7 +107,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                     this._canStream = false;
                     let ending: boolean = false;
                     logger.debug(`Executing ${info.command}`);
-                    let stream: IChannel = accept();
+                    let stream: IChannelWrapper = new ChannelWrapper(accept());
                     stream.on('error', (err: Error) => {
                         if (!ending) {
                             logger.warn(`Stream failed: ${err}`)
@@ -124,10 +123,11 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 }
             })
             .once('shell', (accept, _reject, _info) => {
-                let stream: IChannel = accept();
+                let stream: IChannelWrapper = new ChannelWrapper(accept());
                 this._canStream = true;
-                stream.write(TransportSSHClient.LOGO + `\nVersion: ${this._commander.controller.version}\r\n`);
-                stream.write("$ ");
+                stream.writeGreen(TransportSSHClient.LOGO + '\n');
+                stream.writeDefault(`\nVersion: ${this._commander.controller.version}\r\n`);
+                stream.writeDefault("$ ");
                 let len: number = 0;
                 let cursor: number = 0;
                 let history: string[] = [];
