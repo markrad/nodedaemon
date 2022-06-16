@@ -107,6 +107,7 @@ export default class ConsoleInterface extends AppParent {
         this._cmds = [
             new (require('./commandhelp')).CommandHelp(),
             new (require('./commandversion')).CommandVersion(),
+            new (require('./commandhostname')).CommandHostname(),
             new (require('./commandgetconfig')).CommandGetConfig(),
             new (require('./commanduptime')).CommandUptime(),
             new (require('./commandinspect')).CommandInspect(),
