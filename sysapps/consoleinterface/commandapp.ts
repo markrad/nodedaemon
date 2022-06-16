@@ -10,13 +10,14 @@ var logger: Logger = getLogger(CATEGORY);
 
 export class CommandApp extends CommandBase {
     public constructor() {
-        super('app', ['start', 'stop', 'list', 'log']);
+        super('app', ['start', 'stop', 'reload', 'list', 'log']);
     }
 
     public get helpText(): string {
         let help: string = 
 `${this.commandName}     start appname           start the specified app\r
         stop appname            stop the specified app\r
+        reload appname          reload the configuration settings
         list                    list apps\r
         log appname <level>     get log level or set log level to <level>\r
                                 where <level> = ${LogLevels().join(' | ').toLowerCase()}`;
@@ -28,7 +29,7 @@ export class CommandApp extends CommandBase {
         return new Promise(async (resolve, reject) => {
             logger.debug('app start called');
             let appName: string = inputArray[2];
-            let aps: AppInfo[] = that.controller.apps.filter((item) =>item.name == appName);
+            let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
             try {
                 if (aps.length != 1) {
                     return reject(new Error(`App ${inputArray[2]} does not exist`));
@@ -78,6 +79,37 @@ export class CommandApp extends CommandBase {
 
             return resolve();
         });
+    }
+
+    private async _appReload(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+        return new Promise(async (resolve, reject) => {
+            logger.debug('app reload called');
+            let appName: string = inputArray[2];
+            let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
+            try {
+                if (aps.length != 1) {
+                    return reject(new Error(`App ${inputArray[2]} does not exist`));
+                }
+                if (aps[0].status != 'running') {
+                    return reject(new Error(`Cannot reload app ${aps[0].name} - not running`));
+                }
+                else {
+                    let config: any = that.controller.config[aps[0].path.split('/').slice(-1)[0]];
+                    if (!config) {
+                        throw new Error(`Unable to reload ${aps[0].name} - config does not exist`);
+                    }
+                    aps[0].instance.validate(config);
+                    sock.write(`App ${aps[0].name} reloaded\r\n`);
+                }
+            }
+            catch (err: any) {
+                logger.debug(`Failed to start app ${appName}: ${err.message}`);
+                aps[0].status = 'failed';
+                return reject(new Error(`Failed to start app ${appName}: ${err.message}`));
+            }
+
+            return resolve();
+        })
     }
 
     private _listapps(_inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): void {
@@ -148,6 +180,12 @@ export class CommandApp extends CommandBase {
                         throw new Error('Missing or invalid arguments');
                     }
                     await this._appStop(inputArray, that, sock);
+                break;
+                case "reload":
+                    if (inputArray.length != 3) {
+                        throw new Error('Missing or invalid arguments');
+                    }
+                    await this._appReload(inputArray, that, sock);
                 break;
                 case "log":
                     if (inputArray.length < 3 || inputArray.length > 4) {

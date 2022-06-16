@@ -107,6 +107,7 @@ dist
 .tern-port
 
 config.yaml
+secrets.yaml
 apps/
 sshcerts/
 test*.js

@@ -293,6 +293,10 @@ export class HaMain extends EventEmitter {
         }
     }
 
+    public get config(): any {
+        return this._config;
+    }
+
     public async restartHA(): Promise<void> {
         await this._haInterface.callService('homeassistant', 'restart', {});
     }
