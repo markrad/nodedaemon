@@ -37,7 +37,7 @@ export class CommandInspect extends CommandBase {
                 ? that.items.getItemByName(inputArray[1], true) 
                 : that.items.getItemByName();
             items.forEach((item) => {
-                sock.write(`Entity Id = ${item.entityId}\r\n`);
+                sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
                 sock.write(`State = ${item.state}\r\n`);
                 sock.write('Attributes:\r\n');
