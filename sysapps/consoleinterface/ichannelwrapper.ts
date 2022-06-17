@@ -10,6 +10,7 @@ export interface IChannelWrapper extends IChannel {
     writeGreen: (data: string | Buffer) => void;
     writeBlue: (data: string | Buffer) => void;
     writeLightBlue: (data: string | Buffer) => void;
+    writeLightMagenta: (data: string | Buffer) => void;
     on: (name: string, ...args: any) => void;
     exit: (rc: number) => void;
     end: () => void;
