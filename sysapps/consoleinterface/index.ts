@@ -31,8 +31,13 @@ var logger: Logger = getLogger(CATEGORY);
 export const enum TERMCOLOR {
     RED = '\x1b[31m',
     GREEN = '\x1b[32m',
-    BLUE= '\x1b[34m',
+    ORANGE = '\x1b[33m',
+    BLUE = '\x1b[34m',
+    MAGENTA = '\x1b[35m',
+    CYAN = '\x1b[36m',
+    LIGHT_GRAY = '\x1b[37m',
     LIGHT_BLUE = '\x1b[94m',
+    LIGHT_MAGENTA = '\x1b[95m',
     DEFAULT = '\x1b[39m'
 };
 
