@@ -107,14 +107,14 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                     this._canStream = false;
                     let ending: boolean = false;
                     logger.debug(`Executing ${info.command}`);
-                    let stream: IChannelWrapper = new ChannelWrapper(accept());
+                    let stream: IChannelWrapper = new ChannelWrapper(accept(), false);
                     stream.on('error', (err: Error) => {
                         if (!ending) {
                             logger.warn(`Stream failed: ${err}`)
                         }
                     });
                     commander.parseAndSend(this, stream, info.command);
-                    stream.exit(0);     // TODO: Set a meaningful return code for exec processing
+                    stream.exit(0);    
                     ending = true;
                     stream.end();
                 }
