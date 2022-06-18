@@ -15,7 +15,6 @@ const CATEGORY = 'WebServer';
 
 const logger: Logger = getLogger(CATEGORY);
 
-// TODO: Broken
 export default class WebServer extends AppParent {
     private _port: number;
     private _app: Express.Application;
@@ -24,7 +23,6 @@ export default class WebServer extends AppParent {
     public constructor(controller: HaMain, config: any) {
         super(controller, logger);
         this._port = config.webserver?.port ?? 4526;
-        // this._controller = controller;
         this._app = Express(); 
         this._server = null;
         logger.info('Constructed');
