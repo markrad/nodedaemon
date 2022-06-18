@@ -15,13 +15,15 @@ export class CommandVersion extends CommandBase {
         return `${this.commandName}\t\t\t\tPrint version number`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             sock.write(`Version: ${that.controller.version}\r\n`);
+            return 0;
         }
         catch (err) {
             this._displayError(logger, sock, err)
+            return 4;
         }
     }
 }

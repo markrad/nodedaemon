@@ -26,8 +26,8 @@ export class CommandLogs extends CommandBase {
         return `${this.commandName}\t<Optional Regex>\tFollow logs with optional filtering`;
     }
 
-    public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
-        return new Promise((resolve, reject) => {
+    public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
+        return new Promise<number>((resolve, _reject) => {
             // this._messageWriter = (message:string) => { if (this._sock) this._sock.write(`${message}\r\n`); }
             try {
                 if (inputArray.length > 2) throw new Error('Only one optional argument is permitted')
@@ -37,12 +37,12 @@ export class CommandLogs extends CommandBase {
                 logEmitter.on('logmessage', this._messageWriter);
                 this._isRunning = true;
                 this._ew = new EventWaiter();
-                this._ew.EventWait().then(() => resolve());
+                this._ew.EventWait().then(() => resolve(0));
             }
             catch (err) {
                 this._isRunning = false;
                 this._displayError(logger, sock, err);
-                reject(err);
+                resolve(4);
             }
         });
     }

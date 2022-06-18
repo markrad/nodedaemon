@@ -89,7 +89,7 @@ export default class ConsoleInterface extends AppParent {
                 client.lastCommand = command;
                 try {
                     stream.setColor(TERMCOLOR.LIGHT_BLUE);
-                    await command.execute(words, this, stream, this._cmds);
+                    rc = await command.execute(words, this, stream, this._cmds);
                     stream.setColor(TERMCOLOR.DEFAULT);
                 }
                 catch (_err) {

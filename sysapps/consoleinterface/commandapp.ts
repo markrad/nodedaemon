@@ -165,7 +165,7 @@ export class CommandApp extends CommandBase {
         }
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             switch (inputArray[1]) {
@@ -200,9 +200,12 @@ export class CommandApp extends CommandBase {
                     this._listapps(inputArray, that, sock);
                 break;
             }
+
+            return 0;
         }
         catch (err: any) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

@@ -16,7 +16,7 @@ export class CommandStop extends CommandBase {
         return `${this.commandName}\t\t\t\tStops the service`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             logger.debug('Stop called');
@@ -25,9 +25,11 @@ export class CommandStop extends CommandBase {
                 await that.controller.stop();
                 process.exit(0);
             }, 5000);
-            }
+            return 0
+        }
         catch (err: any) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

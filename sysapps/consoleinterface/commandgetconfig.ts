@@ -15,15 +15,17 @@ export class CommandGetConfig extends CommandBase {
         return `${this.commandName}\t\t\tReturns the Home Assistand configuration`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             sock.write('Configuration:\r\n');
             sock.write(JSON.stringify(that.controller.haConfig, null, 2).replace(/\n/g, '\r\n'));
             sock.write('\r\n');
+            return 0;
         }
         catch (err: any) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

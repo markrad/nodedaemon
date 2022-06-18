@@ -26,7 +26,7 @@ export class CommandInspect extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<number> {
         try {
             this._validateParameters(inputArray.slice(0, inputArray.length - 1));
             if (inputArray.length != 2) {
@@ -42,10 +42,12 @@ export class CommandInspect extends CommandBase {
                 sock.write(`State = ${item.state}\r\n`);
                 sock.write('Attributes:\r\n');
                 sock.write(`${JSON.stringify(item.attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
+                return 0;
             });
         }
         catch (err: any) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

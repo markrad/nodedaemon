@@ -17,7 +17,7 @@ export class CommandHa extends CommandBase {
         return `${this.commandName} \tstatus\t\t\tGet Home Assistant Status\r\n\trestart\t\t\tRestart Home Assistant\r\n\tstop\t\t\tStop Home Assistant`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
 
@@ -40,9 +40,12 @@ export class CommandHa extends CommandBase {
                 default:
                     throw new Error('Parameter validation error - this should not happen');
             }
+
+            return 0;
         }
         catch (err: any) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

@@ -15,7 +15,7 @@ export class CommandUptime extends CommandBase {
         return `${this.commandName}\t\t\t\tTime since last restart`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             let millis: number = (new Date().getTime() - that.controller.startTime.getTime());
@@ -28,9 +28,11 @@ export class CommandUptime extends CommandBase {
             if (!hours.startsWith('01')) hours += 's';
             if (!days.startsWith('1')) days += 's';
             sock.write(`${days} ${hours} ${minutes} ${seconds}\r\n`);
+            return 0;
         }
         catch (err) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

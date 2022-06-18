@@ -20,8 +20,8 @@ export class CommandEvents extends CommandBase {
         return `${this.commandName}\t<not> <optional regex>\tFollow events that match <optional regex> or <not> match\r\n\t\t\t\tFor example events not state`;
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
-        return new Promise((resolve, _reject) => {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
+        return new Promise<number>((resolve, _reject) => {
             var regex: RegExp = null;
             var nonegator: boolean;
             this.messageWriter = (eventType: string, data: string) => 
@@ -36,7 +36,7 @@ export class CommandEvents extends CommandBase {
                 }
                 else if (inputArray.length >= 3) {
                     if (inputArray[1].toLowerCase() != 'not') {
-                        throw new Error('Parameters two must be \'not\' or a regular expression');
+                        throw new Error('Parameter two must be \'not\' or a regular expression');
                     }
                     regex = new RegExp(inputArray[2]);
                     nonegator = false;
@@ -45,14 +45,14 @@ export class CommandEvents extends CommandBase {
                 this._isRunning = true;
                 this._sock = sock;
                 this._ew = new EventWaiter();
-                this._ew.EventWait().then(() => resolve());
+                this._ew.EventWait().then(() => resolve(0));
             }
             catch (err) {
                 this._isRunning = false;
                 this._displayError(logger, sock, err);
-                resolve();
+                resolve(4);
             }
-            });
+        });
     }
 
     public async terminate(that: ConsoleInterface, _sock: IChannelWrapper): Promise<void> {

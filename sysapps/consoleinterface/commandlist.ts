@@ -52,7 +52,7 @@ export class CommandList extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             let items: IHaItem[];
@@ -97,9 +97,11 @@ export class CommandList extends CommandBase {
                     this._printItems(sock, items);
                 break;
             }
+            return 0;
         }
         catch (err) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 

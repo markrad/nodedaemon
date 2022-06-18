@@ -12,7 +12,7 @@ export abstract class CommandBase implements ICommand {
     }
 
     public abstract get helpText(): string;
-    public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, commands: ICommand[]): Promise<void>;
+    public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, commands: ICommand[]): Promise<number>;
 
     public terminate(_that: ConsoleInterface, _sock: IChannelWrapper): Promise<void> {
         return;

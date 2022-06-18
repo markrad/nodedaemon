@@ -52,7 +52,7 @@ export class CommandSet extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<void> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<number> {
         try {
             this._validateParameters(inputArray);
             if (inputArray.length < 3) {
@@ -128,9 +128,11 @@ export class CommandSet extends CommandBase {
                 default:
                     throw new Error(`Command ${inputArray[1]} is invalid`);
             }
+            return 0;
         }
         catch (err: any) {
             this._displayError(logger, sock, err);
+            return 4;
         }
     }
 }

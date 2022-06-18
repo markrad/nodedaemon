@@ -16,13 +16,15 @@ export class CommandHostname extends CommandBase {
         return `${this.commandName}\t\t\t\tPrint host name`;
     }
 
-    public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             sock.write(`Hostname: ${os.hostname()}\r\n`);
+            return 0;
         }
         catch (err) {
             this._displayError(logger, sock, err)
+            return 4;
         }
     }
 }

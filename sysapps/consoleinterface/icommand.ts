@@ -8,6 +8,6 @@ export interface ICommand {
     tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[]
     tabParameters(that: any, tabCount: any, parameters: any): string[];
     get helpText(): string;
-    execute(inputArray: string[], that: any, sock: IChannelWrapper, commands: ICommand[]): Promise<void>;
+    execute(inputArray: string[], that: any, sock: IChannelWrapper, commands: ICommand[]): Promise<number>;
     terminate(that: ConsoleInterface, sock: IChannelWrapper): Promise<void>;
 }
