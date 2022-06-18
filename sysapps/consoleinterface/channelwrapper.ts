@@ -31,8 +31,20 @@ export class ChannelWrapper implements IChannel {
         this.writeColor(TERMCOLOR.GREEN, data);
     }
 
+    writeOrange(data: string | Buffer): void {
+        this.writeColor(TERMCOLOR.ORANGE, data);
+    }
+
     writeBlue(data: string | Buffer): void {
         this.writeColor(TERMCOLOR.BLUE, data);
+    }
+
+    writeMagenta(data: string | Buffer): void {
+        this.writeColor(TERMCOLOR.MAGENTA, data);
+    }
+
+    writeCyan(data: string | Buffer): void {
+        this.writeColor(TERMCOLOR.CYAN, data);
     }
 
     writeLightBlue(data: string | Buffer): void {
