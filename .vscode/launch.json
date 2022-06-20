@@ -14,7 +14,7 @@
             "program": "${workspaceFolder}/output/nodedaemon.js",
             "outputCapture": "std",
             "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
-            "_args": [ "--appsdir", "./output/sysapps" ],
+            // "_args": [ "--appsdir", "./output/sysapps" ],
             "env": {
                 "HAINTERFACE_LOGGING": "debug",
                 "HAMAIN_LOGGING": "debug",

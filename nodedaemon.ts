@@ -3,7 +3,7 @@ import { getLogger, configure, Logger, Configuration } from 'log4js';
 import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
-import yaml from 'js-yaml'
+import YAML, { ScalarTag } from 'yaml';
 import { LogLevelValidator, LogLevels } from './common/loglevelvalidator';
 
 const CATEGORY: string = 'main';
@@ -76,6 +76,17 @@ function fatalExit(message: string, returnCode: number, logger?: Logger) {
 var defaultLogger: Logger; 
 let configFile: string = '';
 
+const secret: ScalarTag = {
+    identify: value => value instanceof String,
+    default: false,
+    tag: '!secret',
+    resolve(str) {
+        let data = fs.readFileSync(Path.join(configPath, 'secrets.yaml'), 'utf8');
+        let vals = YAML.parse(data);
+        return vals[str];
+    },
+}
+
 try {
     const program = new Command();
 
@@ -97,8 +108,11 @@ try {
         fatalExit(`Config file ${configFile} not found`, 4);
     }
 
+    var config: any;
+    var configPath = Path.dirname(configFile);
+
     try {
-        var config: any = yaml.load(fs.readFileSync(configFile, 'utf8'));
+        config = YAML.parse(fs.readFileSync(configFile, 'utf8'),  { customTags: [secret] })
     }
     catch (err) {
         fatalExit(`Config file ${program.opts().config} is invalid: ${err}`, 4);
@@ -227,4 +241,4 @@ catch (err) {
     fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
 }
 
-main(packageJSON.version, config, Path.dirname(configFile));
+main(packageJSON.version, config, configPath);
