@@ -81,9 +81,12 @@ const secret: ScalarTag = {
     default: false,
     tag: '!secret',
     resolve(str) {
-        let data = fs.readFileSync(Path.join(configPath, 'secrets.yaml'), 'utf8');
-        let vals = YAML.parse(data);
-        return vals[str];
+        if (!secrets[str]) {
+            throw new Error(`Secret ${str} not found`);
+        }
+        else {
+            return secrets[str];
+        }
     },
 }
 
@@ -110,7 +113,16 @@ try {
 
     var config: any;
     var configPath = Path.dirname(configFile);
+    var secrets: any = {};
 
+    try {
+        secrets = YAML.parse(fs.readFileSync(Path.join(configPath, 'secrets.yaml'), 'utf8'));
+    }
+    catch (err) {
+        if ((err.errno?? 0) != -2) {
+            fatalExit(`Failed to read secrets file ${Path.join(configPath, 'secret.yaml')} - ${err.message}`, 4);
+        }
+    }
     try {
         config = YAML.parse(fs.readFileSync(configFile, 'utf8'),  { customTags: [secret] })
     }
