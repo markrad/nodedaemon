@@ -271,65 +271,66 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                     {
                         name: "tab", value: Buffer.from([9]), action: () => {
                             let allCmds: string[];
-                            if (len == 0 || !sig) {
+                            let cmdWords: string[] = line.slice(0, cursor).toString().split(' ');
+                            if (len == 0 || cmdWords.length == 1 || !sig) {
                                 if (++tabCount > 1) {
-                                    allCmds = this._commander.commands.map((cmd: ICommand) => cmd.commandName.padEnd(8));
-                                    stream.write('\r\n');
-                                    stream.write(`${allCmds.join('\t')}\r\n`);
-                                    stream.write(`$ ${line.slice(0, len).toString()}`);
+                                    allCmds = this._commander.commands.map((cmd: ICommand) => cmd.commandName).filter((cmd) => cmd.startsWith(cmdWords[0]));
+                                    switch (allCmds.length) {
+                                        case 0:
+                                            break;
+                                        case 1:
+                                            let cursorAdjust: number = allCmds[0].length - cmdWords[0].length;
+                                            line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].slice(0 - cursorAdjust))]);
+                                            stream.write(`${line.slice(0 - cursorAdjust)} `);
+                                            cursor += ++cursorAdjust;
+                                            len = cursor;
+                                            // while (cursorAdjust-- > 0) {
+                                            //     stream.write(rightarrow);
+                                            // }
+                                            break;
+                                        default:
+                                            stream.write('\r\n');
+                                            stream.write(`${allCmds.map((cmd) => cmd.padEnd(8)).join('\t')}\r\n`);
+                                            stream.write(`$ ${line.slice(0, len).toString()}`);
+                                            break;
+                                    }
                                 }
                             }
                             else {
-                                let cmdWords: string[] = line.slice(0, cursor).toString().split(' ');
-                                if (cmdWords.length == 1) {
-                                    allCmds = this._commander.commands.filter((cmd: ICommand) => cmd.commandName.startsWith(cmdWords[0])).map((cmd: ICommand) => cmd.commandName);
-                                    if (allCmds.length == 1) {
-                                        let cursorAdjust: number = line.slice(cursor, len).toString().length;
-                                        line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].substring(cmdWords[0].length)), line.slice(cursor)]);
-                                        len += allCmds[0].length - cmdWords[0].length;
-                                        stream.write(line.slice(cursor, len).toString());
-                                        cursor += allCmds[0].length - cmdWords[0].length;
-                                        while (cursorAdjust-- > 0) {
-                                            stream.write(leftarrow);
-                                        }
-                                    }
-                                }
-                                else {
-                                    let command: ICommand = this._commander.commands.find((cmd: ICommand) => cmd.commandName == cmdWords[0].toLowerCase());
-                                    if (command) {
-                                        let possibles: string[] = command.tabParameters(this._commander, ++tabCount, cmdWords);
-                                        switch (possibles.length) {
-                                            case 0:
-                                                break;
-                                            case 1:
-                                                let cursorAdjust: number = line.slice(cursor, len).toString().length;
-                                                line = Buffer.concat([line.slice(0, cursor), Buffer.from(possibles[0].substring(cmdWords[cmdWords.length - 1].length)), line.slice(cursor)]);
-                                                len += possibles[0].length - cmdWords[cmdWords.length - 1].length;
-                                                stream.write(line.slice(cursor, len).toString());
-                                                cursor += possibles[0].length - cmdWords[cmdWords.length - 1].length;
-                                                while (cursorAdjust-- > 0) {
-                                                    stream.write(leftarrow);
+                                let command: ICommand = this._commander.commands.find((cmd: ICommand) => cmd.commandName == cmdWords[0].toLowerCase());
+                                if (command) {
+                                    let possibles: string[] = command.tabParameters(this._commander, ++tabCount, cmdWords);
+                                    switch (possibles.length) {
+                                        case 0:
+                                            break;
+                                        case 1:
+                                            let cursorAdjust: number = line.slice(cursor, len).toString().length;
+                                            line = Buffer.concat([line.slice(0, cursor), Buffer.from(possibles[0].substring(cmdWords[cmdWords.length - 1].length)), line.slice(cursor)]);
+                                            len += possibles[0].length - cmdWords[cmdWords.length - 1].length;
+                                            stream.write(line.slice(cursor, len).toString());
+                                            cursor += possibles[0].length - cmdWords[cmdWords.length - 1].length;
+                                            while (cursorAdjust-- > 0) {
+                                                stream.write(leftarrow);
+                                            }
+                                            break;
+                                        default:
+                                            let resultLen = possibles[0].length;
+                                            let curr: number;
+                                            for (let i: number = 1; i < possibles.length; i++) {
+                                                curr = 0;
+                                                while (curr < resultLen && curr < possibles[i].length && possibles[0][curr] == possibles[i][curr]) {
+                                                    curr++;
                                                 }
-                                                break;
-                                            default:
-                                                let resultLen = possibles[0].length;
-                                                let curr: number;
-                                                for (let i: number = 1; i < possibles.length; i++) {
-                                                    curr = 0;
-                                                    while (curr < resultLen && curr < possibles[i].length && possibles[0][curr] == possibles[i][curr]) {
-                                                        curr++;
-                                                    }
-                                                    resultLen = curr;
-                                                }
-                                                stream.write('\r\n');
-                                                stream.write(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
-                                                let lastLen: number = cmdWords[cmdWords.length - 1].length;
-                                                line = Buffer.concat([line.slice(0, len), Buffer.from(possibles[0].substr(lastLen, resultLen - lastLen)), line.slice(len)]);
-                                                len += resultLen - lastLen;
-                                                cursor += resultLen - lastLen;
-                                                stream.write(`$ ${line.slice(0, len).toString()}`);
-                                                break;
-                                        }
+                                                resultLen = curr;
+                                            }
+                                            stream.write('\r\n');
+                                            stream.write(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
+                                            let lastLen: number = cmdWords[cmdWords.length - 1].length;
+                                            line = Buffer.concat([line.slice(0, len), Buffer.from(possibles[0].substr(lastLen, resultLen - lastLen)), line.slice(len)]);
+                                            len += resultLen - lastLen;
+                                            cursor += resultLen - lastLen;
+                                            stream.write(`$ ${line.slice(0, len).toString()}`);
+                                            break;
                                     }
                                 }
                             }
