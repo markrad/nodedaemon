@@ -61,7 +61,7 @@ export class ItemsManager {
             ? new RegExp(name)
             : new RegExp(`^${name}$`);
         return this.getItemsAsArray()
-            .filter(item =>  re? re.test(item.entityId) : true)
+            .filter(item =>  re? re.test(item.name) : true)
             .sort((l, r) => l.entityId.localeCompare(r.entityId));
             // .sort((l, r) => l.entityId < r.entityId ? -1 : l.entityId > r.entityId ? 1 : 0);
     }
