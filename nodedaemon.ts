@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { getLogger, configure, Logger, Configuration } from 'log4js';
+import { getLogger, configure, Logger, Configuration, Log4js } from 'log4js';
 import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
@@ -8,7 +8,7 @@ import { LogLevelValidator, LogLevels } from './common/loglevelvalidator';
 
 const CATEGORY: string = 'main';
 
-async function main(version: string, config: any, configPath: string) {
+async function main(version: string, config: any, configPath: string, log4js: Log4js) {
     const LOGO: string = `
                                                   
              |         |                         
@@ -39,6 +39,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
                 try {
                     logger.fatal(`Clean up after event ${signal}`);
                     await haMain.stop();
+                    log4js.shutdown(null);
                     process.exit(eventType == 'SIGTERM'? 0 : 4);
                 } 
                 catch (err) {
@@ -114,6 +115,7 @@ try {
     var config: any;
     var configPath = Path.dirname(configFile);
     var secrets: any = {};
+    var log4js: Log4js;
 
     try {
         secrets = YAML.parse(fs.readFileSync(Path.join(configPath, 'secrets.yaml'), 'utf8'));
@@ -142,18 +144,28 @@ try {
         }
     }
 
-    if (config.main.mqttlogger) {
+    if (config.main.loggers?.mqtt ?? null) {
         loggerOptions.appenders.mqtt = { 
             type: 'common/mqttlogger', 
-            host: config.main.mqttlogger.host,
-            clientid: config.main.mqttlogger.clientid,
-            username: config.main.mqttlogger.username,
-            password: config.main.mqttlogger.password
+            host: config.main.loggers.mqtt.host,
+            clientid: config.main.loggers.mqtt.clientid,
+            username: config.main.loggers.mqtt.username,
+            password: config.main.loggers.mqtt.password
         }
         loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('mqtt');
     }
 
-    configure(loggerOptions);
+    if (config.main.loggers?.file ?? null) {
+        loggerOptions.appenders.file = {
+            type: 'file',
+            filename: config.main.loggers.file.name,
+            maxLogSize: config.main.loggers.file.maxLogSize ?? "1M",
+            backups: config.main.loggers.file.backups ?? 5
+        }
+        loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('file');
+    }
+
+    log4js = configure(loggerOptions);
 
     defaultLogger = getLogger();
 
@@ -253,4 +265,4 @@ catch (err) {
     fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
 }
 
-main(packageJSON.version, config, configPath);
+main(packageJSON.version, config, configPath, log4js);
