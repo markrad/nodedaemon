@@ -159,7 +159,7 @@ try {
         loggerOptions.appenders.file = {
             type: 'file',
             filename: config.main.loggers.file.name,
-            maxLogSize: config.main.loggers.file.maxLogSize ?? "1M",
+            pattern: config.main.loggers.file.pattern ?? ".yyyy-MM-dd",
             backups: config.main.loggers.file.backups ?? 5
         }
         loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('file');
