@@ -156,13 +156,15 @@ try {
     }
 
     if (config.main.loggers?.file ?? null) {
-        loggerOptions.appenders.file = {
+        loggerOptions.appenders.dateFile = {
             type: 'file',
             filename: config.main.loggers.file.name,
             pattern: config.main.loggers.file.pattern ?? ".yyyy-MM-dd",
-            backups: config.main.loggers.file.backups ?? 5
-        }
-        loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('file');
+            backups: config.main.loggers.file.backups ?? 5,
+            mode: config.main.loggers.file.mode ?? 0o644,
+            keepFileExt: true
+        } as any;                                                           // Typescript types are broken
+        loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('dateFile');
     }
 
     log4js = configure(loggerOptions);
