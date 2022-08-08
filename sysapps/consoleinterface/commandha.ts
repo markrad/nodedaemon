@@ -10,11 +10,11 @@ var logger: Logger = getLogger(CATEGORY);
 
 export class CommandHa extends CommandBase {
     public constructor() {
-        super('ha', ['restart', 'stop', 'status']);
+        super('ha', ['restart', 'stop', 'status', 'version']);
     }
 
     public get helpText(): string {
-        return `${this.commandName} \tstatus\t\t\tGet Home Assistant Status\r\n\trestart\t\t\tRestart Home Assistant\r\n\tstop\t\t\tStop Home Assistant`;
+        return `${this.commandName} \tstatus\t\t\tGet Home Assistant Status\r\n\trestart\t\t\tRestart Home Assistant\r\n\tstop\t\t\tStop Home Assistant\r\n\tversion\t\t\tShow Home Assistant version`;
     }
 
     public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
@@ -37,6 +37,9 @@ export class CommandHa extends CommandBase {
                 case 'status':
                     sock.write(`${that.controller.isConnected? 'Connected' : 'Not connected'} to Home Assistant\r\n`);
                 break;
+                case 'version':
+                    sock.write(`${that.controller.haConfig.version}\r\n`);
+                    break;
                 default:
                     throw new Error('Parameter validation error - this should not happen');
             }
