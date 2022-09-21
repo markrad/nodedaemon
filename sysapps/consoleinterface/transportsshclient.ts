@@ -1,5 +1,5 @@
 import { getLogger } from "log4js";
-import { AuthContext, Connection, Session, PseudoTtyInfo } from "ssh2";
+import { AuthContext, Connection, Session, PseudoTtyInfo, SetEnvInfo, ServerChannel, ExecInfo } from "ssh2";
 import { ICommand } from "./icommand";
 import { TransportSSH, User } from "./transportssh";
 // import { ParsedKey, utils } from 'ssh2-streams';
@@ -57,11 +57,11 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 case 'publickey':
                     let i;
                     for (i = 0; i < transport.AllowedPublicKeys.length; i++) {
-                        let allowedPubKey: string = transport.AllowedPublicKeys[i].getPublicSSH();
-                        if (ctx.key.algo == transport.AllowedPublicKeys[i].type ||
-                            ctx.key.data.length === transport.AllowedPublicKeys.length ||
-                            Crypto.timingSafeEqual(ctx.key.data, Buffer.from(allowedPubKey)) ||
-                            (ctx.signature && transport.AllowedPublicKeys[i].verify(ctx.blob, ctx.signature) == true)) {
+                        let allowedPubKey: Buffer = Buffer.from(transport.AllowedPublicKeys[i].getPublicSSH());
+                        if (ctx.key.algo == transport.AllowedPublicKeys[i].type &&
+                            ctx.key.data.length === allowedPubKey.length &&
+                            Crypto.timingSafeEqual(ctx.key.data, allowedPubKey) &&
+                            (ctx.signature == undefined || transport.AllowedPublicKeys[i].verify(ctx.blob, ctx.signature) == true)) {
                             break;
                         }
                     }
@@ -101,6 +101,12 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
         session
             .on('pty', (accept: () => boolean, _reject: () => boolean, _req: PseudoTtyInfo) => {
                 accept();
+            })
+            .on('env', (_accept, _reject, _info: SetEnvInfo) => {
+                logger.warn('env request ignored');
+            })
+            .on('sftp', (_accept: () => ServerChannel, _reject: () => boolean, _info: ExecInfo) => {
+                logger.warn('sftp request ignored');
             })
             .once('exec', (accept, _reject, info) => {
                 try {
