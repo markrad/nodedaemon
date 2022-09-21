@@ -31,6 +31,7 @@ export class WSWrapper extends EventEmitter {
     
     public async open(): Promise<void> {
         this._closing = false;
+        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT'];
         return new Promise(async (resolve, reject) => {
             while (true) {
                 try {
@@ -43,6 +44,7 @@ export class WSWrapper extends EventEmitter {
                         this.emit('message', data);
                     });
                     this._client.on('close', async (code, reason) => {
+                        this._connected = false;
                         this.emit('disconnected');
 
                         if (!this._closing) {
@@ -75,7 +77,7 @@ export class WSWrapper extends EventEmitter {
                         break;
                     }
                     else if (err instanceof ConnectionError) {
-                        if (err.code != 'ECONNREFUSED') {
+                        if (!(err.code in handled)) {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
                             reject(err);
                             break;
@@ -97,7 +99,16 @@ export class WSWrapper extends EventEmitter {
     }
 
     public async send(data: string | Buffer): Promise<void> {
-        return new Promise<void>((resolve, reject) =>{
+        return new Promise<void>(async (resolve, reject) =>{
+            if (!this._connected || this._client.readyState != WebSocket.OPEN) {
+                if (this._closing) {
+                    // We are closing - ignore this
+                    resolve();
+                }
+                logger.warn('WebSocket is not open - trying to reconnect');
+                this._connected = false;
+                await this.open();
+            }
             this._client.send(data, (err: Error) => {
                 if (err) {
                     reject(err);
