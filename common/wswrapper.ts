@@ -169,20 +169,28 @@ export class WSWrapper extends EventEmitter {
     }
 
     private _runPings() {
-        if (this._pingRate > 0) {
+        if (!this._pingTimer && this._pingRate > 0) {
             let pingId: number = 0;
             let pingOutstanding: number = 0;
             let pongWait: NodeJS.Timeout = null;
             this._client.on('pong', (_data) => {
                 clearTimeout(pongWait);
                 pingOutstanding = 0;
+                logger.debug('Pong received');
             });
-            this._pingTimer = setInterval(() => {
+            this._pingTimer = setInterval(async () => {
                 if (!this._connected) {
                     clearInterval(this._pingTimer);
+                    this._pingTimer = null;
                 }
                 else {
-                    if (pingOutstanding > 5) {
+                    if (pingOutstanding > 10) {
+                        logger.error('No pong responses - reconnecting');
+                        clearInterval(this._pingTimer);
+                        await this.close();
+                        await this.open();
+                    }
+                    else if (pingOutstanding > 5) {
                         logger.warn(`Outstanding ping count: ${pingOutstanding}`);
                     }
                     pongWait = setTimeout(() => {
@@ -190,6 +198,7 @@ export class WSWrapper extends EventEmitter {
                     }, 5000);
                     pingOutstanding++;
                     this._client.ping((++pingId).toString(), true);
+                    logger.debug(`Ping ${pingId} sent`);
                 }
             }, this._pingRate * 1000);
         }
