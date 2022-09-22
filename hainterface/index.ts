@@ -99,7 +99,7 @@ export class HaInterface extends EventEmitter {
     private _connected: boolean = false;
     private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
-    public constructor(hostname: string, port: number,  accessToken: string, pingRate: number = 60000) {
+    public constructor(hostname: string, port: number,  accessToken: string, pingRate: number = 30) {
         super();
         this._accessToken = accessToken;
         this._hostname = hostname;
@@ -115,7 +115,7 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), 0)
+                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingRate)
                 logger.info(`Connecting to ${this._client.url}`);
 
                 this._client.on('message', async (message: string) => {
