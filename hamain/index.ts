@@ -440,7 +440,7 @@ export class HaMain extends EventEmitter {
                                     let app = reload(fullname).default;
                                     try {
                                         let loc: string = path.join(dir.path, dirent.name);
-                                        if (!this._config[dirent.name]) {
+                                        if (this._config[dirent.name] === undefined) {
                                             logger.warn(`Ignoring ${dirent.name} - no config`);
                                         }
                                         else {
