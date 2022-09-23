@@ -38,11 +38,19 @@ export class HaMain extends EventEmitter {
     private _configPath;
     private _reconnect: boolean = false;
     private _version: string = null;
+    private _hostname: string = null;
+    private _port: number = NaN;
+    private _accessToken: string = null;
+    private _pingInterval: number = NaN;
     constructor(config: any, configPath: string, version: string) {
         super();
         this._config = config;
         this._configPath = configPath;
         this._version = version;
+        this._hostname = this._config.main.hostname ?? '127.0.0.1';
+        this._port = this._config.main.port ?? 8123
+        this._accessToken = this._config.main.accessToken;
+        this._pingInterval = this._config.main.pintInterval ?? 0;
 
         if (process.env.HAMAIN_LOGGING) {
             logger.level = process.env.HAMAIN_LOGGING;
@@ -52,7 +60,7 @@ export class HaMain extends EventEmitter {
 
     public async start(): Promise<void> {
         try {
-            this._haInterface = new HaInterface(this._config.main.hostname ?? '127.0.0.1', this._config.port ?? 8123, this._config.main.accessToken);
+            this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
             this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
                 if (eventType == 'state_changed') {
                     let state: StateChange = data;

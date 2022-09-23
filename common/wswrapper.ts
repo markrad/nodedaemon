@@ -5,23 +5,24 @@ import { getLogger } from 'log4js';
 import EventEmitter from 'events';
 
 import { ErrorFactory, ConnectionError, DNSError, GenericSyscallError } from './haInterfaceError';
+import { dumpError } from './errorUtil';
 
 const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);
 
 export class WSWrapper extends EventEmitter {
     private _url: string;
-    private _pingRate: number;
+    private _pingInterval: number;
     private _pingTimer: NodeJS.Timer;
     private _connected: boolean;
     private _closing: boolean;
     private _client: WebSocket;
-    public constructor(url: string, pingRate: number) {
+    public constructor(url: string, pingInterval: number) {
         super();
 
         if (!url) throw new Error('Error: WSWrapper requires url');
         this._url = url;
-        this._pingRate = pingRate ?? 0;
+        this._pingInterval = pingInterval ?? 0;
         this._pingTimer = null;
         this._connected = false;
         this._closing = false;
@@ -31,39 +32,15 @@ export class WSWrapper extends EventEmitter {
     
     public async open(): Promise<void> {
         this._closing = false;
-        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT'];
+        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH' ];
         return new Promise(async (resolve, reject) => {
+
             while (true) {
                 try {
                     logger.debug(`Connecting to ${this._url}`);
                     this._client = await this._open(this._url);
-                    logger.debug(`Connected to ${this._url}`);
-                    this._connected = true;
-                    this._client.on('message',  (data) => {
-                        logger.trace(`Data received:\n${JSON.stringify(data, null, 2)}`);
-                        this.emit('message', data);
-                    });
-                    this._client.on('close', async (code, reason) => {
-                        this._connected = false;
-                        this.emit('disconnected');
-
-                        if (!this._closing) {
-                            logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
-                            await this.open();
-                        }
-                    });
-                    this._client.on('error', async (err) => {
-                        logger.warn(`Connection error: ${err.message} - reconnecting`);
-                        await this.close();
-                        await this.open();
-                    });
-                    this._client.on('unexpected-response', (_clientRequest, _incomingMessage) => {
-                        logger.warn('Unexpected response');
-                    });
-                    this._runPings();
-                    this.emit('connected');
-                    resolve();
-                    break;
+                    if (this._connected) break;
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
                 catch (err) {
                     if (err instanceof DNSError) {
@@ -77,7 +54,7 @@ export class WSWrapper extends EventEmitter {
                         break;
                     }
                     else if (err instanceof ConnectionError) {
-                        if (!(err.code in handled)) {
+                        if (!(handled.includes(err.code))) {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
                             reject(err);
                             break;
@@ -88,13 +65,40 @@ export class WSWrapper extends EventEmitter {
                     }
                     else {
                         logger.fatal(`Unhandled error ${err.message}`);
-                        logger.debug(JSON.stringify(err));
+                        dumpError(err, logger, 'FATAL');
                         reject(err);
+                        break;
                     }
                 }
-
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise<void>((resolve) => setTimeout(resolve, 1000));
             }
+            logger.debug(`Connected to ${this._url}`);
+            
+            this._client
+            .on('message',  (data) => {
+                logger.trace(`Data received:\n${JSON.stringify(data, null, 2)}`);
+                this.emit('message', data);
+            })
+            .on('close', async (code, reason) => {
+                this._connected = false;
+                this.emit('disconnected');
+
+                if (!this._closing) {
+                    logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
+                    await this.open();
+                }
+            })
+            .on('error', async (err) => {
+                logger.warn(`Connection error: ${err.message} - reconnecting`);
+                await this.close();
+                await this.open();
+            })
+            .on('unexpected-response', (_clientRequest, _incomingMessage) => {
+                logger.warn('Unexpected response');
+            });
+            this.emit('connected');
+            this._runPings();
+            resolve();
         });
     }
 
@@ -126,17 +130,8 @@ export class WSWrapper extends EventEmitter {
             logger.info('Closing');
             this._connected = false;
             let timer: NodeJS.Timeout = null;
-            // await new Promise((resolve, _reject) => {
-                // timer = setTimeout(() => {
-                //     logger.warn('Failed to close before timeout')
-                //     resolve(new Error('Failed to close connection'));
-                // }, 5000);
-                // this._client.once('close', (_reason, _description) => {
-                //     logger.info('Closed');
-                //     this.emit('close');
-                // });
-                this._client.close();
-            // });
+            this._client.close();
+            this.emit('disconnected');
             clearTimeout(timer);
             this._client.removeAllListeners();
             resolve();
@@ -161,6 +156,7 @@ export class WSWrapper extends EventEmitter {
 
             var connectSucceeded = () => {
                 client.off('connectFailed', connectFailed);
+                this._connected = true;
                 resolve(client);
             };
             client.once('open', connectSucceeded);
@@ -169,7 +165,7 @@ export class WSWrapper extends EventEmitter {
     }
 
     private _runPings() {
-        if (!this._pingTimer && this._pingRate > 0) {
+        if (!this._pingTimer && this._pingInterval > 0) {
             let pingId: number = 0;
             let pingOutstanding: number = 0;
             let pongWait: NodeJS.Timeout = null;
@@ -189,6 +185,7 @@ export class WSWrapper extends EventEmitter {
                         clearInterval(this._pingTimer);
                         await this.close();
                         await this.open();
+                        pingOutstanding = 0;
                     }
                     else if (pingOutstanding > 5) {
                         logger.warn(`Outstanding ping count: ${pingOutstanding}`);
@@ -200,7 +197,7 @@ export class WSWrapper extends EventEmitter {
                     this._client.ping((++pingId).toString(), true);
                     logger.debug(`Ping ${pingId} sent`);
                 }
-            }, this._pingRate * 1000);
+            }, this._pingInterval * 1000);
         }
     }
 }

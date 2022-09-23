@@ -94,17 +94,16 @@ export class HaInterface extends EventEmitter {
     private _port: number;
     private _id: number = 0;
     private _tracker: Map<number, any> = new Map<number, any>();
-    private _pingRate: number;
-    private _pingInterval: NodeJS.Timer = null;
+    private _pingInterval: number;
     private _connected: boolean = false;
     private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
-    public constructor(hostname: string, port: number,  accessToken: string, pingRate: number = 30) {
+    public constructor(hostname: string, port: number,  accessToken: string, pingInterval: number = 30) {
         super();
         this._accessToken = accessToken;
         this._hostname = hostname;
         this._port = port;
-        this._pingRate = pingRate;
+        this._pingInterval = pingInterval;
 
         if (process.env.HAINTERFACE_LOGGING) {
             logger.level = process.env.HAINTERFACE_LOGGING;
@@ -115,7 +114,7 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingRate)
+                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingInterval)
                 logger.info(`Connecting to ${this._client.url}`);
 
                 this._client.on('message', async (message: string) => {
@@ -179,21 +178,11 @@ export class HaInterface extends EventEmitter {
 
                 this._client.on('disconnected', () => {
                     this._kill();
+                    this.emit('disconnected');
                 });
 
                 await this._client.open();
                 logger.info(`Connection complete`);
-                this._pingInterval = setInterval(() => {
-                    if (this._waitAuth.EventIsResolved) {
-                        let ping = { id: ++this._id, type: 'ping' };
-                        this._sendPacket(ping)
-                            .then((_response) => {})
-                            .catch((err) => {
-                                logger.error(`Ping failed ${err}`);
-                            });
-                        }
-                }, this._pingRate);
-
                 resolve();
             }
             catch (err) {
@@ -425,7 +414,7 @@ export class HaInterface extends EventEmitter {
     private _kill() {
         this._connected = false;
         this._running = false;
-        clearTimeout(this._pingInterval);
+        // clearTimeout(this._pingInterval);
     }
 
     private async _waitAuthenticated(): Promise<void> {
