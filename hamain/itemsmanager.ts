@@ -32,7 +32,8 @@ export class ItemsManager {
         return this.checkItemIs(type, obj)? obj as typeof type : null;
     }
 
-    public getItemAs<T>(type: any, entityId: string, throwOnFailure: boolean = false): T {
+    public getItemAs<T extends IHaItem>(type: T, entityId: string, throwOnFailure: boolean = false): T {
+
         let obj: IHaItem = this.getItem(entityId);
 
         if (obj == null) {
