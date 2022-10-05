@@ -10,6 +10,17 @@ import { dumpError } from './errorUtil';
 const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);
 
+export interface WSWrapperEvents {
+    'connected': () => void;
+    'disconnected': () => void;
+    'message': (data: WebSocket.Data) => void;
+};
+
+export declare interface WSWrapper {
+    on<U extends keyof WSWrapperEvents>(event: U, listner: WSWrapperEvents[U]): this;
+    emit<U extends keyof WSWrapperEvents>(event: U, ...args: Parameters<WSWrapperEvents[U]>): boolean;
+}
+
 export class WSWrapper extends EventEmitter {
     private _url: string;
     private _pingInterval: number;
@@ -75,7 +86,7 @@ export class WSWrapper extends EventEmitter {
             logger.debug(`Connected to ${this._url}`);
             
             this._client
-            .on('message',  (data) => {
+            .on('message', (data) => {
                 logger.trace(`Data received:\n${JSON.stringify(data, null, 2)}`);
                 this.emit('message', data);
             })

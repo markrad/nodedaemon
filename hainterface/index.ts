@@ -169,14 +169,13 @@ export class HaInterface extends EventEmitter {
                         }
                     }
                 });
-
-                this._client.on('connected', () => {
+                this._client.on('connected', (): void => {
                     this._waitAuth.EventReset()
                     this._connected = true;
                     this.emit('connected');
                 });
 
-                this._client.on('disconnected', () => {
+                this._client.on('disconnected', (): void => {
                     this._kill();
                     this.emit('disconnected');
                 });
