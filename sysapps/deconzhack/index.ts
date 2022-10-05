@@ -105,7 +105,7 @@ export default class DeconzHack extends AppParent {
             this._ws = new WSWrapper(`ws://${this._deconzConfig.host}:${this._deconzConfig.port}`, 60);
             this._ws.on('message', (msg) => {
                 if (this._printMessages) logger.info(msg);
-                var msgData = JSON.parse(msg);
+                var msgData = JSON.parse(msg.toString());
 
                 logger.trace(`Received:\n${JSON.stringify(msgData, null, 2)}`);
                 
