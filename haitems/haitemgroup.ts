@@ -2,7 +2,7 @@ import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 import { ServicePromise } from './haparentitem';
 
-class HaItemGroup extends HaGenericSwitchItem {
+export default class HaItemGroup extends HaGenericSwitchItem {
     private _children: string[];
     public constructor(item: State) {
         super(item);
@@ -20,5 +20,3 @@ class HaItemGroup extends HaGenericSwitchItem {
         return this._children;
     }
 }
-
-module.exports = HaItemGroup;

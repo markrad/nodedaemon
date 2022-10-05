@@ -1,12 +1,14 @@
 import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem';
 import { State } from '../hamain/state'
 
-export abstract class HaGenericUpdateableItem extends HaParentItem implements IHaItemEditable {
+export class HaGenericUpdateableItem extends HaParentItem implements IHaItemEditable {
     public constructor(item: State, logLevel?: string) {
         super(item, logLevel);
     }
 
-    public abstract updateState(newState: string | boolean | number): Promise<ServicePromise>;
+    public updateState(_newState: string | boolean | number): Promise<ServicePromise>{
+        throw new Error('This function should be overridden');
+    };
 
     public get isEditable(): boolean {
         return true;

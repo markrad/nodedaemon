@@ -32,7 +32,19 @@ export class ItemsManager {
         return this.checkItemIs(type, obj)? obj as typeof type : null;
     }
 
-    public getItemAs<T extends IHaItem>(type: T, entityId: string, throwOnFailure: boolean = false): T {
+    public getItemAsEx<T extends IHaItem>(entityId: string, ctor: { new (...args: any[]): T }, throwOnFailure: boolean = false): T {
+        let instance: IHaItem = this.getItem(entityId);
+        try {
+            if (instance && instance instanceof ctor) return instance as T;
+        }
+        catch (_err) {
+            _err;
+        }
+        if (throwOnFailure) throw new Error(`Entity ${entityId} not found or cannot be cast to ${ctor.prototype}`);
+        return null;
+    }
+
+    public getItemAs<T extends IHaItem>(type: unknown, entityId: string, throwOnFailure: boolean = false): T {
 
         let obj: IHaItem = this.getItem(entityId);
 

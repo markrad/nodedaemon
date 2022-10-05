@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { HaParentItem } from './haparentitem';
 
-export class HaItemNumber extends HaParentItem {
+export default class HaItemNumber extends HaParentItem {
     public constructor(item: State) {
         super(item);
     }
@@ -22,5 +22,3 @@ export class HaItemNumber extends HaParentItem {
         return this.attributes.mode;
     }
 }
-
-module.exports = HaItemNumber;

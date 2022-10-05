@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import log4js from 'log4js';
-// import { HaInterface } from '../hainterface';
 import { IHaItem } from './ihaitem';
 
 const CATEGORY: string = 'HaItemFactory';
@@ -50,7 +49,7 @@ export class HaItemFactory {
                 for await (const dirent of dir) {
                     if (dirent.name.startsWith('haitem') && dirent.name.endsWith('.js')) {
                         let itemType = dirent.name.split('.')[0].substr(6);
-                        this._itemClasses[itemType] = require('./' + dirent.name);
+                        this._itemClasses[itemType] = (await import('./' + dirent.name)).default;
                     }
                 }
 

@@ -12,7 +12,7 @@ import { ActionAndNewState, HaParentItem, IHaItemSwitch, ServicePromise } from '
 //     SUPPORT_WHITE_VALUE = 128,
 // }
 
-export abstract class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemSwitch {
+export class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaItemSwitch {
     private _moment: number;
     // private _support: SUPPORT;       
     private _timer: NodeJS.Timeout;

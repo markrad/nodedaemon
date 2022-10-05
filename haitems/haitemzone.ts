@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { HaParentItem } from './haparentitem';
 
-class HaItemZone extends HaParentItem {
+export default class HaItemZone extends HaParentItem {
     public constructor(item: State) {
         super(item);
     }
@@ -18,5 +18,3 @@ class HaItemZone extends HaParentItem {
         return this.attributes.radius;
     }
 }
-
-module.exports = HaItemZone;

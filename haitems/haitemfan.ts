@@ -9,7 +9,7 @@ enum SUPPORT {
     PRESET_MODE = 8
 }
 
-export class HaItemFan extends HaGenericSwitchItem {
+export default class HaItemFan extends HaGenericSwitchItem {
     // private _chainStateFn: (item: HaParentItem, state: State) => void;
     public constructor(item: State, logLevel?: string) {
         super(item, logLevel);
@@ -75,5 +75,3 @@ export class HaItemFan extends HaGenericSwitchItem {
         this.logger.debug(`Received new state: ${item.state}${this.isSetSpeedSupported? " Percentage: " + item.attributes.percentage : ""}`);
     }
 }
-
-module.exports = HaItemFan;

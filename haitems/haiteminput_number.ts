@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
 
-class HaItemInputNumber extends HaParentItem {
+export default class HaItemInputNumber extends HaParentItem {
     public constructor(item: State) {
         super(item);
     }
@@ -46,5 +46,3 @@ class HaItemInputNumber extends HaParentItem {
         return { action: action, expectedNewState: expectedNewState };
     }
 }
-
-module.exports = HaItemInputNumber;

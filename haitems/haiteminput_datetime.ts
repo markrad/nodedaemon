@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
 
-class HaItemInputDateTime extends HaParentItem {
+export default class HaItemInputDateTime extends HaParentItem {
     public constructor(item: State) {
         super(item);
     }
@@ -36,5 +36,3 @@ class HaItemInputDateTime extends HaParentItem {
         return { action: action, expectedNewState: expectedNewState };
     }
 }
-
-module.exports = HaItemInputDateTime;

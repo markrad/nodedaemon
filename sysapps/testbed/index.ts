@@ -3,9 +3,10 @@ import { AppParent } from '../../common/appparent';
 import { HaMain /*, SensorType */ } from '../../hamain';
 // import { HaItemSensor } from '../../haitems/haitemsensor'
 // import { IHaItemEditable } from '../../haitems/haparentitem';
-// import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
+import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 // import { resolve } from 'path';
-import { HaItemUpdate } from '../../haitems/haitemupdate';
+import  HaItemUpdate from '../../haitems/haitemupdate';
+import { HaGenericBinaryItem } from '../../haitems/hagenericbinaryitem';
 
 const CATEGORY: string = 'TestBed';
 var logger: Logger = getLogger(CATEGORY);
@@ -18,14 +19,15 @@ export default class TestBed extends AppParent {
 
     validate(_config: any): boolean {
         // Since this is test code we don't do much in here
-        let x: HaItemUpdate = (this.controller.items.getItem('update.rr_synol1_dsm_update') as HaItemUpdate);
-        logger.debug(x.state);
+        let x: HaItemUpdate = this.controller.items.getItemAsEx('update.rr_synol1_dsm_update', HaGenericBinaryItem);
+        let y: HaItemUpdate = this.controller.items.getItemAsEx('update.rr_synol1_dsm_update', HaItemUpdate);
+        logger.debug(y.state);
         logger.debug(`isOn=${x.isOn}; isOff=${x.isOff}`);
-        // let a: HaGenericSwitchItem = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, 'light.marks_light');
-        // let b: HaGenericSwitchItem = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, 'sensor.bedroom_nightstand_1_battery_level');
-        // logger.debug(a);
-        // logger.debug(b);
-        // logger.info('Validated successfully')
+        let a: HaGenericSwitchItem = this.controller.items.getItemAsEx('light.marks_light', HaGenericSwitchItem);
+        let b: HaGenericSwitchItem = this.controller.items.getItemAsEx('sensor.bedroom_nightstand_1_battery_level', HaGenericSwitchItem);
+        logger.debug(a);
+        logger.debug(b);
+        logger.info('Validated successfully')
         return true;
     }
 

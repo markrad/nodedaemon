@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 // TODO Add mechanism to activate it?
-export class HaItemAutomation extends HaGenericSwitchItem {
+export default class HaItemAutomation extends HaGenericSwitchItem {
     public constructor(item: State) {
         super(item);
     }
@@ -14,5 +14,3 @@ export class HaItemAutomation extends HaGenericSwitchItem {
         return this.attributes?.mode ?? 'unknown';
     }
 }
-
-module.exports = HaGenericSwitchItem;

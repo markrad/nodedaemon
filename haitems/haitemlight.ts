@@ -12,7 +12,7 @@ import { ServiceTarget, ServicePromise, HaParentItem } from './haparentitem';
 //     SUPPORT_WHITE_VALUE = 128,
 // }
 
-export class HaItemLight extends HaGenericSwitchItem {
+export default class HaItemLight extends HaGenericSwitchItem {
     private _saveStateChangeFn: (item: HaParentItem, state: State) => void;
     public constructor(item: State) {
         super(item);
@@ -92,5 +92,3 @@ export class HaItemLight extends HaGenericSwitchItem {
         });
     }
 }
-
-module.exports = HaItemLight;

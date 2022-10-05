@@ -2,14 +2,13 @@
 import { Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { IHaItemSwitch } from '../../haitems/haparentitem';
-import { HaItemLight } from '../../haitems/haitemlight';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
-import { HaItemLock } from '../../haitems/haitemlock';
-import { HaItemMediaPlayer } from '../../haitems/haitemmedia_player';
-import { HaItemBinarySensor } from '../../haitems/haitembinary_sensor';
 import { HaMain } from '../../hamain';
-// import { IHaItem } from '../../haitems/ihaitem';
 import { State } from '../../hamain/state';
+import HaItemLight from '../../haitems/haitemlight';
+import HaItemLock from '../../haitems/haitemlock';
+import HaItemMediaPlayer from '../../haitems/haitemmedia_player';
+import HaItemBinarySensor from '../../haitems/haitembinary_sensor';
 
 const CATEGORY = 'DayAndNight';
 

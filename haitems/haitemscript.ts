@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 
-export class HaItemScript extends HaGenericSwitchItem {
+export default class HaItemScript extends HaGenericSwitchItem {
     public constructor(item: State) {
         super(item);
     }
@@ -14,5 +14,3 @@ export class HaItemScript extends HaGenericSwitchItem {
         return this.attributes?.mode ?? 'unknown';
     }
 }
-
-module.exports = HaItemScript;

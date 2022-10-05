@@ -10,7 +10,7 @@ import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
-import  { HaItemButton } from '../../haitems/haitembutton';
+import HaItemButton from '../../haitems/haitembutton';
 
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);

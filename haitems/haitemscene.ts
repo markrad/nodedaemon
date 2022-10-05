@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
 import { HaParentItem, ServicePromise } from './haparentitem';
 
-class HaItemScene extends HaParentItem {
+export default class HaItemScene extends HaParentItem {
     public constructor(item: State) {
         super(item);
     }
@@ -17,5 +17,3 @@ class HaItemScene extends HaParentItem {
         });
     }
 }
-
-module.exports = HaItemScene;

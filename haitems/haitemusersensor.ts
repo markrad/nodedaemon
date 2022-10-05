@@ -3,7 +3,7 @@ import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, ServicePromise } from './haparentitem';
 import { IHaItem } from './ihaitem';
 
-class HaItemUserSensor extends HaGenericUpdateableItem {
+export default class HaItemUserSensor extends HaGenericUpdateableItem {
     public constructor(item: State) {
         super(item);
     }
@@ -37,5 +37,3 @@ class HaItemUserSensor extends HaGenericUpdateableItem {
         return { action: action, expectedNewState: expectedNewState };
     }
 }
-
-module.exports = HaItemUserSensor;

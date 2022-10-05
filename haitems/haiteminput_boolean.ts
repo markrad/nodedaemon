@@ -2,7 +2,7 @@ import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 import { ServicePromise } from './haparentitem';
 
-class HaItemInputBoolean extends HaGenericSwitchItem {
+export default class HaItemInputBoolean extends HaGenericSwitchItem {
     public constructor(item: State, logLevel: string) {
         super(item, logLevel);
     }
@@ -14,5 +14,3 @@ class HaItemInputBoolean extends HaGenericSwitchItem {
         });
     }
 }
-
-module.exports = HaItemInputBoolean;

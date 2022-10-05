@@ -2,7 +2,7 @@ import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, ServicePromise } from './haparentitem';
 
-class HaItemVar extends HaGenericUpdateableItem {
+export default class HaItemVar extends HaGenericUpdateableItem {
     public constructor(item: State) {
         super(item);
     }
@@ -30,5 +30,3 @@ class HaItemVar extends HaGenericUpdateableItem {
         return { action: action, expectedNewState: expectedNewState };
     }
 }
-
-module.exports = HaItemVar;
