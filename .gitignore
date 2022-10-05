@@ -115,6 +115,7 @@ secrets.yaml
 
 # Certificates
 sshcerts/
+dockercerts/
 
 # Code counter extension file
 .VSCodeCounter/
