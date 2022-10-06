@@ -104,49 +104,49 @@ export default class ContainerVersionCheck extends AppParent {
     }
 
     async run(): Promise<boolean> {
+        let updateFunc: () => Promise<boolean> = async () => {
+            return new Promise<boolean>(async (resolve, reject) => {
+                try {
+                    const dockerOptions: DockerModem.ConstructorOptions = {
+                        ca: this._ca,
+                        cert: this._cert,
+                        key: this._key,
+                        host: 'rr-hass.lan',
+                        port: this._port,
+                        protocol: this._protocol as 'http'
+                    };
+                    const docker = new Docker(dockerOptions);
+                    let containerList = ((await docker.container.list())
+                        .filter((value: Container) => this._names.includes(((value.data as any)['Image'] as string).split(':')[0].split('/')[0])));
+    
+                    for (let i = 0; i < containerList.length; i++) {
+                        let repo: string = (containerList[i].data as any)['Image'].split(':');
+                        try {
+                            let tags = (await getTags(this._dockerURL, repo[0], this._dockerUserId, this._dockerPassword))
+                                .filter((item: string) => this._re.exec(item));
+                            // logger.debug(tags);
+                            logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags.slice(-1)[0]}`);
+                            let cp: ContainerPair = this._containerPairs.find((item) => item.name == repo[0].split('/')[0]);
+                            cp.currentEntity.updateState(repo[1]);
+                            cp.dockerEntity.updateState(tags.slice(-1)[0]);
+                        }
+                        catch (err) {
+                            logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
+                        }
+                    }
+                    resolve(true);
+                }
+                catch (err: any) {
+                    logger.error(`Failed to connect to docker: ${(err as Error).message}`)
+                    reject(false);
+                }
+            });
+        }
+        
         const rule = new schedule.RecurrenceRule();
         rule.hour = [8, 20];
-        this._job = schedule.scheduleJob(rule, this._run);
-        return this._run();
-    }
-
-    async _run(): Promise<boolean> {
-        return new Promise<boolean>(async (resolve, reject) => {
-            try {
-                const dockerOptions: DockerModem.ConstructorOptions = {
-                    ca: this._ca,
-                    cert: this._cert,
-                    key: this._key,
-                    host: 'rr-hass.lan',
-                    port: this._port,
-                    protocol: this._protocol as 'http'
-                };
-                const docker = new Docker(dockerOptions);
-                let containerList = ((await docker.container.list())
-                    .filter((value: Container) => this._names.includes(((value.data as any)['Image'] as string).split(':')[0].split('/')[0])));
-
-                for (let i = 0; i < containerList.length; i++) {
-                    let repo: string = (containerList[i].data as any)['Image'].split(':');
-                    try {
-                        let tags = (await getTags(this._dockerURL, repo[0], this._dockerUserId, this._dockerPassword))
-                            .filter((item: string) => this._re.exec(item));
-                        // logger.debug(tags);
-                        logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags.slice(-1)[0]}`);
-                        let cp: ContainerPair = this._containerPairs.find((item) => item.name == repo[0].split('/')[0]);
-                        cp.currentEntity.updateState(repo[1]);
-                        cp.dockerEntity.updateState(tags.slice(-1)[0]);
-                    }
-                    catch (err) {
-                        logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
-                    }
-                }
-                resolve(true);
-            }
-            catch (err: any) {
-                logger.error(`Failed to connect to docker: ${(err as Error).message}`)
-                reject(false);
-            }
-        });
+        this._job = schedule.scheduleJob(rule, updateFunc);
+        return updateFunc();
     }
 
     async stop(): Promise<void> {
