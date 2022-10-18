@@ -122,13 +122,19 @@ export default class ContainerVersionCheck extends AppParent {
                     for (let i = 0; i < containerList.length; i++) {
                         let repo: string = (containerList[i].data as any)['Image'].split(':');
                         try {
+                            const initalValue: string = '';
                             let tags = (await getTags(this._dockerURL, repo[0], this._dockerUserId, this._dockerPassword))
-                                .filter((item: string) => this._re.exec(item));
-                            // logger.debug(tags);
-                            logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags.slice(-1)[0]}`);
+                                .filter((item: string) => this._re.exec(item))
+                                .sort((left: string, right: string) => {
+                                    return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
+                                           right.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) 
+                                           ? 1
+                                           : -1;
+                                });
+                            logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags[0]}`);
                             let cp: ContainerPair = this._containerPairs.find((item) => item.name == repo[0].split('/')[0]);
                             cp.currentEntity.updateState(repo[1]);
-                            cp.dockerEntity.updateState(tags.slice(-1)[0]);
+                            cp.dockerEntity.updateState(tags[0]);
                         }
                         catch (err) {
                             logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
