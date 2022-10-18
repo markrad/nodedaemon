@@ -98,7 +98,7 @@ export default class WebServer extends AppParent {
                 })
                 .catch((err) => {
                     logger.error(`Could not get router webpage: ${err}`);
-                    res.redirect('http://rr-router');
+                    res.redirect('http://router1.lan');
                 });
         });
 
@@ -121,8 +121,7 @@ export default class WebServer extends AppParent {
 
     private async _getadpage() {
         return new Promise((resolve, reject) => {
-            // http.get('http://rr-router.home.radrealm.com', (resp) => {
-            http.get('http://192.168.1.1', (resp) => {
+            http.get('http://router1.lan', (resp) => {
                     let data: string = '';
 
                 resp.on('data', (chunk) => {
@@ -137,7 +136,7 @@ export default class WebServer extends AppParent {
                         reject(new Error('Unable to find version string in URL'));
                     }
                     else {
-                        resolve(`http://192.168.1.1/ui/${result[1]}/dynamic/login.html`);
+                        resolve(`http://router1.lan/ui/${result[1]}/dynamic/login.html`);
                     }
                 });
 
