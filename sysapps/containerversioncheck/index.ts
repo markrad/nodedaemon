@@ -152,6 +152,11 @@ export default class ContainerVersionCheck extends AppParent {
         const rule = new schedule.RecurrenceRule();
         rule.hour = [8, 20];
         this._job = schedule.scheduleJob(rule, updateFunc);
+        this.controller.on('serviceevent', async (eventType: string, data: any) => {
+            if (eventType == 'nodedaemon' && data?.script == 'containerversioncheck' && data?.command == 'run') {
+                await updateFunc();
+            }
+        });
         return updateFunc();
     }
 
