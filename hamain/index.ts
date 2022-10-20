@@ -27,6 +27,17 @@ export enum SensorType {
     binary
 }
 
+export interface HaMainEvents {
+    'itemdeleted': (item: IHaItem) => void;
+    'itemadded': (item: IHaItem) => void;
+    'serviceevent': (eventType: string, data: any) => void;
+};
+
+export declare interface HaMain {
+    on<U extends keyof HaMainEvents>(event: U, listner: HaMainEvents[U]): this;
+    emit<U extends keyof HaMainEvents>(event: U, ...args: Parameters<HaMainEvents[U]>): boolean;
+}
+
 export class HaMain extends EventEmitter {
     private _haInterface: HaInterface = null;
     private _items: ItemsManager = new ItemsManager();
@@ -62,6 +73,7 @@ export class HaMain extends EventEmitter {
         try {
             this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
             this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
+                if (eventType != 'state_changed') logger.debug(`Service Event: ${eventType}`);
                 if (eventType == 'state_changed') {
                     let state: StateChange = data;
                     if (this._items.getItem(state.entity_id)) {
@@ -124,10 +136,6 @@ export class HaMain extends EventEmitter {
                 }
             });
 
-            this._haInterface.on('fatal_error', (err) => {
-                logger.fatal(`Transport layer reports fatal error - ${err.message}`);
-                process.exit(4);
-            });
             this._haItemFactory = new HaItemFactory(this._config);
             await this._haInterface.start();
             this._haConfig = await this._haInterface.getConfig();

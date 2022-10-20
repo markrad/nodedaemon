@@ -85,6 +85,17 @@ const CATEGORY = 'HaInterface';
 
 var logger = getLogger(CATEGORY);
 
+export interface HaInterfaceEvents {
+    'serviceevent': (eventType: any, data: any) => void;
+    'connected': () => void;
+    'disconnected': () => void;
+};
+
+export declare interface HaInterface {
+    on<U extends keyof HaInterfaceEvents>(event: U, listner: HaInterfaceEvents[U]): this;
+    emit<U extends keyof HaInterfaceEvents>(event: U, ...args: Parameters<HaInterfaceEvents[U]>): boolean;
+}
+
 export class HaInterface extends EventEmitter {
     private static readonly APIPATH = '/api/websocket';
     private static readonly RESTPATH = '/api';
