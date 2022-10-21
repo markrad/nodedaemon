@@ -82,43 +82,43 @@ export class HaMain extends EventEmitter {
                             this.items.getItem(state.entity_id).setReceivedState(state.new_state);
                         }
                         else {
-                            logger.info(`Item ${state.entity_id} has been dropped`);
                             let item = this.items.getItem(state.entity_id);
                             this.items.deleteItem(state.entity_id);
                             this.emit('itemdeleted', item);
+                            logger.info(`Item ${state.entity_id} has been dropped`);
                         }
                     }
                     else {
-                        // It may have just been deleted
                         if (state.new_state != null) {
-                            logger.debug(`Item ${state.entity_id} not found - will be added`);
+                            let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
+                            let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
+                            this._setupItem(itemInstance); 
+                            logger.info(`Item ${state.entity_id} not found - added`);
                         }
-                        // logger.error(`Item ${state.entity_id} not found - this should not happen`);
-                        // this._processItems(await this._haInterface.getStates());
                     }
                 }
                 else if (eventType == 'call_service') {
                     logger.debug(`Call Service ${JSON.stringify(data, null, 4)}`);
                     logger.debug(`Ignored event "${eventType}"`)
                 }
-                else if (eventType == 'entity_registry_updated') {
-                    if (data.action == 'create') {
-                        logger.info(`Adding new device ${data.entity_id}`);
-                        let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
-                        let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
-                        this._setupItem(itemInstance); 
-                    }
-                    else if (data.action == 'remove') {
-                        logger.info(`Removing deleted device ${data.entity_id}`);
-                        let item = this.items.getItem(data.entity_id);
-                        this.items.deleteItem(data.entity_id);
-                        this.emit('itemdeleted', item);
-                }
-                    else {
-                        // TODO: Handle this
-                        logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
-                    }
-                }
+                // else if (eventType == 'entity_registry_updated') {
+                //     if (data.action == 'create') {
+                //         logger.info(`Adding new device ${data.entity_id}`);
+                //         let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
+                //         let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
+                //         this._setupItem(itemInstance); 
+                //     }
+                //     else if (data.action == 'remove') {
+                //         logger.info(`Removing deleted device ${data.entity_id}`);
+                //         let item = this.items.getItem(data.entity_id);
+                //         this.items.deleteItem(data.entity_id);
+                //         this.emit('itemdeleted', item);
+                //     }
+                //     else {
+                //         // TODO: Handle this
+                //         logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
+                //     }
+                // }
                 else {
                     logger.debug(`Event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
                 }
