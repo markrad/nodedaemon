@@ -154,6 +154,7 @@ export default class ContainerVersionCheck extends AppParent {
         this._job = schedule.scheduleJob(rule, updateFunc);
         this.controller.on('serviceevent', async (eventType: string, data: any) => {
             if (eventType == 'nodedaemon' && data?.script == 'containerversioncheck' && data?.command == 'run') {
+                logger.info('Update requested');
                 await updateFunc();
             }
         });
