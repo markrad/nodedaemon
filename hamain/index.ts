@@ -53,6 +53,8 @@ export class HaMain extends EventEmitter {
     private _port: number = NaN;
     private _accessToken: string = null;
     private _pingInterval: number = NaN;
+    private _memInterval: number = NaN;
+    private _memHandle: NodeJS.Timer = null;
     constructor(config: any, configPath: string, version: string) {
         super();
         this._config = config;
@@ -62,17 +64,39 @@ export class HaMain extends EventEmitter {
         this._port = this._config.main.port ?? 8123
         this._accessToken = this._config.main.accessToken;
         this._pingInterval = this._config.main.pintInterval ?? 0;
+        this._memInterval = this._config.main.memInterval ?? 0;
 
         if (process.env.HAMAIN_LOGGING) {
             logger.level = process.env.HAMAIN_LOGGING;
             logger.log(logger.level, 'Logging level overridden');
         }
+
+        if (isNaN(this._port)) {
+            logger.error(`Specified port ${this._port} is invalid - will try 8123`);
+            this._port = 8123;
+        }
+
+        if (isNaN(this._pingInterval)) {
+            logger.warn(`Ping interval ${this._pingInterval} is invalid - ignored`);
+        }
+
+        if (isNaN(this._memInterval)) {
+            logger.warn(`Mem interval ${this._memInterval} is invalid - ignored`);
+        }
     }
 
     public async start(): Promise<void> {
         try {
-            this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
-            this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
+                if (this._memInterval > 0) {
+                    var heapUsed: number = 0;
+                    this._memHandle = setInterval(() => {
+                        var mem: NodeJS.MemoryUsage = process.memoryUsage();
+                        logger.info(`Used ${Math.round(mem.heapUsed * 100 / mem.heapTotal * 100) / 100}% - change of ${(mem.heapUsed - heapUsed).toLocaleString()} (total: ${mem.heapTotal.toLocaleString()}; used: ${mem.heapUsed.toLocaleString()})`);
+                        heapUsed = mem.heapUsed;
+                    }, this._memInterval * 1000);
+                }
+                this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
+                this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
                 if (eventType != 'state_changed') logger.debug(`Service Event: ${eventType}`);
                 if (eventType == 'state_changed') {
                     let state: StateChange = data;
@@ -193,6 +217,10 @@ export class HaMain extends EventEmitter {
 
     public async stop() {
         return new Promise<void>(async (resolve, reject) => {
+            if (this._memHandle != null) {
+                clearInterval(this._memHandle);
+                this._memHandle = null;
+            }
             this._apps.forEach(async (app) => {
                 try {
                     if (app) {
