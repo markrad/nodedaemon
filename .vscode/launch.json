@@ -5,7 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "pwa-node",
+            "name": "Launch build",
+            "program": "${workspaceFolder}/build/build.js",
+            "request": "launch",
+            "args": ["1.1.11"],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
             "request": "launch",
             "name": "Launch nodedaemon",
             "skipFiles": [
@@ -30,7 +41,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "type": "pwa-node"
+            "type": "node"
         },
         {
             "address": "192.168.1.13",
@@ -42,7 +53,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "type": "pwa-node"
+            "type": "node"
         }
     ]
 }
