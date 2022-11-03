@@ -43,7 +43,8 @@ export class WSWrapper extends EventEmitter {
     
     public async open(): Promise<void> {
         this._closing = false;
-        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH' ];
+        // Note: It appears that ENOTFOUND can be thrown during docker upheaval thus it may be transient
+        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENOTFOUND' ];
         return new Promise(async (resolve, reject) => {
 
             while (true) {
