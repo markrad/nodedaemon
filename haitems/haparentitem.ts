@@ -39,6 +39,17 @@ export type ActionAndNewState = {
     expectedNewState: string
 }
 
+export interface HaParentItemEvents {
+    'new_state': (that: any, oldstate: any) => void;
+    'forcestateupdate': (entityid: string, state: string | number | boolean) => void;
+    'callservice': (domain: string, service: string, state: ServiceTarget) => void;
+};
+
+export declare interface HaParentItem {
+    on<U extends keyof HaParentItemEvents>(event: U, listner: HaParentItemEvents[U]): this;
+    emit<U extends keyof HaParentItemEvents>(event: U, ...args: Parameters<HaParentItemEvents[U]>): boolean;
+}
+
 export abstract class HaParentItem extends EventEmitter implements IHaItem {
     private _attributes: any;
     private _name: string;
@@ -138,6 +149,28 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this._lastUpdated = new Date(newState.last_updated);
         this._lastChanged = new Date(newState.last_changed);
         this.emit('new_state', this, oldState);
+    }
+
+    public forceStateUpdate(newState: string | number | boolean) {
+        return new Promise<ServicePromise>((resolve, _reject) => {
+            let waitChange = (newState: string | boolean | number): void => {
+                let onChange = (that: IHaItem, _oldState: string | boolean | number) => {
+                    if (that.state == newState) {
+                        clearTimeout(timer);
+                        this.off('new_state', onChange);
+                        resolve({ message: 'success', err: null })
+                    }
+                };
+                this.on('new_state', onChange);
+                let timer: NodeJS.Timer = setTimeout(() => {
+                    this.logger.error('Time out before state change');
+                    this.off('new_state', onChange);
+                    resolve({ message: 'error', err: new Error('Time out before state change')});
+                }, 5000);
+            }
+            waitChange(newState);
+            this.emit('forcestateupdate', this.entityId, newState);
+        });
     }
 
     public get logging(): string | Level {
