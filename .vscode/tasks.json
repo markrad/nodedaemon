@@ -22,6 +22,11 @@
 			],
 			"group": "build",
 			"label": "tsc: build - tsconfig.json"
+		},
+		{
+			"label": "shutdown",
+			"type": "shell",
+			"command": "${workspaceFolder}/tools/shutdown.sh"
 		}
 	]
 }
