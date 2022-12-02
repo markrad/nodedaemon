@@ -1,0 +1,1 @@
+kill -INT $(ps ax | grep output/nodedaemon.js | grep -v grep | cut -f 2 -d ' ')
