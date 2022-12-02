@@ -40,6 +40,8 @@ export class CommandInspect extends CommandBase {
                 sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
                 sock.write(`State = ${item.state}\r\n`);
+                sock.write(`Last Changed = ${item.lastChanged.toISOString()}\r\n`);
+                sock.write(`Last Updated = ${item.lastUpdated.toISOString()}\r\n`);
                 sock.write('Attributes:\r\n');
                 sock.write(`${JSON.stringify(item.attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
                 return 0;
