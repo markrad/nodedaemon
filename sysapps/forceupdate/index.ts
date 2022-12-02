@@ -57,11 +57,16 @@ export default class ForceUpdate extends AppParent {
     async run(): Promise<boolean> {
         let updater = async (tracker: Tracker): Promise<void> => {
             logger.debug(`Updating state of ${tracker.entity.friendlyName}`);
-            var state: boolean | number | string = tracker.entity.state;
-            let rc: ServicePromise = await tracker.entity.updateState(state, true);
+            if (((new Date()).getTime() - tracker.entity.lastUpdated.getTime()) / 1000 / 60 < tracker.interval / 2) {
+                logger.debug(`State was updated less than ${Math.ceil(tracker.interval /2)} ago - not updated`);
+            }
+            else {
+                let state: boolean | number | string = tracker.entity.state;
+                let rc: ServicePromise = await tracker.entity.updateState(state, true);
 
-            if (rc.err) {
-                logger.error(rc.err);
+                if (rc.err) {
+                    logger.error(rc.err);
+                }
             }
         }
         return new Promise(async (resolve, _reject) => {
