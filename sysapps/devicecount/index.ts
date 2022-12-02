@@ -51,7 +51,7 @@ export default class DeviceTracker extends AppParent {
                     res.on('end', () => {
                         try {
                             let devices = JSON.parse(body);
-                            this._deviceCount.updateState(devices.length);
+                            this._deviceCount.updateState(devices.length, false);
                         }
                         catch (err) {
                             logger.error(`Failed parsing devices JSON: ${err.message}`);

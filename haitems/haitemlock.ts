@@ -1,7 +1,8 @@
 import { State } from '../hamain/state'
-import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
+import { HaGenericUpdateableItem } from './hagenericupdatableitem';
+import { ActionAndNewState, ServicePromise } from './haparentitem';
 
-export default class HaItemLock extends HaParentItem {
+export default class HaItemLock extends HaGenericUpdateableItem {
     public constructor(item: State) {
         super(item);
     }

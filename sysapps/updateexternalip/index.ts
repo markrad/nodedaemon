@@ -1,4 +1,4 @@
-import { IHaItemEditable } from "../../haitems/haparentitem";
+import { IHaItemEditable } from "../../haitems/IHaItemEditable";
 import { HaMain } from "../../hamain";
 import http from 'http';
 import { getLogger, Logger } from "log4js";
@@ -39,7 +39,7 @@ export default class UpdateExternalIP extends AppParent {
                     let currentIP = await this._whatsMyIP();
 
                     logger.info(`Updating external IP address to ${currentIP}`);
-                    this._external_ip.updateState(currentIP);
+                    this._external_ip.updateState(currentIP, false);
                 }
                 catch (err) {
                     logger.error(`Could not get IP address: ${err}`);

@@ -1,7 +1,8 @@
 import { State } from '../hamain/state'
-import { HaGenericSwitchItem } from './hagenericswitchitem';
+import { HaGenericButtonItem } from './hagenericbuttonitem';
 
-export default class HaItemScript extends HaGenericSwitchItem {
+// TODO: Validate logic
+export default class HaItemScript extends HaGenericButtonItem {
     public constructor(item: State) {
         super(item);
     }

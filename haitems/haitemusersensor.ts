@@ -7,9 +7,9 @@ export default class HaItemUserSensor extends HaGenericUpdateableItem {
         super(item);
     }
 
-    public async updateState(newState: string | boolean | number): Promise<ServicePromise> {
+    public async updateState(newState: string | boolean | number, forceUpdate: boolean): Promise<ServicePromise> {
         return new Promise<ServicePromise>((resolve, _reject) => {
-            let result = this.forceStateUpdate(newState);
+            let result = this.updateState(newState, forceUpdate);
             resolve(result);
         });
     }

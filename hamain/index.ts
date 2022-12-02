@@ -371,7 +371,7 @@ export class HaMain extends EventEmitter {
                 // Error already logged
             }
         });
-        itemInstance.on('callrestservice', async (entityId: string, state: string | boolean | number) => {
+        itemInstance.on('callrestservice', async (entityId: string, state: string | boolean | number, forceUpdate: boolean) => {
             try {
                 let entity = this.items.getItem(entityId);
 
@@ -379,7 +379,7 @@ export class HaMain extends EventEmitter {
                     logger.error(`Entity ${entityId} does not exist`);
                     return;
                 }
-                await this._haInterface.updateSensor(entity, state);
+                await this._haInterface.updateSensor(entity, state, forceUpdate);
             }
             catch (err) {
                 logger.error(err.message);

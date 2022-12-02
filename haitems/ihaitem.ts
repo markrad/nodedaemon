@@ -20,7 +20,7 @@ export interface IHaItem {
     get logging(): string | Level;
     set logging(value: string | Level);
     setReceivedState(newState: State): void;
-    forceStateUpdate(newState: string | number | boolean): Promise<ServicePromise>;
+    updateState(newState: string | number | boolean, forceUpdate: boolean): Promise<ServicePromise>;
     on(eventName: string | symbol, listener: (...args: any[]) => void): void;
     off(eventName: String | symbol, listener: (...args: any[]) => void): void;
 }

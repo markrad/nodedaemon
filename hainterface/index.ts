@@ -364,14 +364,14 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    public async updateSensor(entityId: IHaItem, value: boolean | string | number, attributes?: any): Promise<void> {
+    public async updateSensor(entityId: IHaItem, value: boolean | string | number, forceUpdate: boolean): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             const parameters = this._getrestparms(entityId.entityId, value, false);
 
-            parameters.body.attributes = { ...parameters.body.attributes, ...entityId.attributes, ...{ updatedBy: 'nodedaemon' } };
+            parameters.body.attributes = { ...parameters.body.attributes, ...entityId.attributes };
 
-            if (attributes) {
-                parameters.body.attributes = { ...parameters.body.attributes, ...attributes };
+            if (forceUpdate) {
+                parameters.body.attributes = { ...parameters.body.attributes, ...{ forceUpdate: 'yes' } };
             }
 
             const req = http.request(parameters.options, (res) => {

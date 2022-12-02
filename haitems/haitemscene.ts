@@ -1,7 +1,10 @@
 import { State } from '../hamain/state'
-import { HaParentItem, ServicePromise } from './haparentitem';
+import { ServicePromise } from './haparentitem';
+import { HaGenericButtonItem } from './hagenericbuttonitem';
 
-export default class HaItemScene extends HaParentItem {
+
+// TODO Validate this logic
+export default class HaItemScene extends HaGenericButtonItem {
     public constructor(item: State) {
         super(item);
     }

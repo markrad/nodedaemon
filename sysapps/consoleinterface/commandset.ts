@@ -5,7 +5,8 @@ import ConsoleInterface from ".";
 import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
-import { IHaItemEditable, ServicePromise } from '../../haitems/haparentitem';
+import { ServicePromise } from '../../haitems/haparentitem';
+import { IHaItemEditable } from "../../haitems/IHaItemEditable";
 import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
@@ -90,7 +91,7 @@ export class CommandSet extends CommandBase {
                         throw new Error(`set state requires a new state to be a single word`);
                     }
 
-                    rc = await target.updateState(inputArray[3]);
+                    rc = await target.updateState(inputArray[3], false);
 
                     if (rc.err) {
                         sock.write(`Error: Command ${inputArray[3]} failed for ${target.entityId}: ${rc.err.message}\r\n`);

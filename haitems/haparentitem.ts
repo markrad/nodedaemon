@@ -18,22 +18,6 @@ export type ServicePromise = {
     err: Error;
 }
 
-export interface IHaItemEditable extends IHaItem {
-    get isEditable(): boolean;
-    updateState(newState: string | boolean | number): Promise<ServicePromise>;
-}
-
-export interface IHaItemSwitch extends IHaItemEditable {
-    turnOn: () => Promise<ServicePromise>;
-    turnOff: () => Promise<ServicePromise>;
-    toggle: () => Promise<ServicePromise>;
-    turnOffAt: (moment: number) => Promise<void>;
-    get isOn(): boolean;
-    get isOff(): boolean;
-    get timeBeforeOff(): number;
-    get isTimerRunning(): boolean;
-}
-
 export type ActionAndNewState = {
     action: string,
     expectedNewState: string
@@ -41,7 +25,7 @@ export type ActionAndNewState = {
 
 export interface HaParentItemEvents {
     'new_state': (that: any, oldstate: any) => void;
-    'callrestservice': (entityid: string, state: string | number | boolean) => void;
+    'callrestservice': (entityid: string, state: string | number | boolean, forceUpdate: boolean) => void;
     'callservice': (domain: string, service: string, state: ServiceTarget) => void;
 };
 
@@ -151,26 +135,8 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('new_state', this, oldState);
     }
 
-    public forceStateUpdate(newState: string | number | boolean): Promise<ServicePromise> {
-        return new Promise<ServicePromise>((resolve, _reject) => {
-            let waitChange = (newState: string | boolean | number): void => {
-                let onChange = (that: IHaItem, _oldState: string | boolean | number) => {
-                    if (that.state == newState) {
-                        clearTimeout(timer);
-                        this.off('new_state', onChange);
-                        resolve({ message: 'success', err: null })
-                    }
-                };
-                this.on('new_state', onChange);
-                let timer: NodeJS.Timer = setTimeout(() => {
-                    this.logger.error('Time out before state change');
-                    this.off('new_state', onChange);
-                    resolve({ message: 'error', err: new Error('Time out before state change')});
-                }, 30000);
-            }
-            waitChange(newState);
-            this.emit('callrestservice', this.entityId, newState);
-        });
+    public updateState(_newState: string | number | boolean, _forceUpdate: boolean): Promise<ServicePromise> {
+        throw new Error('This function should be overridden');
     }
 
     public get logging(): string | Level {

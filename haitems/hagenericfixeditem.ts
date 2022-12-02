@@ -1,0 +1,36 @@
+import { HaParentItem, ServicePromise } from './haparentitem';
+import { IHaItem } from './ihaitem';
+import { State } from '../hamain/state'
+import { IHaItemFixed } from './ihaitemfixed';
+
+export class HaGenericFixedItem extends HaParentItem implements IHaItemFixed {
+    public constructor(item: State, logLevel?: string) {
+        super(item, logLevel);
+    }
+
+    public updateState(newState: string | number | boolean, forceUpdate: boolean): Promise<ServicePromise> {
+        return new Promise<ServicePromise>((resolve, _reject) => {
+            let waitChange = (newState: string | boolean | number): void => {
+                let onChange = (that: IHaItem, _oldState: string | boolean | number) => {
+                    if (that.state == newState) {
+                        clearTimeout(timer);
+                        this.off('new_state', onChange);
+                        resolve({ message: 'success', err: null })
+                    }
+                };
+                this.on('new_state', onChange);
+                let timer: NodeJS.Timer = setTimeout(() => {
+                    this.logger.error('Time out before state change');
+                    this.off('new_state', onChange);
+                    resolve({ message: 'error', err: new Error('Time out before state change')});
+                }, 30000);
+            }
+            waitChange(newState);
+            this.emit('callrestservice', this.entityId, newState, forceUpdate);
+        });
+    }
+
+    public get isEditable(): boolean {
+        return true;
+    }
+}

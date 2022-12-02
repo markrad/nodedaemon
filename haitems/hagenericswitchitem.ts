@@ -1,6 +1,7 @@
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
-import { ActionAndNewState, HaParentItem, IHaItemSwitch, ServicePromise } from './haparentitem';
+import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
+import { IHaItemSwitch } from "./IHaItemSwitch";
 
 // export enum SUPPORT {
 //     SUPPORT_BRIGHTNESS = 1,

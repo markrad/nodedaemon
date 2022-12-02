@@ -1,4 +1,5 @@
-import { HaParentItem, IHaItemEditable, ServicePromise } from './haparentitem';
+import { HaParentItem, ServicePromise } from './haparentitem';
+import { IHaItemEditable } from "./IHaItemEditable";
 import { State } from '../hamain/state'
 
 export class HaGenericUpdateableItem extends HaParentItem implements IHaItemEditable {
@@ -6,7 +7,7 @@ export class HaGenericUpdateableItem extends HaParentItem implements IHaItemEdit
         super(item, logLevel);
     }
 
-    public updateState(_newState: string | boolean | number): Promise<ServicePromise>{
+    public updateState(_newState: string | boolean | number, _forceUpdate: boolean): Promise<ServicePromise>{
         throw new Error('This function should be overridden');
     };
 

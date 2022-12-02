@@ -58,7 +58,7 @@ export default class ForceUpdate extends AppParent {
         let updater = async (tracker: Tracker): Promise<void> => {
             logger.debug(`Updating state of ${tracker.entity.friendlyName}`);
             var state: boolean | number | string = tracker.entity.state;
-            let rc: ServicePromise = await tracker.entity.forceStateUpdate(state);
+            let rc: ServicePromise = await tracker.entity.updateState(state, true);
 
             if (rc.err) {
                 logger.error(rc.err);

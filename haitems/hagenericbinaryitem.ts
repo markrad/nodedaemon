@@ -1,7 +1,7 @@
 import { State } from '../hamain/state'
-import { HaParentItem } from './haparentitem';
+import { HaGenericFixedItem } from './hagenericfixeditem';
 
-export class HaGenericBinaryItem extends HaParentItem {
+export class HaGenericBinaryItem extends HaGenericFixedItem {
     public constructor(item: State) {
         super(item);
     }

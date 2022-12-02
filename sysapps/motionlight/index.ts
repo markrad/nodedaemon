@@ -1,7 +1,7 @@
 "use strict";
 
 import { IHaItem } from "../../haitems/ihaitem";
-import { IHaItemSwitch } from "../../haitems/haparentitem";
+import { IHaItemSwitch } from "../../haitems/IHaItemSwitch";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
 import { getLogger, Logger } from 'log4js';

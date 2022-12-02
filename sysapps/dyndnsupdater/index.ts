@@ -1,6 +1,6 @@
 import { AppParent } from '../../common/appparent';
 import { IHaItem } from "../../haitems/ihaitem";
-import { IHaItemEditable } from "../../haitems/haparentitem";
+import { IHaItemEditable } from "../../haitems/IHaItemEditable";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
 import { getLogger, Level, Logger } from "log4js";
@@ -84,7 +84,7 @@ export default class DynDnsUpdater extends AppParent {
                             switch (rc) {
                                 case 'good':
                                 case 'nochg':
-                                    this._lastUpdate.updateState(now.format('YYYY-MM-DD HH:mm:ss'));
+                                    this._lastUpdate.updateState(now.format('YYYY-MM-DD HH:mm:ss'), false);
                                     logger.info(`DynDns IP address successfully updated to ${item.state}`);
                                 break;
                             default:

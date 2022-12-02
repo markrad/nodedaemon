@@ -3,7 +3,7 @@ import { Logger } from 'log4js';
 import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
-import { IHaItemEditable } from '../../haitems/haparentitem';
+import { IHaItemEditable } from "../../haitems/IHaItemEditable";
 import { HaMain } from '../../hamain';
 
 const CATEGORY = 'AstroHelper';
@@ -62,19 +62,19 @@ export default class AstroHelper extends AppParent {
         this._astro.once('initialized', () => {
             this._astro.on('astroevent', (event: string) => {
                 let now: Date = new Date();
-                this._lastEvent.updateState(event);
+                this._lastEvent.updateState(event, false);
                 let nowString: string = now.getFullYear() + '-' +
                     (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
                     now.getDate().toString().padStart(2, '0') + ' ' +
                     now.getHours().toString().padStart(2, '0') + ':' +
                     now.getMinutes().toString().padStart(2, '0') + ':' +
                     now.getSeconds().toString().padStart(2, '0');
-                this._lastUpdate.updateState(nowString);
+                this._lastUpdate.updateState(nowString, false);
             });
-            this._astro.on('moonphase', (phase: any) => this._moon.updateState(phase));
-            this._astro.on('isLight', () => this._dark.updateState(false));
-            this._astro.on('isDark', () => this._dark.updateState(true))
-            this._lastEvent.updateState(this._astro.lastEvent);
+            this._astro.on('moonphase', (phase: any) => this._moon.updateState(phase, false));
+            this._astro.on('isLight', () => this._dark.updateState(false, false));
+            this._astro.on('isDark', () => this._dark.updateState(true, false))
+            this._lastEvent.updateState(this._astro.lastEvent, false);
             let now = new Date();
             let nowString = now.getFullYear() + '-' +
                 (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
@@ -82,9 +82,9 @@ export default class AstroHelper extends AppParent {
                 now.getHours().toString().padStart(2, '0') + ':' +
                 now.getMinutes().toString().padStart(2, '0') + ':' +
                 now.getSeconds().toString().padStart(2, '0');
-            this._lastUpdate.updateState(nowString);
-            this._moon.updateState(this._astro.lastMoonPhase)
-            this._dark.updateState(this._astro.isDark);
+            this._lastUpdate.updateState(nowString, false);
+            this._moon.updateState(this._astro.lastMoonPhase, false)
+            this._dark.updateState(this._astro.isDark, false);
             this._setsuntimes();
             this._midnight = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._setsuntimes());
         });
@@ -112,11 +112,11 @@ export default class AstroHelper extends AppParent {
 
     private _setsuntimes(): void {
         if (this._sunrise) {
-            this._sunrise.updateState(this._getEventTime('sunrise'));
+            this._sunrise.updateState(this._getEventTime('sunrise'), false);
         }
 
         if (this._sunset) {
-            this._sunset.updateState(this._getEventTime('sunset'));
+            this._sunset.updateState(this._getEventTime('sunset'), false);
         }
     }
 
