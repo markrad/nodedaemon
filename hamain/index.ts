@@ -373,7 +373,13 @@ export class HaMain extends EventEmitter {
         });
         itemInstance.on('callrestservice', async (entityId: string, state: string | boolean | number) => {
             try {
-                await this._haInterface.updateSensor(entityId, state);
+                let entity = this.items.getItem(entityId);
+
+                if (!entity) {
+                    logger.error(`Entity ${entityId} does not exist`);
+                    return;
+                }
+                await this._haInterface.updateSensor(entity, state);
             }
             catch (err) {
                 logger.error(err.message);

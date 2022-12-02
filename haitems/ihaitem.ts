@@ -1,5 +1,6 @@
 import { Level, Logger } from 'log4js';
 import { State } from '../hamain/state';
+import { ServicePromise } from './haparentitem';
 
 export interface IHaItem {
     get logger(): Logger;
@@ -19,6 +20,7 @@ export interface IHaItem {
     get logging(): string | Level;
     set logging(value: string | Level);
     setReceivedState(newState: State): void;
+    forceStateUpdate(newState: string | number | boolean): Promise<ServicePromise>;
     on(eventName: string | symbol, listener: (...args: any[]) => void): void;
     off(eventName: String | symbol, listener: (...args: any[]) => void): void;
 }

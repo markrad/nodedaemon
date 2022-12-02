@@ -6,6 +6,7 @@ import { ServiceTarget } from '../haitems/haparentitem';
 import { WSWrapper } from '../common/wswrapper';
 import { EventWaiter } from '../common/eventwaiter';
 import http from 'http';
+import { IHaItem } from '../haitems/ihaitem';
 
 enum PacketTypesIn {
     ServiceAuthRequired,
@@ -315,13 +316,15 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    private _getrestparms(entityId: string, value: boolean | string | number): { body: any, options: any } {
+    private _getrestparms(entityId: string, value: boolean | string | number, newEntity: boolean ): { body: any, options: any } {
         const body: any = {
             state: value,
-            attributes: {
-                addedBy: 'nodedaemon'
-            }
-        };
+            attributes: {}
+        }
+
+        if (newEntity) {
+            body.attributes.addedBy = 'nodedaemon';
+        }
         const options: any = {
             hostname: this._hostname,
             port: this._port.toString(),
@@ -337,10 +340,14 @@ export class HaInterface extends EventEmitter {
         return { body: body, options: options };
     }
 
-    public async addSensor(entityId: string, value: boolean | string | number): Promise<void> {
+    public async addSensor(entityId: string, value: boolean | string | number, attributes?: object): Promise<void> {
         return new Promise<void>((resolve, reject) => {
 
-            const parameters = this._getrestparms(entityId, value);
+            const parameters = this._getrestparms(entityId, value, true);
+
+            if (attributes) {
+                parameters.body.attributes = { ...parameters.body.attributes, ...attributes };
+            }
 
             const req = http.request(parameters.options, (res) => {
                 if (res.statusCode != 201) {
@@ -357,27 +364,17 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    public async updateSensor(entityId: string, value: boolean | string | number): Promise<void> {
+    public async updateSensor(entityId: IHaItem, value: boolean | string | number, attributes?: any): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const body: any = {
-                state: value,
-                attributes: {
-                    addedBy: 'nodedaemon'
-                }
-            };
-            const options: any = {
-                hostname: this._hostname,
-                port: this._port.toString(),
-                path: `${HaInterface.RESTPATH}/states/${entityId}`,
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'authorization': `Bearer ${this._accessToken}`
-                }
-            };
+            const parameters = this._getrestparms(entityId.entityId, value, false);
 
-            const req = http.request(options, (res) => {
+            parameters.body.attributes = { ...parameters.body.attributes, ...entityId.attributes, ...{ updatedBy: 'nodedaemon' } };
+
+            if (attributes) {
+                parameters.body.attributes = { ...parameters.body.attributes, ...attributes };
+            }
+
+            const req = http.request(parameters.options, (res) => {
                 if (res.statusCode != 200) {
                     reject(new Error(`Update sensor failed with ${res.statusCode}`));
                 }
@@ -387,7 +384,7 @@ export class HaInterface extends EventEmitter {
             });
 
             req.on('error', (e) => reject(e));
-            req.write(JSON.stringify(body));
+            req.write(JSON.stringify(parameters.body));
             req.end();
         });
     }

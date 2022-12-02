@@ -41,7 +41,7 @@ export type ActionAndNewState = {
 
 export interface HaParentItemEvents {
     'new_state': (that: any, oldstate: any) => void;
-    'forcestateupdate': (entityid: string, state: string | number | boolean) => void;
+    'callrestservice': (entityid: string, state: string | number | boolean) => void;
     'callservice': (domain: string, service: string, state: ServiceTarget) => void;
 };
 
@@ -151,7 +151,7 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('new_state', this, oldState);
     }
 
-    public forceStateUpdate(newState: string | number | boolean) {
+    public forceStateUpdate(newState: string | number | boolean): Promise<ServicePromise> {
         return new Promise<ServicePromise>((resolve, _reject) => {
             let waitChange = (newState: string | boolean | number): void => {
                 let onChange = (that: IHaItem, _oldState: string | boolean | number) => {
@@ -166,10 +166,10 @@ export abstract class HaParentItem extends EventEmitter implements IHaItem {
                     this.logger.error('Time out before state change');
                     this.off('new_state', onChange);
                     resolve({ message: 'error', err: new Error('Time out before state change')});
-                }, 5000);
+                }, 30000);
             }
             waitChange(newState);
-            this.emit('forcestateupdate', this.entityId, newState);
+            this.emit('callrestservice', this.entityId, newState);
         });
     }
 

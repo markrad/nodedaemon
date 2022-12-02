@@ -2,6 +2,7 @@ import { getLogger, Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { IHaItem } from '../../haitems/ihaitem';
 import { HaMain } from '../../hamain';
+import { ServicePromise } from '../../haitems/haparentitem';
 
 const CATEGORY: string = 'ForceUpdate';
 var logger: Logger = getLogger(CATEGORY);
@@ -54,8 +55,14 @@ export default class ForceUpdate extends AppParent {
     }
 
     async run(): Promise<boolean> {
-        let updater = (tracker: Tracker): void => {
+        let updater = async (tracker: Tracker): Promise<void> => {
             logger.debug(`Updating state of ${tracker.entity.friendlyName}`);
+            var state: boolean | number | string = tracker.entity.state;
+            let rc: ServicePromise = await tracker.entity.forceStateUpdate(state);
+
+            if (rc.err) {
+                logger.error(rc.err);
+            }
         }
         return new Promise(async (resolve, _reject) => {
             this.entities.forEach((element: Tracker) => {
