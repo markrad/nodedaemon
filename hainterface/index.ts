@@ -371,7 +371,7 @@ export class HaInterface extends EventEmitter {
             parameters.body.attributes = { ...parameters.body.attributes, ...entityId.attributes };
 
             if (forceUpdate) {
-                parameters.body.attributes = { ...parameters.body.attributes, ...{ forceUpdate: 'yes' } };
+                parameters.body.attributes = { ...parameters.body.attributes, ...{ forcedUpdateAt: (new Date().toISOString()) } };
             }
 
             const req = http.request(parameters.options, (res) => {
