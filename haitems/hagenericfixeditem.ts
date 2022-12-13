@@ -20,9 +20,10 @@ export class HaGenericFixedItem extends HaParentItem implements IHaItemFixed {
                 };
                 this.on('new_state', onChange);
                 let timer: NodeJS.Timer = setTimeout(() => {
-                    this.logger.error('Time out before state change');
+                    let msg = 'Time out before state change';
+                    this.logger.error(msg);
                     this.off('new_state', onChange);
-                    resolve({ message: 'error', err: new Error('Time out before state change')});
+                    resolve({ message: 'error', err: new Error(msg)});
                 }, 30000);
             }
             waitChange(newState);
