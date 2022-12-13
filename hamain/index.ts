@@ -31,6 +31,7 @@ export interface HaMainEvents {
     'itemdeleted': (item: IHaItem) => void;
     'itemadded': (item: IHaItem) => void;
     'serviceevent': (eventType: string, data: any) => void;
+    'appsinitialized': () => void;
 };
 
 export declare interface HaMain {
@@ -206,6 +207,7 @@ export class HaMain extends EventEmitter {
                         }
                     });
                     logger.info(`Apps loaded: ${this._apps.length}`);
+                    this.emit('appsinitialized');
                 });
         }
         catch (err) {
