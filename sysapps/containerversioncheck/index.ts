@@ -5,34 +5,52 @@ import { HaMain /*, SensorType */ } from '../../hamain';
 import { Docker } from 'node-docker-api';
 import DockerModem from 'docker-modem';
 import { getTags } from '@snyk/docker-registry-v2-client';
-import fs from 'fs';
+import { readFileSync } from 'fs';
 import { Container } from 'node-docker-api/lib/container';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
+import { fileValidator, numberValidator, stringValidator, entityValidator } from '../../common/validator';
+import { IHaItem } from '../../haitems/ihaitem';
 
 const CATEGORY: string = 'ContainerVersionCheck';
 var logger: Logger = getLogger(CATEGORY);
 
-type ContainerPair = {
+type Registry = {
     name: string;
-    currentEntity: HaGenericUpdateableItem;
-    dockerEntity: HaGenericUpdateableItem;
+    url: string;
+    userId: string;
+    password: string;
+}
+
+type RegistryType = {
+    [id: string]: Registry;
+}
+
+type ContainerEntry = {
+    name: string;
+    currentEntity: IHaItem;
+    dockerEntity: IHaItem;
+    registry: Registry;
+}
+
+type ContainerWrapper = {
+    container: Container;
+    containerEntry: ContainerEntry;
+}
+
+type HostEntry = {
+    host: string;
+    port: number;
+    protocol: 'http' | 'https' | 'ssh' | undefined;
+    caFile: string;
+    certFile: string;
+    keyFile: string;
+    containers: ContainerEntry[];
+    names: string[];
 }
 
 export default class ContainerVersionCheck extends AppParent {
-    private _protocol: string = null;
-    private _socketPath: string = null;
-    private _caFile: string = null;
-    private _certFile: string = null;
-    private _keyFile: string = null;
-    private _port: number = null;
-    private _containerPairs: ContainerPair[] = [];
-    private _dockerUserId: string = null;
-    private _dockerPassword: string = null;
-    private _dockerURL: string = 'registry.hub.docker.com';
-    private _ca: Buffer = null;
-    private _cert: Buffer = null;
-    private _key: Buffer = null;
-    private _names: string[] = [];
+    private _registries: RegistryType = {};
+    private _hosts: HostEntry[] = [];
     private _job: schedule.Job = null;
     private readonly _re: RegExp = /^\d{1,4}\.\d{1,2}\.\d{1,2}$/;
     constructor(controller: HaMain, _config: any) {
@@ -42,61 +60,56 @@ export default class ContainerVersionCheck extends AppParent {
 
     validate(config: any): boolean {
         
-        this._protocol = config.protocol ?? null;
-        this._socketPath = config.socketPath ?? null;
-        this._caFile = config.caFile ?? null;
-        this._certFile = config.certFile ?? null;
-        this._keyFile = config.keyFile ?? null;
-        this._port = !config.port? null : parseInt(config.port);
-        this._dockerUserId = config.dockerUserId ?? null;
-        this._dockerPassword = config.dockerPassword ?? null;
-        if (config.dockerURL) this._dockerURL = config.dockerURL;
         try {
-            if (undefined != [this._caFile, this._certFile, this._keyFile].find((item: string) => item == null)) {
-                throw new Error('caFile, certFile and keyFile must all be specified or non');
-            }
-            if (!['http', 'https', 'ssh'].includes(this._protocol)) {
-                throw new Error('Invalid protocol')
+            if (!config.registries || !Array.isArray(config.registries)) {
+                throw new Error('registries is a required entry and must be an array');
             }
 
-            if (this._socketPath == null) {
-                throw new Error('socketPath is required');
-            }
-
-            if (this._port == NaN) {
-                throw new Error('port is invalid');
-            }
-
-            if (!Array.isArray(config.containers)) {
-                throw new Error('Expected array of containers and entities');
-            }
-
-            if (config.containers.length == 0) {
-                throw new Error('No container specified to test');
-            }
-
-            config.containers.forEach((item: any) => {
-                if (!item.container) {
-                    throw new Error('container value missing from containers list');
-                }
-                if (!item.currentEntity){
-                    throw new Error('currentEntity value missing from containers list');
-                }
-                if (!item.dockerEntity){
-                    throw new Error('dockerEntity value missing from containers list');
-                }
-                // this._containerPairs.push({ name: item.container, entity: null });
-                this._containerPairs.push({ name: item.container, 
-                    currentEntity: this.controller.items.getItemAsEx(item.currentEntity, HaGenericUpdateableItem, true),
-                    dockerEntity: this.controller.items.getItemAsEx(item.dockerEntity, HaGenericUpdateableItem, true) });
+            config.registries.forEach((registry: any) => {
+                let name: string = stringValidator.isValid(registry.name, { name: 'registry' });
+                stringValidator.isValid(registry.url, { name: registry.name });
+                registry.userId = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
+                registry.password = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
+                this._registries[name] = { name: registry.name, url: registry.url, userId: registry.userId ?? null, password: registry.password ?? null };
             });
-            this._ca = !this._caFile? undefined : fs.readFileSync(this._caFile);
-            this._cert = !this._certFile? undefined : fs.readFileSync(this._certFile);
-            this._key = !this._keyFile? undefined : fs.readFileSync(this._keyFile);
-            this._names = this._containerPairs.map((item: ContainerPair) => item.name);
+
+            if (!config.hosts || !Array.isArray(config.hosts)) {
+                throw new Error('hosts is a required entry and must be an array');
+            }
+
+            config.hosts.forEach((host: any) => {
+                stringValidator.isValid(host.host, { name: 'host' });
+                host.port = numberValidator.isValid(host.port, { name: host.host, floatOk: false, minValue: 1024, maxValue: 49151, defaultValue: 2376 });
+                if (!['http', 'https', 'ssh'].includes(host.protocol)) {
+                    throw new Error(`${host.host} Invalid protocol`)
+                }
+                fileValidator.isValid(host.caFile);
+                fileValidator.isValid(host.certFile);
+                fileValidator.isValid(host.keyFile);
+                if (!host.containers || !Array.isArray(host.containers)) throw new Error(`${host.host} containers array is required`);
+                let containers: ContainerEntry[] = [];
+                host.containers.forEach((container: any) => {
+                    stringValidator.isValid(container.container, { name: 'container' });
+                    let currentEntity: HaGenericUpdateableItem = entityValidator.isValid(container.currentEntity, { entityType: HaGenericUpdateableItem, name: container.container });
+                    let dockerEntity: HaGenericUpdateableItem = entityValidator.isValid(container.dockerEntity, { entityType: HaGenericUpdateableItem,  name: container.container });
+                    let registry: string = stringValidator.isValid(container.registry, { name: container.container });
+                    if (!this._registries[registry]) throw new Error(`${container.container} references an unknown registry`);
+                    containers.push({ name: container.container, currentEntity: currentEntity, dockerEntity: dockerEntity, registry: this._registries[registry]});
+                });
+                this._hosts.push({ 
+                    host: host.host, 
+                    port: host.port, 
+                    protocol: host.protocol, 
+                    caFile: readFileSync(host.caFile, { encoding: 'utf8' }),
+                    certFile: readFileSync(host.certFile, { encoding: 'utf8' }),
+                    keyFile: readFileSync(host.keyFile, { encoding: 'utf8' }),
+                    containers: containers,
+                    names: containers.map((container) => container.name),
+                });
+            });
         }
-        catch (err: any) {
-            logger.error((err as Error).message);
+        catch (e) {
+            logger.error(e.message);
             return false;
         }
 
@@ -104,61 +117,66 @@ export default class ContainerVersionCheck extends AppParent {
     }
 
     async run(): Promise<boolean> {
-        let updateFunc: () => Promise<boolean> = async () => {
-            return new Promise<boolean>(async (resolve, reject) => {
-                try {
-                    const dockerOptions: DockerModem.ConstructorOptions = {
-                        ca: this._ca,
-                        cert: this._cert,
-                        key: this._key,
-                        host: 'rr-hass.lan',
-                        port: this._port,
-                        protocol: this._protocol as 'http'
-                    };
-                    const docker = new Docker(dockerOptions);
-                    let containerList = ((await docker.container.list())
-                        .filter((value: Container) => this._names.includes(((value.data as any)['Image'] as string).split(':')[0].split('/')[0])));
-    
-                    for (let i = 0; i < containerList.length; i++) {
-                        let repo: string = (containerList[i].data as any)['Image'].split(':');
-                        try {
-                            const initalValue: string = '';
-                            let tags = (await getTags(this._dockerURL, repo[0], this._dockerUserId, this._dockerPassword))
-                                .filter((item: string) => this._re.exec(item))
-                                .sort((left: string, right: string) => {
-                                    return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
-                                           right.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) 
-                                           ? 1
-                                           : -1;
-                                });
-                            logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags[0]}`);
-                            let cp: ContainerPair = this._containerPairs.find((item) => item.name == repo[0].split('/')[0]);
-                            cp.currentEntity.updateState(repo[1], false);
-                            cp.dockerEntity.updateState(tags[0], false);
-                        }
-                        catch (err) {
-                            logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
+        let updateFunc2: () => Promise<boolean> = async () => {
+            return new Promise<boolean>(async (resolve, _reject) => {
+                this._hosts.forEach(async (host) => {
+                    try {
+                        const dockerOptions: DockerModem.ConstructorOptions = {
+                            ca: host.caFile,
+                            cert: host.certFile,
+                            key: host.keyFile,
+                            host: host.host,
+                            port: host.port,
+                            protocol: host.protocol
+                        };
+                        const docker = new Docker(dockerOptions);
+                        let containerList: ContainerWrapper[] = ((await docker.container.list())
+                            .filter((value: Container) => host.names.includes(((value.data as any)['Image'] as string).split(':')[0])))
+                            .map((value: Container) => ({ container: value, containerEntry: (host.containers.find((cont) => {
+                                return cont.name == (value.data as any)['Image'].split(':')[0]; 
+                            }) ) }))
+                        for (let i = 0; i < containerList.length; i++) {
+                            let repo: string = (containerList[i].container.data as any)['Image'].split(':');
+                            try {
+                                const initalValue: string = '';
+                                let tags = (await getTags(containerList[i].containerEntry.registry.url, 
+                                                            repo[0], 
+                                                            containerList[i].containerEntry.registry.userId, 
+                                                            containerList[i].containerEntry.registry.password))
+                                    .filter((item: string) => this._re.exec(item))
+                                    .sort((left: string, right: string) => {
+                                        return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
+                                                right.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) 
+                                                ? 1
+                                                : -1;
+                                    });
+                                logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags[0]}`);
+                                containerList[i].containerEntry.currentEntity.updateState(repo[1], false);
+                                containerList[i].containerEntry.dockerEntity.updateState(tags[0], false);
+                            }
+                            catch (err) {
+                                logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
+                            }
                         }
                     }
-                    resolve(true);
-                }
-                catch (err: any) {
-                    logger.error(`Failed to connect to docker: ${(err as Error).message}`)
-                    reject(false);
-                }
+                    catch (err) {
+                        logger.error(`Failed to connect to docker: ${(err as Error).message}`)
+                    }
+                });
+                resolve(true);
             });
         }
         
         const rule = new schedule.RecurrenceRule();
         rule.hour = [8, 20];
-        this._job = schedule.scheduleJob(rule, updateFunc);
+        this._job = schedule.scheduleJob(rule, updateFunc2);
         this.controller.on('serviceevent', async (eventType: string, data: any) => {
             if (eventType == 'nodedaemon' && data?.script == 'containerversioncheck' && data?.command == 'run') {
                 logger.info('Update requested');
-                await updateFunc();
+                await updateFunc2();
             }
         });
-        return updateFunc();
+        return updateFunc2();
     }
 
     async stop(): Promise<void> {
