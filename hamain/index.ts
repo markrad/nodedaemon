@@ -40,6 +40,7 @@ export declare interface HaMain {
 }
 
 export class HaMain extends EventEmitter {
+    private static _instance: HaMain = null;
     private _haInterface: HaInterface = null;
     private _items: ItemsManager = new ItemsManager();
     private _config: any;
@@ -56,6 +57,12 @@ export class HaMain extends EventEmitter {
     private _pingInterval: number = NaN;
     private _memInterval: number = NaN;
     private _memHandle: NodeJS.Timer = null;
+    public static getInstance(): HaMain {
+        if (!HaMain._instance) {
+            throw new Error('Instance of HaMain has not been constructed yet');
+        }
+        return HaMain._instance;
+    }
     constructor(config: any, configPath: string, version: string) {
         super();
         this._config = config;
@@ -84,6 +91,7 @@ export class HaMain extends EventEmitter {
         if (isNaN(this._memInterval)) {
             logger.warn(`Mem interval ${this._memInterval} is invalid - ignored`);
         }
+        HaMain._instance = this;
     }
 
     public async start(): Promise<void> {
