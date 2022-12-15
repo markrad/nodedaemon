@@ -2,7 +2,8 @@ import { getLogger, Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { IHaItem } from '../../haitems/ihaitem';
 import { HaMain } from '../../hamain';
-import { ServicePromise } from '../../haitems/haparentitem';
+import { HaParentItem, ServicePromise } from '../../haitems/haparentitem';
+import { entityValidator, numberValidator } from '../../common/validator';
 
 const CATEGORY: string = 'ForceUpdate';
 var logger: Logger = getLogger(CATEGORY);
@@ -14,7 +15,7 @@ type Tracker = {
 }
 
 export default class ForceUpdate extends AppParent {
-    private entities: Tracker[] = [];
+    private _entities: Tracker[] = [];
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         logger.info('Constructed');
@@ -27,27 +28,17 @@ export default class ForceUpdate extends AppParent {
             return false;
         }
     
-        config.forEach(element => {
-            if (!element.entity || !element.interval) {
-                logger.error('Each element requires an entity and an interval');
-                return false;
-            }
-            
-            let entity = this.controller.items.getItem(element.entity);
-
-            if (!entity) {
-                logger.error(`Entity ${element.entity} does not exist`);
-                return false;
-            }
-
-            let interval: number = parseFloat(element.interval);
-
-            if (interval == NaN || interval <= 0) {
-                logger.error(`Entity ${element.entity} has an invalid interval ${element.interval}`);
-                return false;
-            }
-            this.entities.push({ entity: entity, interval: interval, timer: null });
-        });
+        try {
+            config.forEach(element => {
+                let entity = entityValidator.isValid(element.entity, { entityType: HaParentItem, name: 'entity' });
+                let interval = numberValidator.isValid(element.interval, { name: 'interval', floatOk: true, minValue: 1 })
+                this._entities.push({ entity: entity, interval: interval, timer: null });
+            });
+        }
+        catch (err) {
+            logger.error(err.message);
+            return false;
+        }
 
         logger.info('Validated successfully');
 
@@ -70,7 +61,7 @@ export default class ForceUpdate extends AppParent {
             }
         }
         return new Promise(async (resolve, _reject) => {
-            this.entities.forEach((element: Tracker) => {
+            this._entities.forEach((element: Tracker) => {
                 element.timer = setInterval(updater, element.interval * 60 * 1000, element);
             });
             resolve(true);
@@ -79,7 +70,7 @@ export default class ForceUpdate extends AppParent {
 
     async stop(): Promise<void> {
         return new Promise(async (resolve, _reject) => {
-            this.entities.forEach((element) => clearInterval(element.timer));
+            this._entities.forEach((element) => clearInterval(element.timer));
             resolve();
         });
     }

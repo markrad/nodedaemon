@@ -2,6 +2,7 @@
 import { Logger } from 'log4js';
 import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
+import { entityValidator } from '../../common/validator';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { IHaItemEditable } from "../../haitems/IHaItemEditable";
 import { HaMain } from '../../hamain';
@@ -35,12 +36,12 @@ export default class AstroHelper extends AppParent {
             }
         }
         try {
-            this._lastEvent = this.controller.items.getItemAsEx(config.lastevent, HaGenericUpdateableItem, true);
-            this._lastUpdate =  this.controller.items.getItemAsEx(config.lastupdate, HaGenericUpdateableItem, true);
-            this._dark =  this.controller.items.getItemAsEx(config.dark, HaGenericUpdateableItem,  true);
-            this._moon =  this.controller.items.getItemAsEx(config.moon, HaGenericUpdateableItem, true);
-            this._sunrise =  this.controller.items.getItemAsEx(config.sunrise, HaGenericUpdateableItem, true);
-            this._sunset =  this.controller.items.getItemAsEx(config.sunset, HaGenericUpdateableItem, true);
+            this._lastEvent = entityValidator.isValid(config.lastevent, { entityType: HaGenericUpdateableItem, name: 'lastevent' });
+            this._lastUpdate =  entityValidator.isValid(config.lastupdate, { entityType: HaGenericUpdateableItem, name: 'lastupdate' });
+            this._dark =  entityValidator.isValid(config.dark, { entityType: HaGenericUpdateableItem,  name: 'dark' });
+            this._moon =  entityValidator.isValid(config.moon, { entityType: HaGenericUpdateableItem, name: 'moon' });
+            this._sunrise =  entityValidator.isValid(config.sunrise, { entityType: HaGenericUpdateableItem, name: 'sunrise' });
+            this._sunset =  entityValidator.isValid(config.sunset, { entityType: HaGenericUpdateableItem, name: 'sunset' });
         }
         catch (err: any) {
             logger.error((err as Error).message);

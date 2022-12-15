@@ -1,6 +1,7 @@
 "use strict"
 import { Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
+import { entityValidator } from '../../common/validator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 import { HaMain } from '../../hamain';
 
@@ -36,8 +37,8 @@ export default class AqaraSwitch extends AppParent {
                     if (!('entity' in subitem)) {
                         throw new Error('All objects in inner arrays must have an entity item');
                     }
-
-                    e = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, subitem.entity, true);
+                    e = entityValidator.isValid(subitem.entity, { entityType: HaGenericSwitchItem, name: 'switch' });
+                    //e = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, subitem.entity, true);
 
                     if ('switch' in subitem) {
                         if (null == regex.exec(subitem.switch)) {

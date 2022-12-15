@@ -7,6 +7,7 @@ import { getLogger, Level, Logger } from "log4js";
 import * as https from 'https';
 import { Dayjs } from "dayjs";
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
+import { entityValidator, stringValidator } from '../../common/validator';
 
 const CATEGORY: string = 'DynDnsUpdater';
 const ONE_DAY: number = 24;                     // Just simple hours
@@ -34,16 +35,13 @@ export default class DynDnsUpdater extends AppParent {
     }
 
     public validate(config: any): boolean {
-        this._user = config?.user;
-        this._updaterKey = config?.updaterKey;
-        this._hostname = config?.hostname;
 
         try {
-            this._externalIp = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.externalIp, true);
-            this._lastUpdate = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.lastUpdate, true);
-            if (!this._user) throw new Error('user not found in config file');
-            if (!this._updaterKey) throw new Error('updaterKey not found in config file');
-            if (!this._hostname) throw new Error('hostname not found in config file');
+            this._user = stringValidator.isValid(config?.user, { name: 'user' });
+            this._updaterKey = stringValidator.isValid(config?.updaterKey, { name: 'updaterKey' });
+            this._hostname = stringValidator.isValid(config?.hostname, { name: 'hostname' });
+            this._externalIp = entityValidator.isValid(config.externalIp, { entityType: HaGenericUpdateableItem, name: 'externalIp' });
+            this._lastUpdate = entityValidator.isValid(config.lastUpdate, { entityType: HaGenericUpdateableItem, name: 'lastUpdate' });
         }
         catch (err: any) {
             logger.error((err as Error).message);

@@ -5,6 +5,7 @@ import * as schedule from 'node-schedule';
 import { HaMain } from '../../hamain';
 import { getLogger } from 'log4js';
 import { AppParent } from '../../common/appparent';
+import { stringValidator } from '../../common/validator';
 
 const CATEGORY: string = 'Astro'
 const SECONDS_IN_A_DAY = 24 * 60 * 60;
@@ -19,7 +20,20 @@ const logger = getLogger(CATEGORY);
         logLevel: 'debug'
     Values for daystart and dayend will determine the isDark timespan.
 \* -------------------------------------------------------------------------- */
-export default class Astro extends AppParent
+
+export interface AstroEvents {
+    'astroevent': (event: string) => void;
+    'moonPhase': (phase: string) => void;
+    'isLight': () => void;
+    'isDark': () => void;
+}
+
+export declare interface Astro {
+    on<U extends keyof AstroEvents>(event: U, listner: AstroEvents[U]): this;
+    emit<U extends keyof AstroEvents>(event: U, ...args: Parameters<AstroEvents[U]>): boolean;
+}
+
+export class Astro extends AppParent
 {
     private _times: any = {};
     private static readonly _events: string[] = [
@@ -52,36 +66,42 @@ export default class Astro extends AppParent
     }
 
     public validate(config: any): boolean {
-        if (config.logLevel) {
-            try {
-                this.logging = config.logLevel;
-                logger.info(`Set log level to ${config.logLevel}`);
+        try {
+            if (config.logLevel) {
+                try {
+                    this.logging = config.logLevel;
+                    logger.info(`Set log level to ${config.logLevel}`);
+                }
+                catch (err: any) {
+                    logger.error(`Failed to set log level to ${config.logLevel}`);
+                }
             }
-            catch (err: any) {
-                logger.error(`Failed to set log level to ${config.logLevel}`);
+
+            this._longitude = this.controller.haConfig.longitude;
+            this._latitude = this.controller.haConfig.latitude;
+
+            if (!this._longitude || !this._latitude) {
+                throw new Error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
             }
+
+            stringValidator.isValid(config.daystart, { name: 'daystart'});
+            stringValidator.isValid(config.dayend, { name: 'dayend'});
+
+            if (!Astro._events.includes(config.daystart)) {
+                throw new Error(`Value ${config.daystart} is not a valid event`);
+            }
+            
+            if (!Astro._events.includes(config.dayend)) {
+                throw new Error(`Value ${config.dayend} is not a valid event`);
+            }
+
+            this._dayStart = config.daystart;
+            this._dayEnd = config.dayend;
         }
-
-        this._longitude = this.controller.haConfig.longitude;
-        this._latitude = this.controller.haConfig.latitude;
-
-        if (!this._longitude || !this._latitude) {
-            logger.error('Unable to determine location from Home Assistant - ensure the longitude and latitude are set');
+        catch (err) {
+            logger.error(err.message);
             return false;
         }
-
-        if (!config.daystart) {
-            logger.error('daystart missing from config');
-            return false;
-        }
-
-        if (!config.dayend) {
-            logger.error('dayend missing from config');
-            return false;
-        }
-
-        this._dayStart = config.daystart;
-        this._dayEnd = config.dayend;
         logger.info('Validated successful')
 
         return true;
@@ -92,7 +112,7 @@ export default class Astro extends AppParent
         this._updateMoon();
         this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight(this));
         this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
-        this.emit('initialized');
+        // this.emit('initialized');
 
         return true;
     }
@@ -258,3 +278,5 @@ export default class Astro extends AppParent
         return Number(test) > Number(comparand);
     }
 }
+
+export default Astro;

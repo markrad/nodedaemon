@@ -4,6 +4,7 @@ import http from 'http';
 import { getLogger, Logger } from "log4js";
 import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
+import { entityValidator } from "../../common/validator";
 
 const CATEGORY = 'UpdateExternalIP';
 var logger: Logger = getLogger(CATEGORY);
@@ -19,12 +20,13 @@ export default class UpdateExternalIP extends AppParent {
     }
 
     public validate(config: any): boolean {
-        if (!config.ip) throw new Error('External IP variable is missing');
-        this._external_ip = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.ip);
-        if (null == this._external_ip) {
-            logger.error(`Entity ${config.ip} is missing or not updatable`);
+        try {
+            this._external_ip = entityValidator.isValid(config.ip, { entityType: HaGenericUpdateableItem, name: 'external IP'});
+        }
+        catch (err) {
+            logger.error(err.message);
             return false;
-        }   
+        }
         logger.info('Validated successfully');
         return true;
     }
