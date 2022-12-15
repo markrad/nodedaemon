@@ -34,7 +34,7 @@ export declare interface HaParentItem {
     emit<U extends keyof HaParentItemEvents>(event: U, ...args: Parameters<HaParentItemEvents[U]>): boolean;
 }
 
-export abstract class HaParentItem extends EventEmitter implements IHaItem {
+export class HaParentItem extends EventEmitter implements IHaItem {
     private _attributes: any;
     private _name: string;
     private _type: string;
