@@ -66,8 +66,8 @@ export class numberValidator {
         let work = parseFloat(value);
         if (isNaN(work)) throw new Error(`${opt.name} is not a number`);
         if (!opt.floatOk && work != Math.floor(work)) throw new Error(`${opt.name} is not an integer`);
-        if (!opt.minValue && work < opt.minValue) throw new Error(`${opt.name} is less than the allowed minimum`);
-        if (!opt.maxValue && work > opt.maxValue) throw new Error(`${opt.name} is greater than the allowed maximum`);
+        if (opt.minValue && work < opt.minValue) throw new Error(`${opt.name} is less than the allowed minimum`);
+        if (opt.maxValue && work > opt.maxValue) throw new Error(`${opt.name} is greater than the allowed maximum`);
         return work;
     }
 }
