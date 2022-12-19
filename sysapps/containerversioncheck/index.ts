@@ -32,8 +32,13 @@ type ContainerEntry = {
     registry: Registry;
 }
 
+type LocalContainer = {
+    name: string;
+    version: string;
+}
+
 type ContainerWrapper = {
-    container: Container;
+    container: LocalContainer;
     containerEntry: ContainerEntry;
 }
 
@@ -113,11 +118,12 @@ export default class ContainerVersionCheck extends AppParent {
             return false;
         }
 
+        logger.info('Validated successfully')
         return true;
     }
 
     async run(): Promise<boolean> {
-        let updateFunc2: () => Promise<boolean> = async () => {
+        let updateFunc: () => Promise<boolean> = async () => {
             return new Promise<boolean>(async (resolve, _reject) => {
                 this._hosts.forEach(async (host) => {
                     try {
@@ -131,16 +137,26 @@ export default class ContainerVersionCheck extends AppParent {
                         };
                         const docker = new Docker(dockerOptions);
                         let containerList: ContainerWrapper[] = ((await docker.container.list())
-                            .filter((value: Container) => host.names.includes(((value.data as any)['Image'] as string).split(':')[0])))
-                            .map((value: Container) => ({ container: value, containerEntry: (host.containers.find((cont) => {
-                                return cont.name == (value.data as any)['Image'].split(':')[0]; 
-                            }) ) }))
+                            .map((entry: Container) => {
+                                let parts: string[] = (entry.data as any)['Image'].split(':');
+                                return { name: parts[0], version: parts[1] };
+                            })
+                            .filter((entry: LocalContainer) => {
+                                return host.names.includes(entry.name);
+                            })
+                            .map((entry: LocalContainer) => {
+                                return { container: entry, containerEntry: host.containers.find((hostentry: ContainerEntry) => {
+                                    return entry.name == hostentry.name;
+                                }) }
+                            }));
                         for (let i = 0; i < containerList.length; i++) {
-                            let repo: string = (containerList[i].container.data as any)['Image'].split(':');
+                            let repo: string = containerList[i].container.name.includes('/')
+                                ? containerList[i].container.name
+                                : 'library/' + containerList[i].container.name;
                             try {
                                 const initalValue: string = '';
                                 let tags = (await getTags(containerList[i].containerEntry.registry.url, 
-                                                            repo[0], 
+                                                            repo, 
                                                             containerList[i].containerEntry.registry.userId, 
                                                             containerList[i].containerEntry.registry.password))
                                     .filter((item: string) => this._re.exec(item))
@@ -150,8 +166,8 @@ export default class ContainerVersionCheck extends AppParent {
                                                 ? 1
                                                 : -1;
                                     });
-                                logger.debug(`Image ${repo[0]}: Current ${repo[1]} Latest ${tags[0]}`);
-                                containerList[i].containerEntry.currentEntity.updateState(repo[1], false);
+                                logger.debug(`Image ${containerList[i].container.name}: Current ${containerList[i].container.version} Latest ${tags[0]}`);
+                                containerList[i].containerEntry.currentEntity.updateState(containerList[i].container.version, false);
                                 containerList[i].containerEntry.dockerEntity.updateState(tags[0], false);
                             }
                             catch (err) {
@@ -169,14 +185,14 @@ export default class ContainerVersionCheck extends AppParent {
         
         const rule = new schedule.RecurrenceRule();
         rule.hour = [8, 20];
-        this._job = schedule.scheduleJob(rule, updateFunc2);
+        this._job = schedule.scheduleJob(rule, updateFunc);
         this.controller.on('serviceevent', async (eventType: string, data: any) => {
             if (eventType == 'nodedaemon' && data?.script == 'containerversioncheck' && data?.command == 'run') {
                 logger.info('Update requested');
-                await updateFunc2();
+                await updateFunc();
             }
         });
-        return updateFunc2();
+        return updateFunc();
     }
 
     async stop(): Promise<void> {
