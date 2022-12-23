@@ -40,7 +40,7 @@ export class ItemsManager {
         catch (_err) {
             _err;
         }
-        if (throwOnFailure) throw new Error(`Entity ${entityId} not found or cannot be cast to ${ctor.prototype}`);
+        if (throwOnFailure) throw new Error(`Entity ${entityId} not found or cannot be cast to ${ctor.name}`);
         return null;
     }
 
