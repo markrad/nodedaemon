@@ -6,13 +6,14 @@ import { entityValidator } from '../../common/validator';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { IHaItemEditable } from "../../haitems/IHaItemEditable";
 import { HaMain } from '../../hamain';
+import Astro from '../astro';
 
 const CATEGORY = 'AstroHelper';
 
 const logger: Logger = require('log4js').getLogger(CATEGORY);
 
 export default class AstroHelper extends AppParent {
-    private _astro: any = null;
+    private _astro: Astro = null;
     private _lastEvent: IHaItemEditable = null;
     private _lastUpdate: IHaItemEditable = null;
     private _dark: IHaItemEditable = null;
@@ -56,7 +57,7 @@ export default class AstroHelper extends AppParent {
     async run(): Promise<boolean> {
         return new Promise<boolean>((resolve, _reject) => {
             this.controller.once('appsinitialized', () => {
-                if (!(this._astro = this.controller.getApp('Astro')?.instance)) {
+                if (!(this._astro = this.controller.getApp('Astro')?.instance as Astro)) {
                     logger.error('Astro module has not been loaded - cannot continue');
                     return resolve(false);
                 }
@@ -71,7 +72,7 @@ export default class AstroHelper extends AppParent {
                         now.getSeconds().toString().padStart(2, '0');
                     this._lastUpdate.updateState(nowString, false);
                 });
-                this._astro.on('moonphase', (phase: any) => this._moon.updateState(phase, false));
+                this._astro.on('moonPhase', (phase: any) => this._moon.updateState(phase, false));
                 this._astro.on('isLight', () => this._dark.updateState(false, false));
                 this._astro.on('isDark', () => this._dark.updateState(true, false))
                 this._lastEvent.updateState(this._astro.lastEvent, false);
@@ -93,7 +94,7 @@ export default class AstroHelper extends AppParent {
     }
 
     private _getEventTime(event: string): string {
-        let sr = this._astro.getEvent(event)
+        let sr: Date = this._astro.getEvent(event) as Date
 
         if (!sr) {
             logger.error(`Specified event ${event} was not found`);
