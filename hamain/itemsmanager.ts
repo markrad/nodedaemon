@@ -67,6 +67,17 @@ export class ItemsManager {
                 : [ ...this.items.values() ];
     }
 
+    public getItemByEntytId(name?: string, useRegEx?: boolean): Array<IHaItem> {
+        let re: RegExp = !name
+            ? null
+            : useRegEx
+            ? new RegExp(name)
+            : new RegExp(`^${name}$`);
+        return this.getItemsAsArray()
+            .filter(item =>  re? re.test(item.entityId) : true)
+            .sort((l, r) => l.entityId.localeCompare(r.entityId));
+    }
+
     public getItemByName(name?: string, useRegEx?: boolean): Array<IHaItem> {
         let re: RegExp = !name
             ? null
@@ -76,7 +87,6 @@ export class ItemsManager {
         return this.getItemsAsArray()
             .filter(item =>  re? re.test(item.name) : true)
             .sort((l, r) => l.entityId.localeCompare(r.entityId));
-            // .sort((l, r) => l.entityId < r.entityId ? -1 : l.entityId > r.entityId ? 1 : 0);
     }
 
     public getItemByType(type?: string, useRegEx?: boolean): Array<IHaItem> {

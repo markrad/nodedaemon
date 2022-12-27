@@ -34,8 +34,8 @@ export class CommandInspect extends CommandBase {
             }
             logger.debug(`inspect called with ${inputArray.join(' ')}`);
             let items = inputArray[1]
-                ? that.items.getItemByName(inputArray[1], true) 
-                : that.items.getItemByName();
+                ? that.items.getItemByEntytId(inputArray[1], true) 
+                : that.items.getItemByEntytId();
             items.forEach((item) => {
                 sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
