@@ -236,12 +236,12 @@ export class Astro extends AppParent
         return this._lastEventSave;
     }
 
-    public getEvent(eventName: string): string
+    public getEvent(eventName: string): Date
     {
         if (this._times.hasOwnProperty(eventName))
             return this._times[eventName];
         else
-            return "0";
+            throw new Error(`Event name ${eventName} does not exist`);
     }
     
     public get lastMoonPhase(): string
