@@ -3,15 +3,17 @@ import { AppParent } from '../../common/appparent';
 import { HaMain /*, SensorType */ } from '../../hamain';
 // import { HaItemSensor } from '../../haitems/haitemsensor'
 // import { IHaItemEditable } from '../../haitems/haparentitem';
-import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
+// import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 // import { resolve } from 'path';
-import  HaItemUpdate from '../../haitems/haitemupdate';
-import { HaGenericBinaryItem } from '../../haitems/hagenericbinaryitem';
+// import  HaItemUpdate from '../../haitems/haitemupdate';
+// import { HaGenericBinaryItem } from '../../haitems/hagenericbinaryitem';
+import Astro from '../astro';
 
 const CATEGORY: string = 'TestBed';
 var logger: Logger = getLogger(CATEGORY);
 
 export default class TestBed extends AppParent {
+    private _astro2: Astro;
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         logger.info('Constructed');
@@ -19,30 +21,26 @@ export default class TestBed extends AppParent {
 
     validate(_config: any): boolean {
         // Since this is test code we don't do much in here
-        let x: HaItemUpdate = this.controller.items.getItemAsEx('update.rr_synol1_dsm_update', HaGenericBinaryItem);
-        let y: HaItemUpdate = this.controller.items.getItemAsEx('update.rr_synol1_dsm_update', HaItemUpdate);
-        logger.debug(y.state);
-        logger.debug(`isOn=${x.isOn}; isOff=${x.isOff}`);
-        let a: HaGenericSwitchItem = this.controller.items.getItemAsEx('light.marks_light', HaGenericSwitchItem);
-        let b: HaGenericSwitchItem = this.controller.items.getItemAsEx('sensor.bedroom_nightstand_1_battery_level', HaGenericSwitchItem);
-        logger.debug(a);
-        logger.debug(b);
         logger.info('Validated successfully')
         return true;
     }
 
     async run(): Promise<boolean> {
         return new Promise(async (resolve, _reject) => {
-        //     let name: string = 'testbed_' + Math.floor(Math.random() * 10000).toString();
-        //     try {
-        //         await this.controller.addSensor(name, SensorType.normal, 'testbed1');
-        //         ((this.controller.items.getItem(`sensor.${name}`)) as IHaItemEditable).updateState('testbed2'); 
-        //         resolve(true);
-        //     }
-        //     catch (err) {
-        //         logger.error(`Failed to add sensor ${name}: ${err.message}`)
-        //     }
-        // });
+            this.controller.once('appsinitialized', () => {
+                if (!(this._astro2 = this.controller.getApp('Astro')?.instance as Astro)) {
+                    logger.error('Astro module has not been loaded - cannot continue');
+                    return resolve(false);
+                }
+                this._astro2.on('astroEvent', (event) => logger.debug(`Astro event: ${event} fired`));
+                this._astro2.on('isDark', () => logger.debug('isDark'));
+                this._astro2.on('isLight', () => logger.debug('isLight'));
+                this._astro2.on('moonPhase', (event) => logger.debug(`Moon phase event: ${event} fired`));
+                logger.debug(`Is dark? ${this._astro2.isDark}`);
+                logger.debug(`Is light? ${this._astro2.isLight}`);
+                logger.debug(`Last Event: ${this._astro2.lastEvent}`);
+                logger.debug(`Moon phase: ${this._astro2.lastMoonPhase}`);
+            });
             resolve(true);
         });
     }
