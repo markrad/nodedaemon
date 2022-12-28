@@ -1,6 +1,7 @@
 "use strict";
 
-import { getMoonIllumination, GetMoonIlluminationResult, getTimes, GetTimesResult } from 'suncalc';
+var SolarCalc = require('solar-calc');
+import * as Lune from 'lune';
 import * as schedule from 'node-schedule';
 import { HaMain } from '../../hamain';
 import { getLogger } from 'log4js';
@@ -22,7 +23,7 @@ const logger = getLogger(CATEGORY);
 \* -------------------------------------------------------------------------- */
 
 export interface AstroEvents {
-    'astroevent': (event: string) => void;
+    'astroEvent': (event: string) => void;
     'moonPhase': (phase: string) => void;
     'isLight': () => void;
     'isDark': () => void;
@@ -33,33 +34,118 @@ export declare interface Astro {
     emit<U extends keyof AstroEvents>(event: U, ...args: Parameters<AstroEvents[U]>): boolean;
 }
 
+type EventTime = {
+    eventName: string;
+    eventTime: Date | 'error';
+}
+
+enum EventNames {
+    NIGHTEND,
+    NAUTICALDAWN,
+    DAWN,
+    SUNRISE,
+    SUNRISEEND,
+    GOLDENHOUREND,
+    SOLARNOON,
+    GOLDENHOURSTART,
+    SUNSETSTART,
+    SUNSET,
+    DUSK,
+    NAUTICALDUSK,
+    NIGHTSTART,
+    NADIR,
+}
+
 export class Astro extends AppParent
 {
-    private _times: any = {};
-    private static readonly _events: string[] = [
-        "sunrise",
-        "sunriseEnd",
-        "goldenHourEnd",
-        "solarNoon",
-        "goldenHour",
-        "sunsetStart",
-        "sunset",
-        "dusk",
-        "nauticalDusk",
-        "night",
-        "nadir",
-        "nightEnd",
-        "nauticalDawn",
-        "dawn"
-    ];;
+    // private _times: any = {};
+    private _events: EventTime[] = [
+        { eventName: "nightEnd", eventTime: null },
+        { eventName: "nauticalDawn", eventTime: null },
+        { eventName: "dawn", eventTime: null },
+        { eventName: "sunrise",  eventTime: null },
+        { eventName: "sunriseEnd",  eventTime: null },
+        { eventName: "goldenHourEnd", eventTime: null },
+        { eventName: "solarNoon",  eventTime: null },
+        { eventName: "goldenHourStart", eventTime: null },
+        { eventName: "sunsetStart",  eventTime: null },
+        { eventName: "sunset",  eventTime: null },
+        { eventName: "dusk", eventTime: null },
+        { eventName: "nauticalDusk", eventTime: null },
+        { eventName: "nightStart", eventTime: null },
+        { eventName: "nadir", eventTime: null },
+    ];
     private _lastEventSave: string = null;
     private _lastMoonPhaseSave: string = '';
     private _longitude: number;
     private _latitude: number;
     private _midnightSched: schedule.Job = null;
     private _moonSched: schedule.Job = null;
-    private _dayStart: string = null;
-    private _dayEnd: string = null;
+    private _nextEvent: schedule.Job = null;
+    private _dayStart: number = null;
+    private _dayEnd: number = null;
+    private _getEvents: () => void = (): void => {
+        const fireEvent = () => {
+            logger.debug(`Firing event ${this._events[nextEvent].eventName}`);
+            this.emit('astroEvent', this._events[nextEvent].eventName);
+            this._lastEventSave = this._events[nextEvent].eventName;
+
+            if (++nextEvent < this._events.length) {
+                logger.debug(`Scheduling ${this._events[nextEvent].eventName} at ${this._events[nextEvent].eventTime}`);
+                this._nextEvent = schedule.scheduleJob(this._events[nextEvent].eventTime, fireEvent);
+            }
+            else {
+                logger.debug(`All events fired - refreshing`);
+                this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._getEvents());
+            }
+        }
+        var today: Date = new Date();
+        var solar = new SolarCalc(today, this._latitude, this._longitude);
+        var otherSolar = new SolarCalc(today, this._latitude * -1, this._longitude < 0? this._longitude + 180 : this._longitude - 180);
+        this._events[EventNames.NIGHTEND].eventTime = solar.nightEnd;
+        this._events[EventNames.NAUTICALDAWN].eventTime = solar.nauticalDawn;
+        this._events[EventNames.DAWN].eventTime = solar.dawn;
+        this._events[EventNames.SUNRISE].eventTime = solar.sunrise;
+        this._events[EventNames.SUNRISEEND].eventTime = solar.sunriseEnd;
+        this._events[EventNames.GOLDENHOUREND].eventTime = solar.goldenHourEnd;
+        this._events[EventNames.SOLARNOON].eventTime = solar.solarNoon;
+        this._events[EventNames.GOLDENHOURSTART].eventTime = solar.goldenHourStart;
+        this._events[EventNames.SUNSETSTART].eventTime = solar.sunsetStart;
+        this._events[EventNames.SUNSET].eventTime = solar.sunset;
+        this._events[EventNames.DUSK].eventTime = solar.dusk;
+        this._events[EventNames.NAUTICALDUSK].eventTime = solar.nauticalDusk;
+        this._events[EventNames.NIGHTSTART].eventTime = solar.nightStart;
+        this._events[EventNames.NADIR].eventTime = otherSolar.solarNoon;
+
+        this._events.forEach((event) => logger.debug(`Firing event ${event.eventName} at ${(event.eventTime as Date)}`));
+
+        let now: Date = new Date();
+        let nextEvent = -1;
+        // let lastEvent: number = this._events.findIndex((event: EventTime, index: number, events: EventTime[]) => {
+        //     if (Number(now) > Number(event.eventTime) && index + 1 < events.length && Number(now) < Number(events[index + 1].eventTime)) {
+        //         return true;
+        //     }
+        // });
+
+        let i: number;
+
+        for (i = 0; i < this._events.length; i++) {
+            if (Number(now) < Number(this._events[i].eventTime)) break;
+        }
+
+        nextEvent = i < this._events.length? i : -1;
+        this._lastEventSave = nextEvent < 1? this._events[EventNames.NADIR].eventName : this._events[nextEvent - 1].eventName;
+
+        if (nextEvent == -1) {
+            logger.debug('Scheduling event refresh')
+            this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._getEvents());
+        }
+        else {
+            logger.debug(`Scheduling ${this._events[nextEvent].eventName} at ${(this._events[nextEvent].eventTime as Date)}`);
+            this._nextEvent = schedule.scheduleJob(this._events[nextEvent].eventTime, fireEvent);
+        }
+    }
+
     public constructor(controller: HaMain) {
         super(controller, logger);
         logger.info('Constructed')
@@ -87,16 +173,17 @@ export class Astro extends AppParent
             stringValidator.isValid(config.daystart, { name: 'daystart'});
             stringValidator.isValid(config.dayend, { name: 'dayend'});
 
-            if (!Astro._events.includes(config.daystart)) {
+            if (-1 == (this._dayStart = this._events.findIndex((event) => config.daystart == event.eventName))) {
                 throw new Error(`Value ${config.daystart} is not a valid event`);
             }
             
-            if (!Astro._events.includes(config.dayend)) {
+            if (-1 == (this._dayEnd = this._events.findIndex((event) => config.dayend == event.eventName))) {
                 throw new Error(`Value ${config.dayend} is not a valid event`);
             }
 
-            this._dayStart = config.daystart;
-            this._dayEnd = config.dayend;
+            if (this._dayStart >= this._dayEnd) {
+                throw new Error(`Day start event must come before day end event`);
+            }
         }
         catch (err) {
             logger.error(err.message);
@@ -108,11 +195,10 @@ export class Astro extends AppParent
     }
     
     public async run(): Promise<boolean> {
-        this._midnight(this);
+        this._getEvents();
         this._updateMoon();
-        this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight(this));
+        // this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
         this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
-        // this.emit('initialized');
 
         return true;
     }
@@ -120,111 +206,60 @@ export class Astro extends AppParent
     public async stop(): Promise<void> {
         this._midnightSched.cancel();
         this._moonSched.cancel();
-    }
-
-    private _setupTimes(times1: GetTimesResult, times2: GetTimesResult, that: Astro): void
-    {
-        logger.debug('In setupTimes');
-        let now: Date = new Date();
-        let latest: Date = new Date(Number(now) - SECONDS_IN_A_DAY * 1000 * 2)
-        let latestIndex: string = null;
-
-        for (let event of Astro._events)
-        {
-            that._times[event] = (that._isAfter((times1 as any)[event], now))
-                ? (times1 as any)[event]
-                : (times2 as any)[event];
-
-            logger.debug(`Firing event ${event} at ${that._times[event].toString()}`);
-            setTimeout((myEvent, that) =>
-            {
-                logger.debug(`Firing event ${myEvent}`);
-                that.emit('astroevent', myEvent);
-                if (myEvent == that._dayStart) {
-                    logger.debug('Firing event isLight');
-                    that.emit('isLight');
-                }
-                else if (myEvent == that._dayEnd) {
-                    logger.debug('Firing event isDark');
-                    that.emit('isDark');
-                }
-            }, Number(that._times[event]) -  Number(now), event, that);
-            
-            logger.trace(`Compare ${that._times[event].toString()} to ${latest.toString()}`);
-            if (Number(that._times[event]) > Number(latest))
-            {
-                logger.trace('Replacing previous time');
-                latest = that._times[event];
-                latestIndex = event;
-            }
-        }
-        
-        that._lastEventSave = latestIndex;
-        logger.debug(`Last event was ${that._lastEventSave}`);
-    }
-
-    private _midnight(that: Astro): void {
-        var today: Date = new Date();
-        var tomorrow: Date = new Date(Number(today) + SECONDS_IN_A_DAY * 1000);
-        this._setupTimes(
-            getTimes(today, this._latitude, this._longitude),
-            getTimes(tomorrow, this._latitude, this._longitude),
-            that);
+        this._nextEvent.cancel();
     }
 
     private _updateMoon(): void
     {
-        this._lastMoonPhaseSave = this._moonPhase();
-        this.emit("moonPhase", this._lastMoonPhaseSave);
+        let moonPhase = this._moonPhase();
+
+        if (moonPhase != this._lastMoonPhaseSave) {
+            this._lastMoonPhaseSave = moonPhase;
+            this.emit("moonPhase", this._lastMoonPhaseSave);
+        }
     }
 
     private _moonPhase(): string
     {
-        let d1 = new Date();
-        let d2 = new Date(Number(d1) + SECONDS_IN_A_DAY * 1000);
-        d1.setHours(12, 0, 0, 0);
-        d2.setHours(12, 0, 0, 0);
-        var moon1: GetMoonIlluminationResult = getMoonIllumination(d1);
-        var moon2: GetMoonIlluminationResult = getMoonIllumination(d2);
+        const phaseNames: string[] = [ 'Full Moon', 'New Moon', 'New Moon', 'First Quarter', 'Last Quarter' ];
+        let today = new Date();
+        let yesterday = new Date(Number(today) - SECONDS_IN_A_DAY * 1000);
+        yesterday.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        let yesterdayMoon = Lune.phase(yesterday);
+        let todayMoon = Lune.phase(today);
+        let phases = Lune.phase_hunt(today);
+        let phaseList: Date[] = [ phases.full_date, phases.new_date, phases.nextnew_date, phases.q1_date, phases.q3_date ];
         var phase = 'Not Set';
 
-        logger.trace(`d1=${d1.toISOString()};d2=${d2.toISOString()};moon1.phase=${moon1.phase};moon2.phase=${moon2.phase}`);
+        logger.trace(`yesterday=${yesterday.toISOString()};today=${today.toISOString()};yesterdayMoon.phase=${yesterdayMoon.phase};todayMoon.phase=${todayMoon.phase}`);
 
-        if (moon1.phase > moon2.phase)
-        {
-            phase = 'New Moon';
+        let index = (phaseList.findIndex((eventDate) => today.getTime() == eventDate.setHours(0, 0, 0, 0)));
+
+        if (index != -1) {
+            phase = phaseNames[index];
         }
-        else if (moon1.phase < 0.25 && moon2.phase > 0.25)
-        {
-            phase = 'First Quarter';
-        }
-        else if (moon1.phase < 0.5 && moon2.phase > 0.5)
-        {
-            phase = 'Full Moon';
-        }
-        else if (moon1.phase < 0.75 && moon2.phase > 0.75)
-        {
-            phase = 'Last Quarter';
-        }
-        else if (moon1.phase < 0.25)
-        {
-            phase = 'Waxing Cresent'
-        }
-        else if (moon1.phase < 0.5)
-        {
-            phase = 'Waxing Gibbous'
-        }
-        else if (moon1.phase < 0.75)
-        {
-            phase = 'Waning Gibbous'
-        }
-        else if (moon1.phase < 1.0)
-        {
-            phase = 'Waning Cresent'
-        }
-        else
-        {
-            phase = 'Fuck Knows'
+        else {
+            if (yesterdayMoon.phase < 0.25)
+            {
+                phase = 'Waxing Cresent'
+            }
+            else if (yesterdayMoon.phase < 0.5)
+            {
+                phase = 'Waxing Gibbous'
+            }
+            else if (yesterdayMoon.phase < 0.75)
+            {
+                phase = 'Waning Gibbous'
+            }
+            else if (yesterdayMoon.phase < 1.0)
+            {
+                phase = 'Waning Cresent'
+            }
+            else
+            {
+                phase = 'Fuck Knows'
+            }
         }
 
         logger.debug(`Moon Phase = ${phase}`);
@@ -236,12 +271,12 @@ export class Astro extends AppParent
         return this._lastEventSave;
     }
 
-    public getEvent(eventName: string): Date
+    public getEvent(eventName: string): Date | 'error'
     {
-        if (this._times.hasOwnProperty(eventName))
-            return this._times[eventName];
-        else
-            throw new Error(`Event name ${eventName} does not exist`);
+        let e = this._events.find((event) => event.eventName == eventName)
+
+        if (e) return e.eventTime;
+        else return 'error';
     }
     
     public get lastMoonPhase(): string
@@ -250,32 +285,18 @@ export class Astro extends AppParent
     }
 
     public get isDark(): boolean {
-        var temp = new Date();
-        var result;
-
-        if (this._isBefore(this._times[this._dayStart], this._times[this._dayEnd])) {
-            result = (this._isBetween(temp, this._times[this._dayStart], this._times[this._dayEnd]))? false : true;
-        } else {
-            result = (this._isBetween(temp, this._times[this._dayEnd], this._times[this._dayStart]))? true : false;
-        }
-
-        return result;
+        return !this.isLight;
     }
 
     public get isLight(): boolean {
-        return this.isDark == false;
+        return this._isBetween(new Date(), this._events[this._dayStart].eventTime, this._events[this._dayEnd].eventTime);
     }
 
-    private _isBetween(test: Date, low: Date, high: Date): boolean {
+    private _isBetween(test: Date, low: Date | 'error', high: Date | 'error'): boolean {
+        if (low == 'error' || high == 'error') {
+            throw new Error('Dates are broken - this is probably a bug');
+        }
         return Number(test) > Number(low) && Number(test) < Number(high);
-    }
-
-    private _isBefore(test: Date, comparand: Date): boolean {
-        return Number(test) < Number(comparand);
-    }
-
-    private _isAfter(test: Date, comparand: Date): boolean {
-        return Number(test) > Number(comparand);
     }
 }
 
