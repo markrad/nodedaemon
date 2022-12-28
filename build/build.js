@@ -52,7 +52,7 @@ async function main() {
                 step = 'add';
                 output = await execAsync(`git add --verbose ${dockerfileOld} ${packagefileOld}`);
                 step = 'commit';
-                output = await execAsync(`git commit -m "Bump version to ${process.argv[2]}"`);
+                output = await execAsync(`git commit -m ":bookmark: Bump version to ${process.argv[2]}"`);
                 step = 'push';
                 output = await execAsync('git push');
                 step = 'tag';
