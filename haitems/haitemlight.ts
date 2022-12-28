@@ -65,7 +65,7 @@ export default class HaItemLight extends HaGenericSwitchItem {
     private async _updateBrightness(newValue: number | string): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var level = Number(newValue);
-            if (level == NaN) {
+            if (isNaN(level)) {
                 resolve({ message: 'Error', err: new Error('Brightness value must be a number between 1 and 254') });
             }
             else {
@@ -80,7 +80,7 @@ export default class HaItemLight extends HaGenericSwitchItem {
     private async _updateTemperature(newValue: number | string): Promise<ServicePromise> {
         return new Promise<any>((resolve, _reject) => {
             var temp = Number(newValue);
-            if (temp == NaN) {
+            if (isNaN(temp)) {
                 resolve({ message: 'Error', err: new Error('Color temperature must be numeric') });
             }
             else {

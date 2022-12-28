@@ -53,7 +53,7 @@ export default class HaItemFan extends HaGenericSwitchItem {
     private async _updateSpeed(newValue: number | string): Promise<ServicePromise> {
         return new Promise((resolve, _reject) => {
             var level = Number(newValue);
-            if (level == NaN) {
+            if (isNaN(level)) {
                 resolve({ message: 'Error', err: new Error('Speed value must be a number between 1 and 100') });
             }
             else {

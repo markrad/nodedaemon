@@ -30,7 +30,7 @@ export default class DeviceTracker extends AppParent {
             this._url = new URL(`http://${this._server}:49090/devices?auth=${this._authKey}`)
             if (config.interval != undefined) {
                 this._interval = parseInt(config.interval);
-                if (this._interval == NaN) throw new Error('Invterval is invalid - must be an integer');
+                if (isNaN(this._interval)) throw new Error('Invterval is invalid - must be an integer');
             }
             logger.info('Validated successfully')
             return true;
