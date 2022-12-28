@@ -61,7 +61,7 @@ export default class AstroHelper extends AppParent {
                     logger.error('Astro module has not been loaded - cannot continue');
                     return resolve(false);
                 }
-                this._astro.on('astroevent', (event: string) => {
+                this._astro.on('astroEvent', (event: string) => {
                     let now: Date = new Date();
                     this._lastEvent.updateState(event, false);
                     let nowString: string = now.getFullYear() + '-' +
