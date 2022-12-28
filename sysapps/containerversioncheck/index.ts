@@ -1,7 +1,7 @@
 import { getLogger, Logger } from 'log4js';
 import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
-import { HaMain /*, SensorType */ } from '../../hamain';
+import { HaMain } from '../../hamain';
 import { Docker } from 'node-docker-api';
 import DockerModem from 'docker-modem';
 import { getTags } from '@snyk/docker-registry-v2-client';
@@ -10,6 +10,7 @@ import { Container } from 'node-docker-api/lib/container';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { fileValidator, numberValidator, stringValidator, entityValidator } from '../../common/validator';
 import { IHaItem } from '../../haitems/ihaitem';
+import Path from 'path';
 
 const CATEGORY: string = 'ContainerVersionCheck';
 var logger: Logger = getLogger(CATEGORY);
@@ -57,9 +58,11 @@ export default class ContainerVersionCheck extends AppParent {
     private _registries: RegistryType = {};
     private _hosts: HostEntry[] = [];
     private _job: schedule.Job = null;
+    private _configRoot: string;
     private readonly _re: RegExp = /^\d{1,4}\.\d{1,2}\.\d{1,2}$/;
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
+        this._configRoot = controller.configPath;
         logger.info('Constructed');
     }
 
@@ -86,11 +89,14 @@ export default class ContainerVersionCheck extends AppParent {
                 stringValidator.isValid(host.host, { name: 'host' });
                 host.port = numberValidator.isValid(host.port, { name: host.host, floatOk: false, minValue: 1024, maxValue: 49151, defaultValue: 2376 });
                 if (!['http', 'https', 'ssh'].includes(host.protocol)) {
-                    throw new Error(`${host.host} Invalid protocol`)
+                    throw new Error(`${host.host} Invalid protocol: ${host.protocol}`);
                 }
-                fileValidator.isValid(host.caFile);
-                fileValidator.isValid(host.certFile);
-                fileValidator.isValid(host.keyFile);
+                let caFile: string = Path.isAbsolute(host.caFile) ? host.caFile : Path.join(this._configRoot, host.caFile);
+                let certFile: string = Path.isAbsolute(host.certFile) ? host.certFile : Path.join(this._configRoot, host.certFile);
+                let keyFile: string = Path.isAbsolute(host.keyFile) ? host.keyFile : Path.join(this._configRoot, host.keyFile);
+                fileValidator.isValid(caFile);
+                fileValidator.isValid(certFile);
+                fileValidator.isValid(keyFile);
                 if (!host.containers || !Array.isArray(host.containers)) throw new Error(`${host.host} containers array is required`);
                 let containers: ContainerEntry[] = [];
                 host.containers.forEach((container: any) => {
@@ -105,9 +111,9 @@ export default class ContainerVersionCheck extends AppParent {
                     host: host.host, 
                     port: host.port, 
                     protocol: host.protocol, 
-                    caFile: readFileSync(host.caFile, { encoding: 'utf8' }),
-                    certFile: readFileSync(host.certFile, { encoding: 'utf8' }),
-                    keyFile: readFileSync(host.keyFile, { encoding: 'utf8' }),
+                    caFile: readFileSync(caFile, { encoding: 'utf8' }),
+                    certFile: readFileSync(certFile, { encoding: 'utf8' }),
+                    keyFile: readFileSync(keyFile, { encoding: 'utf8' }),
                     containers: containers,
                     names: containers.map((container) => container.name),
                 });
