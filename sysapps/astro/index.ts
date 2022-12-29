@@ -204,7 +204,7 @@ export class Astro extends AppParent
     }
 
     public async stop(): Promise<void> {
-        this._midnightSched.cancel();
+        if (this._midnightSched) this._midnightSched.cancel();
         this._moonSched.cancel();
         this._nextEvent.cancel();
     }
