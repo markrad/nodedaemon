@@ -13,7 +13,7 @@ export class CommandHostname extends CommandBase {
     }
 
     public get helpText(): string {
-        return `${this.commandName}\t\t\t\tPrint host name`;
+        return `${this.commandName}\t\t\tPrint host name`;
     }
 
     public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
