@@ -1,5 +1,5 @@
 import ConsoleInterface from ".";
-import { AppInfo } from '../../hamain/appinfo'
+import { AppInfo, AppStatus } from '../../hamain/appinfo'
 import { getLogger, Logger } from "log4js";
 import { CommandBase } from './commandbase';
 import { IChannelWrapper } from "./ichannelwrapper";
@@ -10,14 +10,14 @@ var logger: Logger = getLogger(CATEGORY);
 
 export class CommandApp extends CommandBase {
     public constructor() {
-        super('app', ['start', 'stop', 'reload', 'list', 'log']);
+        super('app', ['start', 'stop', 'restart', 'list', 'log']);
     }
 
     public get helpText(): string {
         let help: string = 
 `${this.commandName}     start appname           start the specified app\r
         stop appname            stop the specified app\r
-        reload appname          reload the configuration settings
+        restart appname         restart app with new configuration settings\r
         list                    list apps\r
         log appname <level>     get log level or set log level to <level>\r
                                 where <level> = ${LogLevels().join(' | ').toLowerCase()}`;
@@ -29,27 +29,22 @@ export class CommandApp extends CommandBase {
         return new Promise(async (resolve, reject) => {
             logger.debug('app start called');
             let appName: string = inputArray[2];
-            let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
+            let app: AppInfo = that.controller.getApp(appName);
             try {
-                if (aps.length != 1) {
+                if (!app) {
                     return reject(new Error(`App ${inputArray[2]} does not exist`));
                 }
-                if (aps[0].status == 'running') {
-                    return reject(new Error(`Cannot start app ${aps[0].name} - already running`));
-                }
                 else {
-                    await aps[0].instance.run();
-                    aps[0].status = 'running';
-                    sock.write(`App ${aps[0].name} started\r\n`);
+                    await that.controller.startApp(app);
+                    sock.write(`App ${app.name} started\r\n`);
                 }
             }
             catch (err: any) {
                 logger.debug(`Failed to start app ${appName}: ${err.message}`);
-                aps[0].status = 'failed';
                 return reject(new Error(`Failed to start app ${appName}: ${err.message}`));
             }
 
-            return resolve();
+            resolve();
         });
     }
 
@@ -57,55 +52,42 @@ export class CommandApp extends CommandBase {
         return new Promise(async (resolve, reject) => {
             logger.debug('app stop called');
             let appName: string = inputArray[2];
-            let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
+            let app: AppInfo = that.controller.getApp(appName);
             try {
-                if (aps.length != 1) {
-                    return reject(new Error(`App ${inputArray[2]} does not exist`));
-                }
-                if (aps[0].status != 'running') {
-                    return reject(new Error(`Cannot stop app ${aps[0].name} - status is ${aps[0].status}\r\n`));
+                if (!app) {
+                    reject(new Error(`App ${inputArray[2]} does not exist`));
                 }
                 else {
-                    await aps[0].instance.stop();
-                    aps[0].status = 'stopped';
-                    sock.write(`App ${aps[0].name} stopped\r\n`)
+                    await that.controller.stopApp(app);
+                    sock.write(`App ${app.name} stopped\r\n`)
                 }
             }
             catch (err: any) {
-                logger.debug(`Failed to stop app ${appName}: ${err.message}`);
-                aps[0].status = 'failed';
-                return reject(new Error(`Failed to stop app ${appName}: ${err.message}`));
+                let msg: string = `Failed to stop app ${appName}: ${err.message}`;
+                logger.debug(msg);
+                reject(new Error(msg));
             }
 
-            return resolve();
+            resolve();
         });
     }
 
-    private async _appReload(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
+    private async _appRestart(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<void> {
         return new Promise(async (resolve, reject) => {
             logger.debug('app reload called');
             let appName: string = inputArray[2];
-            let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
+            let app: AppInfo = that.controller.getApp(appName);
             try {
-                if (aps.length != 1) {
+                if (!app) {
                     return reject(new Error(`App ${inputArray[2]} does not exist`));
                 }
-                if (aps[0].status != 'running') {
-                    return reject(new Error(`Cannot reload app ${aps[0].name} - not running`));
-                }
-                else {
-                    let config: any = that.controller.config[aps[0].path.split('/').slice(-1)[0]];
-                    if (!config) {
-                        throw new Error(`Unable to reload ${aps[0].name} - config does not exist`);
-                    }
-                    aps[0].instance.validate(config);
-                    sock.write(`App ${aps[0].name} reloaded\r\n`);
-                }
+
+                that.controller.restartApp(app);
+                sock.write(`App ${app.name} restarted\r\n`);
             }
             catch (err: any) {
-                logger.debug(`Failed to start app ${appName}: ${err.message}`);
-                aps[0].status = 'failed';
-                return reject(new Error(`Failed to start app ${appName}: ${err.message}`));
+                logger.debug(`Failed to restart app ${appName}: ${err.message}`);
+                return reject(new Error(`Failed to restart app ${appName}: ${err.message}`));
             }
 
             return resolve();
@@ -129,7 +111,7 @@ export class CommandApp extends CommandBase {
             if (aps.length != 1) {
                 throw new Error(`App ${inputArray[2]} does not exist`);
             }
-            if (aps[0].status != 'running') {
+            if (aps[0].status != AppStatus.RUNNING) {
                 throw new Error(`Cannot view or modify logging for ${aps[0].name} - status is ${aps[0].status}\r\n`);
             }
             else {
@@ -181,11 +163,11 @@ export class CommandApp extends CommandBase {
                     }
                     await this._appStop(inputArray, that, sock);
                 break;
-                case "reload":
+                case "restart":
                     if (inputArray.length != 3) {
                         throw new Error('Missing or invalid arguments');
                     }
-                    await this._appReload(inputArray, that, sock);
+                    await this._appRestart(inputArray, that, sock);
                 break;
                 case "log":
                     if (inputArray.length < 3 || inputArray.length > 4) {

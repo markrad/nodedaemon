@@ -14,10 +14,11 @@ import { IHaItem } from '../haitems/ihaitem';
 import { ServiceTarget } from '../haitems/haparentitem';
 import { IApplication } from '../common/IApplication';
 import { LogLevelValidator } from '../common/loglevelvalidator';
-import { AppInfo } from './appinfo';
+import { AppInfo, AppStatus } from './appinfo';
+import { getConfig } from '../common/yamlscaler';
 
-//import * as hound  from 'hound';
-var reload = require('require-reload');
+const hound = require('hound');
+var reload: NodeRequire = require('require-reload');
 
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);
@@ -44,7 +45,7 @@ export class HaMain extends EventEmitter {
     private _haInterface: HaInterface = null;
     private _items: ItemsManager = new ItemsManager();
     private _config: any;
-    private _apps: Array<AppInfo> = new Array<AppInfo>();
+    private _apps: AppInfo[] = [];
     private _haItemFactory: HaItemFactory = null;
     private _haConfig: any = null;
     private _starttime: Date = new Date();
@@ -57,22 +58,69 @@ export class HaMain extends EventEmitter {
     private _pingInterval: number = NaN;
     private _memInterval: number = NaN;
     private _memHandle: NodeJS.Timer = null;
+    private _configFile: string = null;
+    private _configWatcher: any;
     public static getInstance(): HaMain {
         if (!HaMain._instance) {
             throw new Error('Instance of HaMain has not been constructed yet');
         }
         return HaMain._instance;
     }
-    constructor(config: any, configPath: string, version: string) {
+    constructor(config: any, configPath: string, configName: string, version: string) {
         super();
         this._config = config;
         this._configPath = configPath;
+        this._configFile = path.join(configPath, configName);
         this._version = version;
         this._hostname = this._config.main.hostname ?? '127.0.0.1';
         this._port = this._config.main.port ?? 8123
         this._accessToken = this._config.main.accessToken;
         this._pingInterval = this._config.main.pintInterval ?? 0;
         this._memInterval = this._config.main.memInterval ?? 0;
+        this._configWatcher = hound.watch(this._configFile);
+
+        this._configWatcher.on('change', async (file: string, _stats: any) => {
+            try {
+                let countProps: (o: Object) => number = (o: Object): number => {
+                    let count: number = 0;
+                    for (let k in o) {
+                        if (o.hasOwnProperty(k)) count++;
+                    }
+                    return count;
+                }
+                let objectEquals: (l: any, r: any) => boolean = (l, r): boolean =>{
+                    if (l instanceof Object && r instanceof Object) {
+                        if (countProps(l) != countProps(r)) return false;
+                        let ret: boolean;
+                        for (let k in l) {
+                            ret = objectEquals(l[k], r[k]);
+                            if (!ret) return false;
+                        }
+                        return true;
+                    }
+                    else {
+                        return l == r;
+                    }
+                }
+                let newConfig = getConfig(file);
+                for (let key in newConfig) {
+                    if (key != 'main') {
+                        if (this._config[key] === undefined) {
+                            logger.info(`New application found: ${key}`);
+                        }
+                        else if (!objectEquals(newConfig[key], this._config[key])) {
+                            logger.info(`Found config update for application ${key}`);
+                            let app: AppInfo = this.getAppByDirent(key);
+                            app.config = newConfig[key];
+                            this.restartApp(app);
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                logger.error(`Failed to acquire new config file: ${err}`);
+            }
+        });
 
         if (process.env.HAMAIN_LOGGING) {
             logger.level = process.env.HAMAIN_LOGGING;
@@ -91,132 +139,121 @@ export class HaMain extends EventEmitter {
         if (isNaN(this._memInterval)) {
             logger.warn(`Mem interval ${this._memInterval} is invalid - ignored`);
         }
+
         HaMain._instance = this;
     }
 
     public async start(): Promise<void> {
         try {
-                if (this._memInterval > 0) {
-                    var heapUsed: number = 0;
-                    this._memHandle = setInterval(() => {
-                        var mem: NodeJS.MemoryUsage = process.memoryUsage();
-                        logger.info(`Used ${Math.round(mem.heapUsed * 100 / mem.heapTotal * 100) / 100}% - change of ${(mem.heapUsed - heapUsed).toLocaleString()} (total: ${mem.heapTotal.toLocaleString()}; used: ${mem.heapUsed.toLocaleString()})`);
-                        heapUsed = mem.heapUsed;
-                    }, this._memInterval * 1000);
-                }
-                this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
-                this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
-                if (eventType != 'state_changed') logger.debug(`Service Event: ${eventType}`);
-                if (eventType == 'state_changed') {
-                    let state: StateChange = data;
-                    if (this._items.getItem(state.entity_id)) {
-                        if (state.new_state != null) {
-                            logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
-                            this.items.getItem(state.entity_id).setReceivedState(state.new_state);
-                        }
-                        else {
-                            let item = this.items.getItem(state.entity_id);
-                            this.items.deleteItem(state.entity_id);
-                            this.emit('itemdeleted', item);
-                            logger.info(`Item ${state.entity_id} has been dropped`);
-                        }
+            if (this._memInterval > 0) {
+                var heapUsed: number = 0;
+                this._memHandle = setInterval(() => {
+                    var mem: NodeJS.MemoryUsage = process.memoryUsage();
+                    logger.info(`Used ${Math.round(mem.heapUsed * 100 / mem.heapTotal * 100) / 100}% - change of ${(mem.heapUsed - heapUsed).toLocaleString()} (total: ${mem.heapTotal.toLocaleString()}; used: ${mem.heapUsed.toLocaleString()})`);
+                    heapUsed = mem.heapUsed;
+                }, this._memInterval * 1000);
+            }
+            this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
+            this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
+            if (eventType != 'state_changed') logger.debug(`Service Event: ${eventType}`);
+            if (eventType == 'state_changed') {
+                let state: StateChange = data;
+                if (this._items.getItem(state.entity_id)) {
+                    if (state.new_state != null) {
+                        logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
+                        this.items.getItem(state.entity_id).setReceivedState(state.new_state);
                     }
                     else {
-                        if (state.new_state != null) {
-                            let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
-                            let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
-                            this._setupItem(itemInstance); 
-                            logger.info(`Item ${state.entity_id} not found - added`);
-                        }
+                        let item = this.items.getItem(state.entity_id);
+                        this.items.deleteItem(state.entity_id);
+                        this.emit('itemdeleted', item);
+                        logger.info(`Item ${state.entity_id} has been dropped`);
                     }
                 }
-                else if (eventType == 'call_service') {
-                    logger.debug(`Call Service ${JSON.stringify(data, null, 4)}`);
-                    logger.debug(`Ignored event "${eventType}"`)
-                }
-                // else if (eventType == 'entity_registry_updated') {
-                //     if (data.action == 'create') {
-                //         logger.info(`Adding new device ${data.entity_id}`);
-                //         let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
-                //         let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
-                //         this._setupItem(itemInstance); 
-                //     }
-                //     else if (data.action == 'remove') {
-                //         logger.info(`Removing deleted device ${data.entity_id}`);
-                //         let item = this.items.getItem(data.entity_id);
-                //         this.items.deleteItem(data.entity_id);
-                //         this.emit('itemdeleted', item);
-                //     }
-                //     else {
-                //         // TODO: Handle this
-                //         logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
-                //     }
-                // }
                 else {
-                    logger.debug(`Event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
+                    if (state.new_state != null) {
+                        let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
+                        let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
+                        this._setupItem(itemInstance); 
+                        logger.info(`Item ${state.entity_id} not found - added`);
+                    }
                 }
-                this.emit('serviceevent', eventType, data);
-            });
+            }
+            else if (eventType == 'call_service') {
+                logger.debug(`Call Service ${JSON.stringify(data, null, 4)}`);
+                logger.debug(`Ignored event "${eventType}"`)
+            }
+            // else if (eventType == 'entity_registry_updated') {
+            //     if (data.action == 'create') {
+            //         logger.info(`Adding new device ${data.entity_id}`);
+            //         let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
+            //         let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
+            //         this._setupItem(itemInstance); 
+            //     }
+            //     else if (data.action == 'remove') {
+            //         logger.info(`Removing deleted device ${data.entity_id}`);
+            //         let item = this.items.getItem(data.entity_id);
+            //         this.items.deleteItem(data.entity_id);
+            //         this.emit('itemdeleted', item);
+            //     }
+            //     else {
+            //         // TODO: Handle this
+            //         logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
+            //     }
+            // }
+            else {
+                logger.debug(`Event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
+            }
+            this.emit('serviceevent', eventType, data);
+        });
 
-            this._haInterface.on('connected', async () => {
-                if (this._reconnect) {
-                    this._processItems(await this._haInterface.getStates());
-                }
-                else {
-                    await this._haInterface.subscribe();
-                    logger.info('Subscribed to events');
-                    this._reconnect = false;
-                }
-            });
+        this._haInterface.on('connected', async () => {
+            if (this._reconnect) {
+                this._processItems(await this._haInterface.getStates());
+            }
+            else {
+                await this._haInterface.subscribe();
+                logger.info('Subscribed to events');
+                this._reconnect = false;
+            }
+        });
 
-            this._haItemFactory = new HaItemFactory(this._config);
-            await this._haInterface.start();
-            this._haConfig = await this._haInterface.getConfig();
-            this._processItems(await this._haInterface.getStates());
-            logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
+        this._haItemFactory = new HaItemFactory(this._config);
+        await this._haInterface.start();
+        this._haConfig = await this._haInterface.getConfig();
+        this._processItems(await this._haInterface.getStates());
+        logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
 
-            let itemTypes: any = {};
-            
-            Array.from(this._items.items.values()).forEach((value: IHaItem) => {
-                if (!(value.type in itemTypes)) {
-                    itemTypes[value.type] = 0;
-                }
-                itemTypes[value.type] += 1;
-            });
+        let itemTypes: any = {};
+        
+        Array.from(this._items.items.values()).forEach((value: IHaItem) => {
+            if (!(value.type in itemTypes)) {
+                itemTypes[value.type] = 0;
+            }
+            itemTypes[value.type] += 1;
+        });
 
-            Object.keys(itemTypes).sort().forEach((value, _index) => {
-                logger.info(`${value}: ${itemTypes[value]}`);
-            }); 
+        Object.keys(itemTypes).sort().forEach((value, _index) => {
+            logger.info(`${value}: ${itemTypes[value]}`);
+        }); 
 
-            let appPromises: Promise<AppInfo[]>[] = [];
-            this._config.main.appsDir.forEach(async (item: string) => {
-                this._setWatcher(item);
-            
-                appPromises.push(this._getApps(this._config.main.ignoreApps, item));
-            });
+        let appPromises: Promise<AppInfo[]>[] = [];
+        this._config.main.appsDir.forEach(async (item: string) => {
+            // this._setWatcher(item);
+        
+            appPromises.push(this._getApps(this._config.main.ignoreApps, item));
+        });
 
-            Promise.all(appPromises)
-                .then((results) => {
-                    results.forEach(result => this._apps = this._apps.concat(result));
-                    // Construct all apps
-                    this._apps.forEach(async (app) => {
-                        try {
-                            if (app.status == 'constructed') {
-                                await app.instance.run();
-                                app.status = 'running';
-                            }
-                            else {
-                                logger.warn(`App is not in a runnable state ${app.name} - ${app.status}`);
-                            }
-                        }
-                        catch (err) {
-                            app.status = 'failed';
-                            logger.warn(`Could not run app ${app.name} - ${err}`);
-                        }
-                    });
-                    logger.info(`Apps loaded: ${this._apps.length}`);
-                    this.emit('appsinitialized');
+        Promise.all(appPromises)
+            .then((results) => {
+                results.forEach(result => this._apps = this._apps.concat(result));
+                // Construct all apps
+                this._apps.forEach(async (app) => {
+                    await this._startApp(app, this._config.main.norunApps);
                 });
+                logger.info(`Apps loaded: ${this._apps.length}`);
+                this.emit('appsinitialized');
+            });
         }
         catch (err) {
             logger.error(`Error: ${err}`);
@@ -225,22 +262,72 @@ export class HaMain extends EventEmitter {
         }
     }
 
-    public async stop() {
+    public async restartApp(app: AppInfo): Promise<void> {
+        if (app.status == AppStatus.RUNNING) {
+            await this.stopApp(app);
+        }
+        await this.startApp(app);
+    }
+
+    public async startApp(app: AppInfo): Promise<void> {
+        return await this._startApp(app);
+    }
+
+    private async _startApp(app: AppInfo, norunApps?: string[]): Promise<void> {
+        try {
+            if (app.status != AppStatus.FAILED && app.status != AppStatus.RUNNING) {
+                if (app.instance.validate != undefined && app.instance.validate(app.config)) {
+                    app.status = AppStatus.VALIDATED;
+                    if (norunApps == undefined || !norunApps.includes(app.name)) {
+                        await app.instance.run();
+                        app.status = AppStatus.RUNNING;
+                        logger.info(`Started ${app.name}`);
+                    }
+                    else {
+                        app.status = AppStatus.STOPPED;
+                    }
+                }
+                else {
+                    app.status = AppStatus.BADCONFIG;
+                }
+            }
+            else {
+                throw new Error(`App is not in a startable state - ${app.status}`);
+            }
+        }
+        catch (err) {
+            app.status = AppStatus.FAILED;
+            throw new Error(`Failed to start app ${app.name}: ${err.message}`);
+        }
+    }
+
+    public async stopApp(app: AppInfo): Promise<void> {
+        try {
+            if (app.status == AppStatus.RUNNING) {
+                await app.instance.stop();
+                app.status = AppStatus.STOPPED;
+                logger.info(`Stopped app ${app.name}`);
+            }
+        }
+        catch (err) {
+            app.status = AppStatus.FAILED;
+            throw new Error(`Failed to stop app ${app.name}: ${err.message}`);
+        }
+    }
+
+    public async stop(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             if (this._memHandle != null) {
                 clearInterval(this._memHandle);
                 this._memHandle = null;
             }
+            this._configWatcher.clear();
             this._apps.forEach(async (app) => {
                 try {
-                    if (app) {
-                        await app.instance.stop();
-                        app.status = 'stopped';
-                    }
+                    this.stopApp(app);
                 }
                 catch (err) {
-                    logger.warn(`Failed to stop app ${app.name}: ${err.message}`);
-                    app.status = 'failed';
+                    logger.error(`Failed to stop ${app.name} - ${err}`);
                 }
             });
             try {
@@ -254,7 +341,7 @@ export class HaMain extends EventEmitter {
                 logger.info(`Stack:\n${err.stack}`);
                 reject(err);
             }
-            });
+        });
     }
 
     public async addSensor(name: string, type: SensorType, value: boolean | string | number): Promise<void> {
@@ -312,6 +399,10 @@ export class HaMain extends EventEmitter {
 
     public getApp(name: string): AppInfo {
         return this.apps.find(item => item.name == name);
+    }
+
+    public getAppByDirent(name: string): AppInfo {
+        return this.apps.find(item => path.basename(item.path) == name);
     }
 
     public get haConfig() {
@@ -398,9 +489,9 @@ export class HaMain extends EventEmitter {
         this._items.addItem(itemInstance);
         this.emit('itemadded', this.items.getItem(itemInstance.entityId));
 }
+/*        
 
     private _setWatcher(_item: unknown) {
-/*        
         hound.watch(item)
             .on('create', (file, stats) => {
                 if (this._isApp(this.config.main.appsDir, file, stats)) {
@@ -458,8 +549,8 @@ export class HaMain extends EventEmitter {
                     }
                 }
             });
-*/
     }
+*/
 /*
     private _isApp(appsDir: string[], file: string, stats?: any) {
         stats = stats ?? { isFile: () => { return true; } }
@@ -490,31 +581,40 @@ export class HaMain extends EventEmitter {
                             fs.access(fullname, (err) => {
                                 if (!err) {
                                     let app = reload(fullname).default;
+                                    let loc: string = path.join(dir.path, dirent.name);
                                     try {
-                                        let loc: string = path.join(dir.path, dirent.name);
                                         if (this._config[dirent.name] === undefined) {
                                             logger.warn(`Ignoring ${dirent.name} - no config`);
                                         }
                                         else {
                                             appobject = new app(this, this._config);
-                                            if (appobject.validate == undefined || appobject.validate(this._config[dirent.name])) {
-                                                appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
-                                                    try {
-                                                        await this._haInterface.callService(domain, service, data)
-                                                    }
-                                                    catch (err) {
-                                                        // Error already logged
-                                                    }
-                                                });
-                                                apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'constructed' });
-                                            }
-                                            else {
-                                                apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: 'bad_config' });
-                                            }
+                                            appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
+                                                try {
+                                                    await this._haInterface.callService(domain, service, data)
+                                                }
+                                                catch (err) {
+                                                    // Error already logged
+                                                }
+                                            });
+                                            apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.CONSTRUCTED, config: this._config[dirent.name] });
+                                            // if (appobject.validate == undefined || appobject.validate(this._config[dirent.name])) {
+                                            //     appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
+                                            //         try {
+                                            //             await this._haInterface.callService(domain, service, data)
+                                            //         }
+                                            //         catch (err) {
+                                            //             // Error already logged
+                                            //         }
+                                            //     });
+                                            //     apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.CONSTRUCTED });
+                                            // }
+                                            // else {
+                                            //     apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.BADCONFIG });
+                                            // }
                                         }
                                     }
                                     catch (err) {
-                                        apps.push({ name: appobject?.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
+                                        apps.push({ name: appobject?.constructor.name, path: loc, instance: appobject, status: AppStatus.FAILED, config: this._config[dirent.name] });
                                         logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                                     }
                                 }

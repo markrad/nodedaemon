@@ -3,12 +3,12 @@ import { getLogger, configure, Logger, Configuration, Log4js } from 'log4js';
 import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
-import YAML, { ScalarTag } from 'yaml';
 import { LogLevelValidator, LogLevels } from './common/loglevelvalidator';
+import { getConfig } from './common/yamlscaler';
 
 const CATEGORY: string = 'main';
 
-async function main(version: string, config: any, configPath: string, log4js: Log4js) {
+async function main(version: string, config: any, configPath: string, configName: string, log4js: Log4js) {
     const LOGO: string = `
                                                   
              |         |                         
@@ -31,7 +31,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 
     try {
-        var haMain: HaMain = new HaMain(config, configPath, version);
+        var haMain: HaMain = new HaMain(config, configPath, configName, version);
 
         process.stdin.resume();
         ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
@@ -77,20 +77,6 @@ function fatalExit(message: string, returnCode: number, logger?: Logger) {
 var defaultLogger: Logger; 
 let configFile: string = '';
 
-const secret: ScalarTag = {
-    identify: value => value instanceof String,
-    default: false,
-    tag: '!secret',
-    resolve(str) {
-        if (!secrets[str]) {
-            throw new Error(`Secret ${str} not found`);
-        }
-        else {
-            return secrets[str];
-        }
-    },
-}
-
 try {
     const program = new Command();
 
@@ -114,19 +100,10 @@ try {
 
     var config: any;
     var configPath = Path.dirname(configFile);
-    var secrets: any = {};
     var log4js: Log4js;
 
     try {
-        secrets = YAML.parse(fs.readFileSync(Path.join(configPath, 'secrets.yaml'), 'utf8'));
-    }
-    catch (err) {
-        if ((err.errno?? 0) != -2) {
-            fatalExit(`Failed to read secrets file ${Path.join(configPath, 'secret.yaml')} - ${err.message}`, 4);
-        }
-    }
-    try {
-        config = YAML.parse(fs.readFileSync(configFile, 'utf8'),  { customTags: [secret] })
+        config = getConfig(configFile);
     }
     catch (err) {
         fatalExit(`Config file ${program.opts().config} is invalid: ${err}`, 4);
@@ -267,4 +244,4 @@ catch (err) {
     fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
 }
 
-main(packageJSON.version, config, configPath, log4js);
+main(packageJSON.version, config, configPath, Path.basename(configFile), log4js);
