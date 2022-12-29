@@ -13,7 +13,7 @@ const CATEGORY: string = 'TestBed';
 var logger: Logger = getLogger(CATEGORY);
 
 export default class TestBed extends AppParent {
-    private _astro2: Astro;
+    private _astro: Astro;
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         logger.info('Constructed');
@@ -28,18 +28,18 @@ export default class TestBed extends AppParent {
     async run(): Promise<boolean> {
         return new Promise(async (resolve, _reject) => {
             this.controller.once('appsinitialized', () => {
-                if (!(this._astro2 = this.controller.getApp('Astro')?.instance as Astro)) {
+                if (!(this._astro = this.controller.getApp('Astro')?.instance as Astro)) {
                     logger.error('Astro module has not been loaded - cannot continue');
                     return resolve(false);
                 }
-                this._astro2.on('astroEvent', (event) => logger.debug(`Astro event: ${event} fired`));
-                this._astro2.on('isDark', () => logger.debug('isDark'));
-                this._astro2.on('isLight', () => logger.debug('isLight'));
-                this._astro2.on('moonPhase', (event) => logger.debug(`Moon phase event: ${event} fired`));
-                logger.debug(`Is dark? ${this._astro2.isDark}`);
-                logger.debug(`Is light? ${this._astro2.isLight}`);
-                logger.debug(`Last Event: ${this._astro2.lastEvent}`);
-                logger.debug(`Moon phase: ${this._astro2.lastMoonPhase}`);
+                this._astro.on('astroEvent', (event) => logger.debug(`Astro event: ${event} fired`));
+                this._astro.on('isDark', () => logger.debug('isDark'));
+                this._astro.on('isLight', () => logger.debug('isLight'));
+                this._astro.on('moonPhase', (event) => logger.debug(`Moon phase event: ${event} fired`));
+                logger.debug(`Is dark? ${this._astro.isDark}`);
+                logger.debug(`Is light? ${this._astro.isLight}`);
+                logger.debug(`Last Event: ${this._astro.lastEvent}`);
+                logger.debug(`Moon phase: ${this._astro.lastMoonPhase}`);
             });
             resolve(true);
         });
