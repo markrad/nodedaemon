@@ -3,7 +3,7 @@ FROM arm32v7/node:17.5-slim
 RUN apt update && apt -y upgrade
 RUN apt install -y git
 RUN npm install -g typescript
-RUN git clone -b v1.1.14 https://github.com/markrad/nodedaemon.git
+RUN git clone -b v1.1.15 https://github.com/markrad/nodedaemon.git
 
 WORKDIR /nodedaemon
 
