@@ -33,7 +33,7 @@ export class CommandLogs extends CommandBase {
                 if (inputArray.length > 2) throw new Error('Only one optional argument is permitted')
                 this._sock = sock;
                 if (inputArray.length == 2) this._regex = new RegExp(inputArray[1]);
-                // console.log(this._regex);
+                else this._regex = null;
                 logEmitter.on('logmessage', this._messageWriter);
                 this._isRunning = true;
                 this._ew = new EventWaiter();
