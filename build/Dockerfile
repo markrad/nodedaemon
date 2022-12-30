@@ -1,4 +1,4 @@
-FROM arm32v7/node:17.5-slim
+FROM arm32v7/node:18.12.1-slim
 
 RUN apt update && apt -y upgrade
 RUN apt install -y git
