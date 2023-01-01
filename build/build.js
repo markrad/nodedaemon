@@ -3,7 +3,6 @@ const readline = require('readline');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process'); 
-const { stderr } = require('process');
 
 async function execAsync(cmdLine) {
     return new Promise((resolve, reject) => {
