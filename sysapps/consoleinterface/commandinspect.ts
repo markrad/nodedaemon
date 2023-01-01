@@ -15,12 +15,17 @@ export class CommandInspect extends CommandBase {
     }
 
     public get helpText(): string {
-        return `${this.commandName} <optional regex>\tInspect items optionally filtered by a regex query of entity id`;
+        return `${this.commandName} <regex>\t\t\tInspect items optionally filtered by a regex query of entity id`;
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
+            // let possibles: string[] = (parameters[1]
+            //     ? that.items.getItemByEntytId(parameters[1], true) 
+            // : that.items.getItemByEntytId())
+            // .map((item: IHaItem) => item.entityId)
+            // .sort((l, r) => l < r? -1 : 1);
         let possibles: string[] = [ ...that.controller.items.items ]
-            .filter((item) => item[1].entityId.startsWith(parameters[1]))       // TODO: Make this resolve regex expressions
+            .filter((item) => item[1].entityId.startsWith(parameters[1]))       // TODO: Make this resolve regex expressions (maybe)
             .map((item) => item[1].entityId)
             .sort((l, r) => l < r? -1 : 1);
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
@@ -33,9 +38,7 @@ export class CommandInspect extends CommandBase {
                 throw new Error('Missing or invalid inspection target');
             }
             logger.debug(`inspect called with ${inputArray.join(' ')}`);
-            let items = inputArray[1]
-                ? that.items.getItemByEntytId(inputArray[1], true) 
-                : that.items.getItemByEntytId();
+            let items = that.items.getItemByEntytId(inputArray[1], true);
             items.forEach((item) => {
                 sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
