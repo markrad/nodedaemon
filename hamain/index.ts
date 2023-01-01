@@ -88,7 +88,7 @@ export class HaMain extends EventEmitter {
                     }
                     return count;
                 }
-                let objectEquals: (l: any, r: any) => boolean = (l, r): boolean =>{
+                let objectEquals: (l: any, r: any) => boolean = (l, r): boolean => {
                     if (l instanceof Object && r instanceof Object) {
                         if (countProps(l) != countProps(r)) return false;
                         let ret: boolean;
@@ -112,7 +112,13 @@ export class HaMain extends EventEmitter {
                             logger.info(`Found config update for application ${key}`);
                             let app: AppInfo = this.getAppByDirent(key);
                             app.config = newConfig[key];
-                            this.restartApp(app);
+                            
+                            if (app.status == AppStatus.RUNNING) {
+                                this.restartApp(app);
+                            }
+                            else {
+                                logger.info(`Not starting stopped application ${app.name}`);
+                            }
                         }
                     }
                 }
