@@ -27,11 +27,11 @@ fi
 
 version=$(jq .version ../package.json | tr -d '"')
 IFS="." read -a parts <<< $version
-echo ${parts[$field]}
+# echo ${parts[$field]}
 parts[$field]=$((${parts[$field]}+1))
-echo ${parts[$field]}
+# echo ${parts[$field]}
 newver=$(IFS="." ; echo "${parts[*]}")
-echo $newver
+# echo $newver
 
 echo This will update the version from $version to $newver and push a new tag
 read -p "Do you wish to continue? [Yy] " response
@@ -42,16 +42,18 @@ then
     exit 4
 fi
 
-if [ 1 -ne $(grep -c $1 Dockerfile) ] || [ 1 -ne $(grep -c $1 ../package.json) ]
-then
-    echo Version $1 occurs more than once in one of the build files
-    exit 4
-fi
+echo Updating
 
-sed -i s/$version/$1/ Dockerfile
-sed -i s/$version/$1/ ../package.json
+# if [ 1 -ne $(grep -c $1 Dockerfile) ] || [ 1 -ne $(grep -c $1 ../package.json) ]
+# then
+#     echo Version $1 occurs more than once in one of the build files
+#     exit 4
+# fi
+
+sed -i s/$version/$newver/ Dockerfile
+sed -i s/$version/$newver/ ../package.json
 git add --verbose Dockerfile ../package.json && \
-git commit -m ":bookmark: Bump version to $1" && \
+git commit -m ":bookmark: Bump version to $newver" && \
 git push && \
-git tag v$1 && \
-git push origin v$1
+git tag v$newver && \
+git push origin v$newver
