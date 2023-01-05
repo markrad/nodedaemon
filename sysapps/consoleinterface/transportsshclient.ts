@@ -330,7 +330,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                                                 resultLen = curr;
                                             }
                                             stream.write('\r\n');
-                                            stream.write(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
+                                            stream.writeLightMagenta(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
                                             let lastLen: number = cmdWords[cmdWords.length - 1].length;
                                             line = Buffer.concat([line.slice(0, len), Buffer.from(possibles[0].substr(lastLen, resultLen - lastLen)), line.slice(len)]);
                                             len += resultLen - lastLen;
