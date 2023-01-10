@@ -111,13 +111,18 @@ export class HaMain extends EventEmitter {
                         else if (!objectEquals(newConfig[key], this._config[key])) {
                             logger.info(`Found config update for application ${key}`);
                             let app: AppInfo = this.getAppByDirent(key);
-                            app.config = newConfig[key];
-                            
-                            if (app.status == AppStatus.RUNNING) {
-                                this.restartApp(app);
+                            if (!app) {
+                                logger.info(`Application ${key} is in the ignore list`);
                             }
                             else {
-                                logger.info(`Not starting stopped application ${app.name}`);
+                                app.config = newConfig[key];
+                                
+                                if (app.status == AppStatus.RUNNING) {
+                                    this.restartApp(app);
+                                }
+                                else {
+                                    logger.info(`Not starting stopped application ${app.name}`);
+                                }
                             }
                         }
                     }
