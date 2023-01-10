@@ -19,7 +19,7 @@ export class stringValidator {
             if (opt.defaultValue) return opt.defaultValue;
             else return value;
         }
-        if (typeof value != 'string') throw new Error(`${opt.name} not a string`);
+        if (typeof value != 'string') throw new Error(`${value} not a string`);
         return value;
     }
 }
@@ -40,7 +40,7 @@ type entityValidatorOptions<T extends IHaItem> = stringValidatorOptions & {
 }
 
 export class entityValidator {
-    static isValid<T extends IHaItem>(value: any, options?: entityValidatorOptions<T>): T {
+    static isValid<T extends IHaItem>(value: any, options: entityValidatorOptions<T>): T {
         let opt = { ...{ name: ''}, ...options };
         let work = stringValidator.isValid(value, opt);
         if (work) return HaMain.getInstance().items.getItemAsEx(value, options.entityType, true);
