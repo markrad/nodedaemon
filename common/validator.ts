@@ -42,7 +42,7 @@ type entityValidatorOptions<T extends IHaItem> = stringValidatorOptions & {
 export class entityValidator {
     static isValid<T extends IHaItem>(value: any, options?: entityValidatorOptions<T>): T {
         let opt = { ...{ name: ''}, ...options };
-        let work = stringValidator.isValid(value,opt);
+        let work = stringValidator.isValid(value, opt);
         if (work) return HaMain.getInstance().items.getItemAsEx(value, options.entityType, true);
         throw new Error(`${opt.name} entity not found`);
     }
