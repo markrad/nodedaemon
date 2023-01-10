@@ -44,7 +44,7 @@ export class WSWrapper extends EventEmitter {
     public async open(): Promise<void> {
         this._closing = false;
         // Note: It appears that ENOTFOUND can be thrown during docker upheaval thus it may be transient
-        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENOTFOUND' ];
+        let handled = [ 'ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH' ];
         return new Promise(async (resolve, reject) => {
 
             while (true) {
@@ -56,6 +56,14 @@ export class WSWrapper extends EventEmitter {
                 }
                 catch (err) {
                     if (err instanceof DNSError) {
+                        if (err.code != 'ENOTFOUND') {
+                            logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
+                            reject(err);
+                            break;
+                        }
+                        else {
+                            logger.info(`${err.message} - retrying`);
+                        }
                         logger.fatal(`Unable to resolve host address: ${this._url}`);
                         reject(err);
                         break;
@@ -84,6 +92,7 @@ export class WSWrapper extends EventEmitter {
                 }
                 await new Promise<void>((resolve) => setTimeout(resolve, 1000));
             }
+            // TODO: Control should not pass to here if the above fails
             logger.debug(`Connected to ${this._url}`);
             
             this._client
