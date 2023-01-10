@@ -1,19 +1,20 @@
 import { getLogger, Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { HaMain /*, SensorType */ } from '../../hamain';
+import { IHaItem } from '../../haitems/ihaitem';
 // import { HaItemSensor } from '../../haitems/haitemsensor'
 // import { IHaItemEditable } from '../../haitems/haparentitem';
 // import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
 // import { resolve } from 'path';
 // import  HaItemUpdate from '../../haitems/haitemupdate';
 // import { HaGenericBinaryItem } from '../../haitems/hagenericbinaryitem';
-import Astro from '../astro';
+// import Astro from '../astro';
 
 const CATEGORY: string = 'TestBed';
 var logger: Logger = getLogger(CATEGORY);
 
 export default class TestBed extends AppParent {
-    private _astro: Astro;
+    // private _astro: Astro;
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         logger.info('Constructed');
@@ -21,26 +22,39 @@ export default class TestBed extends AppParent {
 
     validate(_config: any): boolean {
         // Since this is test code we don't do much in here
+        let test: IHaItem[] = this.controller.items.getItemsAsArray();
+        let counters = {
+            number: 0,
+            string: 0,
+            boolean: 0,
+            other: 0
+        }
+        test.forEach((item) => {
+            switch(typeof item.state) {
+                case 'string': 
+                    counters.string++;
+                break;
+                case 'number':
+                    counters.number++;
+                break;
+                case 'boolean':
+                    counters.boolean++;
+                break;
+                default:
+                    counters.other++;
+                break;
+            }
+        })
+        logger.debug('string: \t' + counters.string);
+        logger.debug('number: \t' + counters.number);
+        logger.debug('boolean:\t' + counters.boolean);
+        logger.debug('other:  \t' + counters.other);
         logger.info('Validated successfully')
         return true;
     }
 
     async run(): Promise<boolean> {
         return new Promise(async (resolve, _reject) => {
-            this.controller.once('appsinitialized', () => {
-                if (!(this._astro = this.controller.getApp('Astro')?.instance as Astro)) {
-                    logger.error('Astro module has not been loaded - cannot continue');
-                    return resolve(false);
-                }
-                this._astro.on('astroEvent', (event) => logger.debug(`Astro event: ${event} fired`));
-                this._astro.on('isDark', () => logger.debug('isDark'));
-                this._astro.on('isLight', () => logger.debug('isLight'));
-                this._astro.on('moonPhase', (event) => logger.debug(`Moon phase event: ${event} fired`));
-                logger.debug(`Is dark? ${this._astro.isDark}`);
-                logger.debug(`Is light? ${this._astro.isLight}`);
-                logger.debug(`Last Event: ${this._astro.lastEvent}`);
-                logger.debug(`Moon phase: ${this._astro.lastMoonPhase}`);
-            });
             resolve(true);
         });
     }
