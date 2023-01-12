@@ -67,7 +67,7 @@ export class ItemsManager {
                 : [ ...this.items.values() ];
     }
 
-    public getItemByEntytId(name?: string, useRegEx?: boolean): Array<IHaItem> {
+    public getItemByEntityId(name?: string, useRegEx?: boolean): Array<IHaItem> {
         let re: RegExp = !name
             ? null
             : useRegEx

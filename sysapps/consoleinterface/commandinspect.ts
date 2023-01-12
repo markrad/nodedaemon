@@ -38,7 +38,7 @@ export class CommandInspect extends CommandBase {
                 throw new Error('Missing or invalid inspection target');
             }
             logger.debug(`inspect called with ${inputArray.join(' ')}`);
-            let items = that.items.getItemByEntytId(inputArray[1], true);
+            let items = that.items.getItemByEntityId(inputArray[1], true);
             items.forEach((item) => {
                 sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
