@@ -1,7 +1,7 @@
 "use strict";
 
 import EventEmitter from 'events';
-import { getLogger } from 'log4js';
+import { getLogger, Level } from 'log4js';
 import { ServiceTarget } from '../haitems/haparentitem';
 import { WSWrapper } from '../common/wswrapper';
 import { EventWaiter } from '../common/eventwaiter';
@@ -126,7 +126,7 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingInterval)
+                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingInterval, logger.level as Level)
                 logger.info(`Connecting to ${this._client.url}`);
 
                 this._client.on('message', async (message: string) => {

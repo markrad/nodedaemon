@@ -105,27 +105,27 @@ export class CommandApp extends CommandBase {
 
     private _applog(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): void {
         logger.debug('app log called');
-        let appName: string = inputArray[2];
-        let aps: AppInfo[] = that.controller.apps.filter((item) => item.name == appName);
+        let app = that.controller.getApp(inputArray[2]);
         try {
-            if (aps.length != 1) {
+            if (!app) {
                 throw new Error(`App ${inputArray[2]} does not exist`);
             }
-            if (aps[0].status != AppStatus.RUNNING) {
-                throw new Error(`Cannot view or modify logging for ${aps[0].name} - status is ${aps[0].status}\r\n`);
+            if (app.status != AppStatus.RUNNING) {
+                throw new Error(`Cannot view or modify logging for ${app.name} - status is ${app.status}\r\n`);
             }
             else {
                 if (inputArray.length == 3) {
-                    sock.write(`App ${aps[0].name} has log level ${aps[0].instance.logging}\r\n`);
+                    sock.write(`App ${app.name} has log level ${app.instance.logging}\r\n`);
                 }
                 else {
-                    aps[0].instance.logging = inputArray[3];
-                    sock.write(`App ${aps[0].name} has log level ${aps[0].instance.logging}\r\n`);
+                    app.instance.logging = inputArray[3];
+                    logger.info(`Logging for ${app.name} set to ${app.instance.logging}`);
+                    sock.write(`App ${app.name} has log level ${app.instance.logging}\r\n`);
                 }
             }
         }
         catch (err: any) {
-            logger.debug(`Failed to get or set logging for ${appName}: ${err.message}`);
+            logger.debug(`Failed to get or set logging for ${inputArray[2]}: ${err.message}`);
             throw err;
         }
 }

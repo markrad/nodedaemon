@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { getLogger, configure, Logger, Configuration, Log4js } from 'log4js';
+import { getLogger, configure, Logger, Configuration, Log4js, Level, levels } from 'log4js';
 import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
@@ -18,7 +18,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
                                                    Version ${version} is starting
 `;
     var logger: Logger = getLogger(CATEGORY);
-    let level: any = (logger.level);
+    let level: Level = (logger.level) as Level;
 
     if (level.level > 20000) {
         logger.level = 'info';
@@ -27,7 +27,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     logger.info(`${LOGO}`);
 
     if (level.level > 20000) {
-        logger.level = level.level;
+        logger.level = level;
     }
 
     try {
@@ -74,14 +74,12 @@ function fatalExit(message: string, returnCode: number, logger?: Logger) {
     process.exit(returnCode);
 }
 
+const defaultLogLevel: Level = levels.WARN;
 var defaultLogger: Logger; 
 let configFile: string = '';
 
 try {
     const program = new Command();
-
-    const defaultLogLevel: number = 3;
-
     var packageJSON: any = JSON.parse(fs.readFileSync('package.json').toString());
 
     program.version(`Version = ${packageJSON.version}\nAuthor  = ${packageJSON.author}\nLicense = ${packageJSON.license}\nWebpage = ${packageJSON.repository.url}`)
@@ -89,7 +87,7 @@ try {
         .option('-a, --appsdir <location...>', 'location of apps directory\n(default: if present the value from config.yaml appsDir otherwise ./apps')
         .option('-r, --replace', 'replace config file appsdir with command line appsdir - default is to merge them')
         .option('-c, --config <locaton>', 'name and location of config.yaml', './config.yaml')
-        .option('-l --loglevel <type>', `logging level [${LogLevels().join(' | ')}]\n(default: if present the value from config.yaml logLevel otherwise ${LogLevels()[defaultLogLevel]})`)
+        .option('-l --loglevel <type>', `logging level [${LogLevels().join(' | ')}]\n(default: if present the value from config.yaml logLevel otherwise ${defaultLogLevel.levelStr})`)
         .parse(process.argv);
 
     configFile = Path.resolve(program.opts().config ?? './config.yaml');
@@ -172,7 +170,7 @@ try {
         config.main.logLevel = program.opts().loglevel;
     }
     else if (!config.main.logLevel) {
-        config.main.logLevel = LogLevels()[defaultLogLevel];
+        config.main.logLevel = defaultLogLevel.levelStr;
     }
 
     if (!config.main.appsDir) {

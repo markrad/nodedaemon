@@ -1,7 +1,7 @@
 "use strict";
 
 import WebSocket = require('ws');
-import { getLogger } from 'log4js';
+import { getLogger, Level } from 'log4js';
 import EventEmitter from 'events';
 
 import { ErrorFactory, ConnectionError, DNSError, GenericSyscallError } from './haInterfaceError';
@@ -28,9 +28,10 @@ export class WSWrapper extends EventEmitter {
     private _connected: boolean;
     private _closing: boolean;
     private _client: WebSocket;
-    public constructor(url: string, pingInterval: number) {
+    public constructor(url: string, pingInterval: number, level?: Level) {
         super();
 
+        if (level) logger.level = level;
         if (!url) throw new Error('Error: WSWrapper requires url');
         this._url = url;
         this._pingInterval = pingInterval ?? 0;
