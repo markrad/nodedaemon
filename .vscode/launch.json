@@ -32,11 +32,11 @@
             ],
             "program": "${workspaceFolder}/output/nodedaemon.js",
             "outputCapture": "std",
-            "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
-            // "_args": [ "--appsdir", "./output/sysapps" ],
+            // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
+            "args": [ "--appsdir", "./output/sysapps" ],
             "env": {
-                "HAINTERFACE_LOGGING": "debug",
-                "HAMAIN_LOGGING": "debug",
+                "HAINTERFACE_LOGGING": "info",
+                "HAMAIN_LOGGING": "info",
             }
         },
         {
