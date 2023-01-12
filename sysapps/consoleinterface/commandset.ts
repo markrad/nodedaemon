@@ -1,6 +1,6 @@
 "use strict";
 // TODO Fix toggle autocomplete
-import { getLogger, Logger } from 'log4js';
+import { getLogger, Level, Logger } from 'log4js';
 import ConsoleInterface from ".";
 import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from './commandbase';
@@ -60,7 +60,7 @@ export class CommandSet extends CommandBase {
                 throw new Error('Requires command and target item');
             }
             logger.debug(`set called with ${inputArray.join(' ')}`);
-            let item: IHaItem[] = that.items.getItemByName(inputArray[2], false);
+            let item: IHaItem[] = that.items.getItemByEntityId(inputArray[2], false);
 
             if (item.length != 1) {
                 throw new Error(`Item ${inputArray[2]} was not found`);
@@ -80,6 +80,7 @@ export class CommandSet extends CommandBase {
                     }
                     else {
                         item[0].logging = inputArray[3];
+                        logger.info(`Logging for ${item[0].name} has been set to ${(item[0].logging as unknown as Level).levelStr}`)
                         sock.write(`Item ${item[0].name} has log level ${item[0].logging}\r\n`);
                     }
                 break;
