@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import log4js from 'log4js';
 import { IHaItem } from './ihaitem';
+import { LoggerLevel } from '../hamain';
 
 const CATEGORY: string = 'HaItemFactory';
 var logger: any = log4js.getLogger(CATEGORY);
@@ -8,10 +9,10 @@ logger.level = 'info';
 
 export class HaItemFactory {
     private _itemClasses: any;
-    private _config: any;
+    private _loggerLevels: LoggerLevel[];
 
-    public constructor(config: any) {
-        this._config = config;
+    public constructor(loggerLevels: LoggerLevel[]) {
+        this._loggerLevels = loggerLevels;
         this._itemClasses = {};
         this._getItemObjects()
             .then(() => logger.debug('Objects acquired'))
@@ -23,21 +24,25 @@ export class HaItemFactory {
 
     public getItemObject(item: any): IHaItem {
         let itemType: string = item.entity_id.split('.')[0];
-        let logLevel: any = null;
+        let logLevel: string = null;
 
-        if (this._config.main.loggerLevelOverrides){
-            logLevel = this._config.main.loggerLevelOverrides.find((value: any) => value.hasOwnProperty(item.entity_id));
+        if (this._loggerLevels) {
+            let ll: LoggerLevel = null;
+            if ((ll = this._loggerLevels.find((value: LoggerLevel) => value.entityId == item.entity_id))) {
+                logLevel = ll.level;
+            }
         }
         
-        if (logLevel) logger.info(`Set logging to ${logLevel[item.entity_id]} for ${item.entity_id}`);
+        if (logLevel) logger.info(`Set logging to ${logLevel} for ${item.entity_id}`);
+
         if (item?.attributes?.addedBy == 'nodedaemon') {
-            return new this._itemClasses['usersensor'](item, logLevel? logLevel[item.entity_id] : undefined);
+            return new this._itemClasses['usersensor'](item, logLevel);
         }
         else if (itemType in this._itemClasses) {
-            return new this._itemClasses[itemType](item, logLevel? logLevel[item.entity_id] : undefined);
+            return new this._itemClasses[itemType](item, logLevel);
         }
         else {
-            return new this._itemClasses['unknown'](item , logLevel?.item.entity_id);
+            return new this._itemClasses['unknown'](item , logLevel);
         }
     }
 
