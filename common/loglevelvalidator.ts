@@ -7,10 +7,6 @@ export function LogLevels(): string[] {
         .map(item => item.levelStr);
 }
 
-export function LogLevelValidator(value: string | Level): boolean {
-    if (levels.getLevel(value) == undefined) {
-        return false;
-    }
-
-    return true;
+export function LogLevelValidator(value: string | Level): string | Level {
+    return levels.getLevel(value);
 }
