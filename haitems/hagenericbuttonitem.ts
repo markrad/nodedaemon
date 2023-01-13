@@ -1,9 +1,10 @@
+import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 import { ServicePromise } from './haparentitem';
 
 export class HaGenericButtonItem extends HaGenericSwitchItem {
-    public constructor(item: State, logLevel?: string) {
+    public constructor(item: State, logLevel: Level) {
         super(item, logLevel);
     }
 

@@ -1,9 +1,10 @@
 import { HaParentItem, ServicePromise } from './haparentitem';
 import { IHaItemEditable } from "./IHaItemEditable";
 import { State } from '../hamain/state'
+import { Level } from 'log4js';
 
 export class HaGenericUpdateableItem extends HaParentItem implements IHaItemEditable {
-    public constructor(item: State, logLevel?: string) {
+    public constructor(item: State, logLevel: string | Level) {
         super(item, logLevel);
     }
 

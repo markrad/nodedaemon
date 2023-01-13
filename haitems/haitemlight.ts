@@ -1,3 +1,4 @@
+import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
 import { ServiceTarget, ServicePromise, HaParentItem } from './haparentitem';
@@ -14,8 +15,8 @@ import { ServiceTarget, ServicePromise, HaParentItem } from './haparentitem';
 
 export default class HaItemLight extends HaGenericSwitchItem {
     private _saveStateChangeFn: (item: HaParentItem, state: State) => void;
-    public constructor(item: State) {
-        super(item);
+    public constructor(item: State, logLevel: Level) {
+        super(item, logLevel);
         if (this.isBrightnessSupported) this.updateBrightness = this._updateBrightness;
         if (this.isTemperatureSupported) this.updateTemperature = this._updateTemperature;
         this._saveStateChangeFn = this._stateChangeFn;

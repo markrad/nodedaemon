@@ -1,12 +1,13 @@
 import { State } from '../hamain/state'
 import { ServicePromise } from './haparentitem';
 import { HaGenericButtonItem } from './hagenericbuttonitem';
+import { Level } from 'log4js';
 
 
 // TODO Validate this logic
 export default class HaItemScene extends HaGenericButtonItem {
-    public constructor(item: State) {
-        super(item);
+    public constructor(item: State, logLevel: Level) {
+        super(item, logLevel);
     }
 
     public async activate(): Promise<ServicePromise> {

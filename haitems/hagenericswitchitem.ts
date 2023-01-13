@@ -1,3 +1,4 @@
+import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
@@ -17,7 +18,7 @@ export class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaI
     private _moment: number;
     // private _support: SUPPORT;       
     private _timer: NodeJS.Timeout;
-    public constructor(item: State, logLevel?: string) {
+    public constructor(item: State, logLevel: string | Level) {
         super(item, logLevel);
         this._moment = 0;
         this._timer = null;
@@ -104,7 +105,8 @@ export class HaGenericSwitchItem extends HaGenericUpdateableItem implements IHaI
         });
     }
 
-    private _switchStateChangeFn(_item: HaParentItem, _oldState: State) {
+    private _switchStateChangeFn(item: HaParentItem, oldState: State) {
+        this._defaultStateChangeFn(item, oldState);
         if (this._moment != 0) {
             this.logger.debug('Cancelling off timer');
             clearTimeout(this._timer);

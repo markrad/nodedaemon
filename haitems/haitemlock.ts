@@ -1,10 +1,11 @@
+import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, ServicePromise } from './haparentitem';
 
 export default class HaItemLock extends HaGenericUpdateableItem {
-    public constructor(item: State) {
-        super(item);
+    public constructor(item: State, logLevel: Level) {
+        super(item, logLevel);
     }
 
     public async lock(): Promise<ServicePromise> {

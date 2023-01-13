@@ -1,10 +1,11 @@
 import { State } from '../hamain/state'
 import { ActionAndNewState, ServicePromise } from './haparentitem';
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
+import { Level } from 'log4js';
 
 export default class HaItemInputDateTime extends HaGenericUpdateableItem {
-    public constructor(item: State) {
-        super(item);
+    public constructor(item: State, logLevel: Level) {
+        super(item, logLevel);
     }
 
     public async updateState(newState: string): Promise<ServicePromise> {

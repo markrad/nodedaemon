@@ -45,18 +45,18 @@ export class HaParentItem extends EventEmitter implements IHaItem {
     private _logger: Logger;
     private _support: number;
     protected _stateChangeFn: (item: HaParentItem, state: State) => void;
-    public constructor(item: State, logLevel?: string) {
+    public constructor(item: State, logLevel: string | Level) {
         super();
         this._attributes = item.attributes;
         this._name = '';
         this._type = '';
         [this._type, this._name] = item.entity_id.split('.');
+        this._logger = getLogger(this.category);
         this._friendlyName = item.attributes.friendly_name;
         this._lastChanged = new Date(item.last_changed);
         this._lastUpdated = new Date(item.last_updated);
         this._state = item.state;
         this._support = this.attributes?.supported_features ?? 0;
-        this._logger = getLogger(this.category);
         this._stateChangeFn = this._defaultStateChangeFn;
         if (logLevel) this.logging = logLevel;
         this.on('new_state', (that, _oldstate) => this._stateChangeFn(that, _oldstate));

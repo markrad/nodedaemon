@@ -2,9 +2,10 @@ import { HaParentItem, ServicePromise } from './haparentitem';
 import { IHaItem } from './ihaitem';
 import { State } from '../hamain/state'
 import { IHaItemFixed } from './ihaitemfixed';
+import { Level } from 'log4js';
 
 export class HaGenericFixedItem extends HaParentItem implements IHaItemFixed {
-    public constructor(item: State, logLevel?: string) {
+    public constructor(item: State, logLevel: string | Level) {
         super(item, logLevel);
     }
 
