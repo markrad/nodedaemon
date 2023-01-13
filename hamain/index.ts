@@ -28,6 +28,11 @@ export enum SensorType {
     binary
 }
 
+export type LoggerLevel = {
+    entityId: string,
+    level: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+}
+
 export interface HaMainEvents {
     'itemdeleted': (item: IHaItem) => void;
     'itemadded': (item: IHaItem) => void;
@@ -60,6 +65,7 @@ export class HaMain extends EventEmitter {
     private _memHandle: NodeJS.Timer = null;
     private _configFile: string = null;
     private _configWatcher: any;
+    private _loggerLevels: LoggerLevel[];
     public static getInstance(): HaMain {
         if (!HaMain._instance) {
             throw new Error('Instance of HaMain has not been constructed yet');
@@ -78,6 +84,7 @@ export class HaMain extends EventEmitter {
         this._pingInterval = this._config.main.pintInterval ?? 0;
         this._memInterval = this._config.main.memInterval ?? 0;
         this._configWatcher = hound.watch(this._configFile);
+        this._loggerLevels = this._config.loggerLevelOverrides;
 
         this._configWatcher.on('change', async (file: string, _stats: any) => {
             try {
@@ -149,6 +156,31 @@ export class HaMain extends EventEmitter {
 
         if (isNaN(this._memInterval)) {
             logger.warn(`Mem interval ${this._memInterval} is invalid - ignored`);
+        }
+
+        if (this._loggerLevels) {
+            if (!Array.isArray(this._loggerLevels)) {
+                this._loggerLevels = [this._loggerLevels];
+            }
+
+            let logLevelError = false;
+
+            for (let i = 0; i < this._loggerLevels.length; i++) {
+                if (!LogLevelValidator(this._loggerLevels[i].level)) {
+                    logger.error(`Missing or invalid log level in ${JSON.stringify(this._loggerLevels[i])}`);
+                    this._loggerLevels = null;
+                    logLevelError = true;
+                }
+                if (!this._loggerLevels[i].entityId) {
+                    logger.error(`Missing entity id in ${JSON.stringify(this._loggerLevels[i])}`);
+                    logLevelError = true;
+                }
+            }
+
+            if (logLevelError) {
+                logger.warn('Log level overrides ignored due to errors');
+                this._loggerLevels = null;
+            }
         }
 
         HaMain._instance = this;
@@ -229,7 +261,7 @@ export class HaMain extends EventEmitter {
             }
         });
 
-        this._haItemFactory = new HaItemFactory(this._config);
+        this._haItemFactory = new HaItemFactory(this._config.main.loggerLevelOverrides);
         await this._haInterface.start();
         this._haConfig = await this._haInterface.getConfig();
         this._processItems(await this._haInterface.getStates());
