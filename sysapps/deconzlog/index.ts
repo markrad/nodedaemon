@@ -16,8 +16,10 @@ export default class DeconzLog extends AppParent {
         logger.info('Constructed');
     }
 
-    validate(_config: any): boolean {
-        // Since this is test code we don't do much in here
+    validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         return true;
     }
 

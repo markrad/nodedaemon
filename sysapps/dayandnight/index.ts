@@ -110,16 +110,9 @@ export default class DayAndNight extends AppParent {
     }
 
     validate(config: any): boolean {
-        if (config.logLevel) {
-            try {
-                this.logging = config.logLevel;
-                logger.info(`Set log level to ${config.logLevel}`);
-            }
-            catch (err: any) {
-                logger.error(`Failed to set log level to ${config.logLevel}`);
-            }
+        if (!super.validate(config)) {
+            return false;
         }
-
         try {
             this._dayStart = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.dayStart, true);
             this._nightStart = this.controller.items.getItemAs<HaGenericSwitchItem>(HaGenericSwitchItem, config.nightStart, true);

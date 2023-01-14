@@ -35,7 +35,9 @@ export default class DynDnsUpdater extends AppParent {
     }
 
     public validate(config: any): boolean {
-
+        if (!super.validate(config)) {
+            return false;
+        }
         try {
             this._user = stringValidator.isValid(config?.user, { name: 'user' });
             this._updaterKey = stringValidator.isValid(config?.updaterKey, { name: 'updaterKey' });

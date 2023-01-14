@@ -152,6 +152,9 @@ export class Astro extends AppParent
     }
 
     public validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         try {
             if (config.logLevel) {
                 try {

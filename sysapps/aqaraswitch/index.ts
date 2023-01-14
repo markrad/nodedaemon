@@ -21,6 +21,9 @@ export default class AqaraSwitch extends AppParent {
         logger.info('Constructed');
     }
     validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         const regex = /^[a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){7}$/;
         try {
             if (!Array.isArray(config)) {

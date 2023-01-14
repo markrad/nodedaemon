@@ -12,7 +12,26 @@ export abstract class AppParent extends EventEmitter implements IApplication {
         this._logger = logger;
         this._controller = controller;
     }
-    abstract validate(config: any): boolean;
+    validate(config: any): boolean {
+        if (config && config.logLevel) {
+            try {
+                let ll = LogLevelValidator(config.logLevel);
+
+                if (!ll) {
+                    this._logger.warn(`Invalid log level ${config.logLevel} passed to ${this._logger.category}`);
+                }
+                else {
+                    this.logging = ll;
+                    this._logger.info(`Set log level to ${config.logLevel}`);
+                }
+            }
+            catch (err: any) {
+                this._logger.error(`Failed to set log level to ${config.logLevel}`);
+            }
+        }
+        return true;
+    }
+
     abstract run(): Promise<boolean>;
     abstract stop(): Promise<void>;
 

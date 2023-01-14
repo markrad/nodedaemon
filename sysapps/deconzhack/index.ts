@@ -79,6 +79,9 @@ export default class DeconzHack extends AppParent {
     }
 
     validate(configIn: any): boolean {
+        if (!super.validate(configIn)) {
+            return false;
+        }
         let config: Config = configIn;
         if (!config.devices || config.devices.length == 0) {
             logger.error('Missing deconzhack.devices section in config - this is required');

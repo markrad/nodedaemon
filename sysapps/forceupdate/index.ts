@@ -22,6 +22,9 @@ export default class ForceUpdate extends AppParent {
     }
 
     validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         // Validation of configuration entries
         if (!Array.isArray(config)) {
             logger.error('Input config must be an array');

@@ -36,6 +36,9 @@ export default class WebServer extends AppParent {
     }
 */
     public validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         this._root = config.webdataroot;
 
         if (!this._root) {

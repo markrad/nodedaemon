@@ -20,6 +20,9 @@ export default class UpdateExternalIP extends AppParent {
     }
 
     public validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         try {
             this._external_ip = entityValidator.isValid(config.ip, { entityType: HaGenericUpdateableItem, name: 'external IP'});
         }

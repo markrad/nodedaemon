@@ -27,14 +27,8 @@ export default class AstroHelper extends AppParent {
     }
 
     validate(config: any): boolean {
-        if (config.logLevel) {
-            try {
-                this.logging = config.logLevel;
-                logger.info(`Set log level to ${config.logLevel}`);
-            }
-            catch (err: any) {
-                logger.error(`Failed to set log level to ${config.logLevel}`);
-            }
+        if (!super.validate(config)) {
+            return false;
         }
         try {
             this._lastEvent = entityValidator.isValid(config.lastevent, { entityType: HaGenericUpdateableItem, name: 'lastevent' });

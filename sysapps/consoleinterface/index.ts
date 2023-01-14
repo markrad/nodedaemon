@@ -54,6 +54,9 @@ export default class ConsoleInterface extends AppParent {
     }
 
     public validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         let locName: string = this.controller.haConfig.location_name;
         this._config = config;
         this._transport = new TransportSSH(locName, this, this._config);

@@ -21,6 +21,9 @@ export default class DeviceTracker extends AppParent {
     }
 
     validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         try {
             this._deviceCount = this.controller.items.getItemAs<HaGenericUpdateableItem>(HaGenericUpdateableItem, config.deviceCount, true);
             if (!config.authKey) throw new Error('Fing auth key must be provided');

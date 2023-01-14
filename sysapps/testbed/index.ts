@@ -20,7 +20,10 @@ export default class TestBed extends AppParent {
         logger.info('Constructed');
     }
 
-    validate(_config: any): boolean {
+    validate(config: any): boolean {
+        if (!super.validate(config)) {
+            return false;
+        }
         // Since this is test code we don't do much in here
         let test: IHaItem[] = this.controller.items.getItemsAsArray();
         let counters = {

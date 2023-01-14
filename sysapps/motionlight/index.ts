@@ -36,6 +36,9 @@ export default class MotionLight extends AppParent {
 
     public validate(config: any): boolean {
         const ops: string[] = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
+        if (!super.validate(config)) {
+            return false;
+        }
         if (!config) {
             logger.error('No devices specified');
         }

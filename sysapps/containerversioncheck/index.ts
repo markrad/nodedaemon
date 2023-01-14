@@ -67,7 +67,9 @@ export default class ContainerVersionCheck extends AppParent {
     }
 
     validate(config: any): boolean {
-        
+        if (!super.validate(config)) {
+            return false;
+        }
         try {
             if (!config.registries || !Array.isArray(config.registries)) {
                 throw new Error('registries is a required entry and must be an array');
