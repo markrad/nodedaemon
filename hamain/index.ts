@@ -30,7 +30,8 @@ export enum SensorType {
 
 export type LoggerLevel = {
     entityId: string,
-    level: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+    level: 'debug' | 'info' | 'warn' | 'error' | 'fatal',
+    used: boolean
 }
 
 export interface HaMainEvents {
@@ -84,7 +85,7 @@ export class HaMain extends EventEmitter {
         this._pingInterval = this._config.main.pintInterval ?? 0;
         this._memInterval = this._config.main.memInterval ?? 0;
         this._configWatcher = hound.watch(this._configFile);
-        this._loggerLevels = this._config.loggerLevelOverrides;
+        this._loggerLevels = this._config.main.loggerLevelOverrides;
 
         this._configWatcher.on('change', async (file: string, _stats: any) => {
             try {
@@ -175,6 +176,7 @@ export class HaMain extends EventEmitter {
                     logger.error(`Missing entity id in ${JSON.stringify(this._loggerLevels[i])}`);
                     logLevelError = true;
                 }
+                this._loggerLevels[i].used = false;
             }
 
             if (logLevelError) {
@@ -261,7 +263,7 @@ export class HaMain extends EventEmitter {
             }
         });
 
-        this._haItemFactory = new HaItemFactory(this._config.main.loggerLevelOverrides);
+        this._haItemFactory = new HaItemFactory(this._loggerLevels);
         await this._haInterface.start();
         this._haConfig = await this._haInterface.getConfig();
         this._processItems(await this._haInterface.getStates());
@@ -497,13 +499,17 @@ export class HaMain extends EventEmitter {
         states.forEach((item) => {
             let work: IHaItem;
             if (!(work = this.items.getItem(item.entity_id))) {
-                let itemInstance: IHaItem = this._haItemFactory.getItemObject(item /*, this._haInterface*/);
+                let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
                 this._setupItem(itemInstance); 
             }
             else {
                 work.setReceivedState({ entity_id: item.entity_id, state: item.state, attributes: item.attributes, context: item.context, last_changed: item.last_changed, last_updated: item.last_updated });
             }
         });
+
+        let unusedCnt: number = this._loggerLevels.reduce<number>((count, current) => count += Number(!current.used), 0);
+
+        logger.info(`Number of log overrides not used is ${unusedCnt}`)
     }
 
     private _setupItem(itemInstance: IHaItem): void {

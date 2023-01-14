@@ -30,6 +30,7 @@ export class HaItemFactory {
             let ll: LoggerLevel = null;
             if ((ll = this._loggerLevels.find((value: LoggerLevel) => value.entityId == item.entity_id))) {
                 logLevel = ll.level;
+                ll.used = true;
             }
         }
         
