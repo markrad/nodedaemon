@@ -12,4 +12,4 @@ RUN npm install
 RUN tsc
 
 # CMD [ "tail", "-f", "/etc/passwd"]
-CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml", "-l", "debug" ]
+CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
