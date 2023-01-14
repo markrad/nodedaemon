@@ -39,15 +39,15 @@ export default class MotionLight extends AppParent {
         if (!super.validate(config)) {
             return false;
         }
-        if (!config) {
+        if (!config || !config.entries) {
             logger.error('No devices specified');
         }
         else {
-            if (!Array.isArray(config)) {
+            if (!Array.isArray(config.entries)) {
                 logger.error('Invalid device specification');
                 return false;
             }
-            this._trips = config.map((value: any) => {
+            this._trips = config.entries.map((value: any) => {
                 try {
                     let sensor: HaGenericBinaryItem;
                     let delay: number;
