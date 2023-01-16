@@ -14,12 +14,12 @@ import { ServiceTarget, ServicePromise, HaParentItem } from './haparentitem';
 // }
 
 export default class HaItemLight extends HaGenericSwitchItem {
-    private _saveStateChangeFn: (item: HaParentItem, state: State) => void;
+    // private _saveStateChangeFn: (item: HaParentItem, state: State) => void;
     public constructor(item: State, logLevel: Level) {
         super(item, logLevel);
         if (this.isBrightnessSupported) this.updateBrightness = this._updateBrightness;
         if (this.isTemperatureSupported) this.updateTemperature = this._updateTemperature;
-        this._saveStateChangeFn = this._stateChangeFn;
+        // this._saveStateChangeFn = this._stateChangeFn;
         this._stateChangeFn = this._lightStateChangeFn;
     }
 
@@ -55,12 +55,12 @@ export default class HaItemLight extends HaGenericSwitchItem {
         return new Promise(resolve => resolve(new Error('Temperature is not supported')));
     }
 
-    private _lightStateChangeFn(item: HaParentItem, state: State): void {
+    private _lightStateChangeFn(item: HaParentItem, _state: State): void {
         let that: HaItemLight = item as HaItemLight;
         let brightnessMsg = `${that.isOn && that.isBrightnessSupported? 'Brightness: ' + that.brightness : ''}`;
         let tempMsg = `${that.isOn && that.isTemperatureSupported? 'Temperature: ' + that.temperature : ''}`;
         this.logger.debug(`Received new state: ${that.state} ${brightnessMsg} ${tempMsg}`);
-        this._saveStateChangeFn(that, state);
+        // this._saveStateChangeFn(that, state);
     }
 
     private async _updateBrightness(newValue: number | string): Promise<ServicePromise> {
