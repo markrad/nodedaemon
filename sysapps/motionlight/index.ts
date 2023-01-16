@@ -17,7 +17,7 @@ interface KillSwitch {
     comperand: string | number | boolean;
 }
 interface Trip {
-    sensor: IHaItem;
+    sensor: IHaItem[];
     lights: IHaItemSwitch[];
     timeout: number;
     killswitch?: KillSwitch;
@@ -49,12 +49,18 @@ export default class MotionLight extends AppParent {
             }
             this._trips = config.entries.map((value: any) => {
                 try {
-                    let sensor: HaGenericBinaryItem;
+                    // let sensor: HaGenericBinaryItem[];
                     let delay: number;
                     let op: string = null;
                     let comp: string | number | boolean;
                     let killEntity: HaParentItem = null;
-                    if (!(sensor = entityValidator.isValid(value.sensor, { entityType: HaGenericBinaryItem }))) throw new Error('Entry does not contain a sensor');
+                    if (!Array.isArray(value.sensor)) value.sensor = [ value.sensor ];
+                    let sensor: HaGenericBinaryItem[] = (value.sensor as Array<string>).map((value: string) => {
+                        let tempsen: HaGenericBinaryItem;
+                        if (!(tempsen = entityValidator.isValid(value, { entityType: HaGenericBinaryItem}))) throw new Error(`Specified sensor is missing or invalue ${value}`);
+                        return tempsen;
+                    })
+                    // if (!(sensor = entityValidator.isValid(value.sensor, { entityType: HaGenericBinaryItem }))) throw new Error('Entry does not contain a sensor');
                     if (value.switch == undefined) throw new Error('Entry does not contain any switches');
                     if (!(delay = numberValidator.isValid(value.delay, { minValue: 0, floatOk: true }))) throw new Error('Entry does not contain a delay');
                     if (!Array.isArray(value.switch)) value.switch = [ value.switch ];
@@ -128,7 +134,7 @@ class actioner {
         this._timer = null;
 
         this._eventHandler = (that: IHaItem, _oldState: State) => {
-            logger.debug(`State ${that.state} triggered on ${this._trip.sensor.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
+            logger.debug(`State ${that.state} triggered on ${that.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
             if (that.state == 'on' && !this.shouldIgnore(this._trip.killswitch)) {
                 this._trip.lights.forEach((light: IHaItemSwitch) => {
                     light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
@@ -139,8 +145,9 @@ class actioner {
                         clearInterval(this._timer);
                         this._timer = null;
                     }
-                    else if (this._trip.sensor.state == 'on') {
-                        logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
+                    else if (this._trip.sensor.find((sensor) => sensor.state == 'on')) {
+                    // else if (this._trip.sensor.state == 'on') {
+                        // logger.trace(`Checking motion sensor status: ${this._trip.sensor.state}`);
                         this._trip.lights.forEach((light) => {
                             logger.debug('Extenting turn off time');
                             light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
@@ -153,11 +160,13 @@ class actioner {
                 this._timer = null;
             }
         }
-        this._trip.sensor.on('new_state', this._eventHandler); 
+        this._trip.sensor.forEach((sensor) => sensor.on('new_state', this._eventHandler));
+        // this._trip.sensor.on('new_state', this._eventHandler); 
     }
 
     public async stop(): Promise<void> {
-        this._trip.sensor.off('new_state', this._eventHandler);
+        this._trip.sensor.forEach((sensor) => sensor.off('new_state', this._eventHandler));
+        // this._trip.sensor.off('new_state', this._eventHandler);
     }
 
     private shouldIgnore(killswitch: KillSwitch): boolean {
