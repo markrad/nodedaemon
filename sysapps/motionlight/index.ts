@@ -11,7 +11,7 @@ import { HaGenericSwitchItem } from "../../haitems/hagenericswitchitem";
 import { HaParentItem } from "../../haitems/haparentitem";
 import { HaGenericBinaryItem } from "../../haitems/hagenericbinaryitem";
 
-interface KillSwitch {
+interface killSwitch {
     entity: IHaItem;
     op: string;
     comperand: string | number | boolean;
@@ -20,7 +20,7 @@ interface Trip {
     sensor: IHaItem[];
     lights: IHaItemSwitch[];
     timeout: number;
-    killswitch?: KillSwitch;
+    killSwitch?: killSwitch;
 }
 
 const CATEGORY = 'MotionLight';
@@ -57,21 +57,21 @@ export default class MotionLight extends AppParent {
                     if (!Array.isArray(value.sensor)) value.sensor = [ value.sensor ];
                     let sensor: HaGenericBinaryItem[] = (value.sensor as Array<string>).map((value: string) => {
                         let tempsen: HaGenericBinaryItem;
-                        if (!(tempsen = entityValidator.isValid(value, { entityType: HaGenericBinaryItem}))) throw new Error(`Specified sensor is missing or invalue ${value}`);
+                        tempsen = entityValidator.isValid(value, { name: 'sensor', entityType: HaGenericBinaryItem});
                         return tempsen;
                     })
                     // if (!(sensor = entityValidator.isValid(value.sensor, { entityType: HaGenericBinaryItem }))) throw new Error('Entry does not contain a sensor');
                     if (value.switch == undefined) throw new Error('Entry does not contain any switches');
-                    if (!(delay = numberValidator.isValid(value.delay, { minValue: 0, floatOk: true }))) throw new Error('Entry does not contain a delay');
+                    delay = numberValidator.isValid(value.delay, { name: 'delay', minValue: 0, floatOk: true });
                     if (!Array.isArray(value.switch)) value.switch = [ value.switch ];
 
-                    if (value.killswitch) {
-                        if (!ops.includes(value.killswitch.operator)) throw new Error(`Invalid operator ${value.killswitch.op} passed`);
-                        op = value.killswitch.operator;
-                        if (!value.killswitch.comperand) throw new Error('Killswitch is missing comperand');
-                        comp = value.killswitch.comperand;
-                        // if (!('comperand' in value.killswitch)) throw new Error('Killswitch is missing comperand');
-                        if (!(killEntity = entityValidator.isValid(value.killswitch.killEntity, { entityType: HaParentItem }))) throw new Error(`Killswitch entity ${value.killswitch.entity} does not exist`);
+                    if (value.killSwitch) {
+                        if (!ops.includes(value.killSwitch.operator)) throw new Error(`Invalid operator ${value.killSwitch.op} passed`);
+                        op = value.killSwitch.operator;
+                        if (!value.killSwitch.comperand) throw new Error('killSwitch is missing comperand');
+                        comp = value.killSwitch.comperand;
+                        // if (!('comperand' in value.killSwitch)) throw new Error('killSwitch is missing comperand');
+                        killEntity = entityValidator.isValid(value.killSwitch.killEntity, { name: 'killEntity', entityType: HaParentItem });
 
                     }
                     let lights: HaGenericSwitchItem[] = (value.switch as Array<string>).map((value: string) => {
@@ -85,7 +85,7 @@ export default class MotionLight extends AppParent {
                         timeout: delay
                     }
                     if (killEntity) {
-                        trip.killswitch = {
+                        trip.killSwitch = {
                             entity: killEntity,
                             op: op,
                             comperand: comp
@@ -135,7 +135,7 @@ class actioner {
 
         this._eventHandler = (that: IHaItem, _oldState: State) => {
             logger.debug(`State ${that.state} triggered on ${that.entityId} for ${this._trip.lights.map(item => item.entityId).join(' ')}`);
-            if (that.state == 'on' && !this.shouldIgnore(this._trip.killswitch)) {
+            if (that.state == 'on' && !this.shouldIgnore(this._trip.killSwitch)) {
                 this._trip.lights.forEach((light: IHaItemSwitch) => {
                     light.turnOffAt(Date.now() + this._trip.timeout * 60 * 1000);
                 });
@@ -169,31 +169,31 @@ class actioner {
         // this._trip.sensor.off('new_state', this._eventHandler);
     }
 
-    private shouldIgnore(killswitch: KillSwitch): boolean {
-        if (!killswitch) {
+    private shouldIgnore(killSwitch: killSwitch): boolean {
+        if (!killSwitch) {
             return false;
         }
 
-        let state = this._getStateAsType(killswitch.entity.state, killswitch.comperand);
+        let state = this._getStateAsType(killSwitch.entity.state, killSwitch.comperand);
 
-        switch (killswitch.op) {
+        switch (killSwitch.op) {
             case 'eq':
-                return state == killswitch.comperand;
+                return state == killSwitch.comperand;
                 break;
             case 'ne':
-                return state != killswitch.comperand;
+                return state != killSwitch.comperand;
                 break;
             case 'lt':
-                return state < killswitch.comperand;
+                return state < killSwitch.comperand;
                 break;
             case 'le':
-                return state <= killswitch.comperand;
+                return state <= killSwitch.comperand;
                 break;
             case 'gt':
-                return state > killswitch.comperand;
+                return state > killSwitch.comperand;
                 break;
             case 'ge':
-                return state >= killswitch.comperand;
+                return state >= killSwitch.comperand;
                 break;
         }
     }
