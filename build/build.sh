@@ -48,6 +48,9 @@ then
     exit 4
 fi
 
+echo Testing npm install
+npm install || { echo 'npm install failed' ; exit 1; }
+
 echo Updating
 
 sed -i s/$version/$newver/ Dockerfile
