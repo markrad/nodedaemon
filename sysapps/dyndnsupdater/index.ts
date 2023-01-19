@@ -3,7 +3,7 @@ import { IHaItem } from "../../haitems/ihaitem";
 import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
-import { getLogger, Level, Logger } from "log4js";
+import { getLogger, Logger } from "log4js";
 import * as https from 'https';
 import { Dayjs } from "dayjs";
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
@@ -18,6 +18,50 @@ export default class DynDnsUpdater extends AppParent {
     private _lastUpdate: IHaItemEditable;
     private _user: string;
     private _updaterKey: string;
+    private _eventHandler: (item: IHaItem, oldState: State) => void = (item: IHaItem, oldState: State) => {
+        let now: Dayjs = new Dayjs();
+        let then: Dayjs = new Dayjs(this._lastUpdate.state as string);
+
+        if (isNaN(then.year())) {
+            then = new Dayjs(0);
+        }
+
+        // Update when IP address changes or at least once every 24 hours
+        if (now.diff(then, 'hours') >= ONE_DAY || item.state != oldState.state) {
+            logger.info(`Updating DynDNS IP address to ${item.state}`);
+            let allchunks: string = '';
+            let options: any = {
+                headers: {
+                    'User-Agent': 'Radrealm - HassTest - v0.0.1'
+                }
+            };
+
+            https.get(this._url + item.state, options, (res) => {
+                res.setEncoding('utf8');
+                res.on('data', (chunk: string) => allchunks += chunk);
+                res.on('end', () => {
+                    logger.debug(`DynDns response: ${allchunks}`);
+                    let rc = allchunks.split(' ')[0];
+                    switch (rc) {
+                        case 'good':
+                        case 'nochg':
+                            this._lastUpdate.updateState(now.format('YYYY-MM-DD HH:mm:ss'), false);
+                            logger.info(`DynDns IP address successfully updated to ${item.state}`);
+                        break;
+                    default:
+                        if (this._errors.has(rc)) {
+                            logger.error(this._errors.get(rc));
+                        }
+                        else {
+                            logger.error(`Update failed with unrecognized code: ${allchunks}`);
+                        }
+                    }
+                });
+            }).on('error', (err) => {
+                logger.error(`Failed to update IP address: ${err}`);
+            });
+        }
+    };
     private _hostname: string;
     private _errors: Map<string, string> = new Map<string, string>([
         [ 'badauth', 'DynDns authorization is invalid' ],
@@ -56,63 +100,14 @@ export default class DynDnsUpdater extends AppParent {
     }
 
     public async run(): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            this._externalIp.on('new_state', (item: IHaItem, oldState: State) => {
-                let now: Dayjs = new Dayjs();
-                let then: Dayjs = new Dayjs(this._lastUpdate.state as string);
 
-                if (isNaN(then.year())) {
-                    then = new Dayjs(0);
-                }
-        
-                // Update when IP address changes or at least once every 24 hours
-                if (now.diff(then, 'hours') >= ONE_DAY || item.state != oldState.state) {
-                    logger.info(`Updating DynDNS IP address to ${item.state}`);
-                    let allchunks: string = '';
-                    let options: any = {
-                        headers: {
-                            'User-Agent': 'Radrealm - HassTest - v0.0.1'
-                        }
-                    };
-
-                    https.get(this._url + item.state, options, (res) => {
-                        res.setEncoding('utf8');
-                        res.on('data', (chunk: string) => allchunks += chunk);
-                        res.on('end', () => {
-                            logger.debug(`DynDns response: ${allchunks}`);
-                            let rc = allchunks.split(' ')[0];
-                            switch (rc) {
-                                case 'good':
-                                case 'nochg':
-                                    this._lastUpdate.updateState(now.format('YYYY-MM-DD HH:mm:ss'), false);
-                                    logger.info(`DynDns IP address successfully updated to ${item.state}`);
-                                break;
-                            default:
-                                if (this._errors.has(rc)) {
-                                    logger.error(this._errors.get(rc));
-                                }
-                                else {
-                                    logger.error(`Update failed with unrecognized code: ${allchunks}`);
-                                }
-                            }
-                        });
-                    }).on('error', (err) => {
-                        logger.error(`Failed to update IP address: ${err}`);
-                        reject(err);
-                    });
-                }
-            });
-
+        return new Promise<boolean>((resolve, _reject) => {
+            this._externalIp.on('new_state', this._eventHandler);
             resolve(true);
         });
     }
 
-
     public async stop(): Promise<void> {
-
-    }
-
-    public get logging(): string | Level {
-        return logger.level;
+        this._externalIp.off('new_state', this._eventHandler);
     }
 }
