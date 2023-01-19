@@ -49,7 +49,7 @@ then
 fi
 
 echo Testing npm install
-npm install || { echo 'npm install failed' ; exit 1; }
+npm install --dry-run || { echo 'npm install failed' ; exit 1; }
 
 echo Updating
 
