@@ -1,5 +1,5 @@
 import { HaParentItem, ServicePromise } from './haparentitem';
-import { IHaItemEditable } from "./IHaItemEditable";
+import { IHaItemEditable } from "./ihaitemeditable";
 import { State } from '../hamain/state'
 import { Level } from 'log4js';
 

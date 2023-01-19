@@ -34,7 +34,7 @@ export type LoggerLevel = {
     used: boolean
 }
 
-export interface HaMainEvents {
+export interface IHaMainEvents {
     'itemdeleted': (item: IHaItem) => void;
     'itemadded': (item: IHaItem) => void;
     'serviceevent': (eventType: string, data: any) => void;
@@ -42,8 +42,8 @@ export interface HaMainEvents {
 };
 
 export declare interface HaMain {
-    on<U extends keyof HaMainEvents>(event: U, listner: HaMainEvents[U]): this;
-    emit<U extends keyof HaMainEvents>(event: U, ...args: Parameters<HaMainEvents[U]>): boolean;
+    on<U extends keyof IHaMainEvents>(event: U, listner: IHaMainEvents[U]): this;
+    emit<U extends keyof IHaMainEvents>(event: U, ...args: Parameters<IHaMainEvents[U]>): boolean;
 }
 
 export class HaMain extends EventEmitter {

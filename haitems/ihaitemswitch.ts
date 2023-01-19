@@ -1,4 +1,4 @@
-import { IHaItemEditable } from './IHaItemEditable';
+import { IHaItemEditable } from './ihaitemeditable';
 import { ServicePromise } from './haparentitem';
 
 

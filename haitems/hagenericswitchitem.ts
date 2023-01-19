@@ -2,7 +2,7 @@ import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { ActionAndNewState, HaParentItem, ServicePromise } from './haparentitem';
-import { IHaItemSwitch } from "./IHaItemSwitch";
+import { IHaItemSwitch } from "./ihaitemswitch";
 
 // export enum SUPPORT {
 //     SUPPORT_BRIGHTNESS = 1,

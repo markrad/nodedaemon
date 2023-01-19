@@ -23,15 +23,15 @@ export type ActionAndNewState = {
     expectedNewState: string
 }
 
-export interface HaParentItemEvents {
+export interface IHaParentItemEvents {
     'new_state': (that: any, oldstate: any) => void;
     'callrestservice': (entityid: string, state: string | number | boolean, forceUpdate: boolean) => void;
     'callservice': (domain: string, service: string, state: ServiceTarget) => void;
 };
 
 export declare interface HaParentItem {
-    on<U extends keyof HaParentItemEvents>(event: U, listner: HaParentItemEvents[U]): this;
-    emit<U extends keyof HaParentItemEvents>(event: U, ...args: Parameters<HaParentItemEvents[U]>): boolean;
+    on<U extends keyof IHaParentItemEvents>(event: U, listner: IHaParentItemEvents[U]): this;
+    emit<U extends keyof IHaParentItemEvents>(event: U, ...args: Parameters<IHaParentItemEvents[U]>): boolean;
 }
 
 export class HaParentItem extends EventEmitter implements IHaItem {

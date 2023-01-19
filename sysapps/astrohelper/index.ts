@@ -4,7 +4,7 @@ import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
 import { entityValidator } from '../../common/validator';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
-import { IHaItemEditable } from "../../haitems/IHaItemEditable";
+import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { HaMain } from '../../hamain';
 import Astro from '../astro';
 

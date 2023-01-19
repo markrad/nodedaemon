@@ -1,6 +1,6 @@
 import { AppParent } from '../../common/appparent';
 import { IHaItem } from "../../haitems/ihaitem";
-import { IHaItemEditable } from "../../haitems/IHaItemEditable";
+import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
 import { getLogger, Level, Logger } from "log4js";

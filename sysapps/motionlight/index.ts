@@ -1,7 +1,7 @@
 "use strict";
 
 import { IHaItem } from "../../haitems/ihaitem";
-import { IHaItemSwitch } from "../../haitems/IHaItemSwitch";
+import { IHaItemSwitch } from "../../haitems/ihaitemswitch";
 import { HaMain } from "../../hamain";
 import { State } from '../../hamain/state';
 import { getLogger, Logger } from 'log4js';
@@ -11,16 +11,16 @@ import { HaGenericSwitchItem } from "../../haitems/hagenericswitchitem";
 import { HaParentItem } from "../../haitems/haparentitem";
 import { HaGenericBinaryItem } from "../../haitems/hagenericbinaryitem";
 
-interface killSwitch {
+interface IKillSwitch {
     entity: IHaItem;
     op: string;
     comperand: string | number | boolean;
 }
-interface Trip {
+interface ITrip {
     sensor: IHaItem[];
     lights: IHaItemSwitch[];
     timeout: number;
-    killSwitch?: killSwitch;
+    killSwitch?: IKillSwitch;
 }
 
 const CATEGORY = 'MotionLight';
@@ -28,7 +28,7 @@ var logger: Logger = getLogger(CATEGORY);
 
 export default class MotionLight extends AppParent {
     private _actioners: actioner[] = [];
-    private _trips: Trip[] = null;
+    private _trips: ITrip[] = null;
     constructor(controller: HaMain) {
         super(controller, logger);
         logger.info('Constructed');
@@ -79,7 +79,7 @@ export default class MotionLight extends AppParent {
                         if (!(tempsw = entityValidator.isValid(value, { entityType: HaGenericSwitchItem }))) throw new Error(`Specified target light is not a switch or a light: ${value}`);
                         return tempsw;
                     })
-                    let trip: Trip = {
+                    let trip: ITrip = {
                         sensor: sensor,
                         lights: lights,
                         timeout: delay
@@ -98,7 +98,7 @@ export default class MotionLight extends AppParent {
                     logger.error(err.message);
                     return null;
                 }
-            }).filter((item: Trip) => item != null);
+            }).filter((item: ITrip) => item != null);
 
             if (this._trips.length == 0) {
                 logger.error('No valid entries found');
@@ -126,10 +126,10 @@ export default class MotionLight extends AppParent {
 }
 
 class actioner {
-    private _trip: Trip;
+    private _trip: ITrip;
     private _timer: NodeJS.Timer = null;
     private _eventHandler: (that: IHaItem, oldState: State) => void;
-    public constructor(trip: Trip) {
+    public constructor(trip: ITrip) {
         this._trip = trip;
         this._timer = null;
 
@@ -169,7 +169,7 @@ class actioner {
         // this._trip.sensor.off('new_state', this._eventHandler);
     }
 
-    private shouldIgnore(killSwitch: killSwitch): boolean {
+    private shouldIgnore(killSwitch: IKillSwitch): boolean {
         if (!killSwitch) {
             return false;
         }

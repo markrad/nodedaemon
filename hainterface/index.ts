@@ -17,61 +17,61 @@ enum PacketTypesIn {
     ServicePong,
     ServiceEvent,
 }
-interface ServiceParent {
+interface IServiceParent {
     type: string;
     name: PacketTypesIn;
 }
-interface ServiceAuthRequired extends ServiceParent {
+interface IServiceAuthRequired extends IServiceParent {
     type: "auth_required";
     ha_version: "string";
 }
 
-interface ServiceAuthOk extends ServiceParent {
+interface IServiceAuthOk extends IServiceParent {
     type: "auth_ok";
     ha_version: "string";
 }
 
-interface ServiceAuthInvalid extends ServiceParent{
+interface IServiceAuthInvalid extends IServiceParent{
     type: "auth_invalid";
     message: "string";
 }
 
-interface ServiceErrorDetails {
+interface IServiceErrorDetails {
     code: string;
     message: string;
 }
 
-interface ServiceError extends ServiceParent {
+interface IServiceError extends IServiceParent {
     id: number;
     type: "result";
     "success": false;
-    error: ServiceErrorDetails;
+    error: IServiceErrorDetails;
 }
 
-interface ServiceSuccess extends ServiceParent {
+interface IServiceSuccess extends IServiceParent {
     id: number;
     type: "result";
     success: true;
     result: any;
 }
 
-interface ServiceEvent extends ServiceParent {
+interface IServiceEvent extends IServiceParent {
     id: number;
     type: "event";
     event: any;
 }
 
-interface ServicePong extends ServiceParent {
+interface IServicePong extends IServiceParent {
     id: number;
     type: "pong";
 }
 
-interface ServiceAuth extends ServiceParent {
+interface IServiceAuth extends IServiceParent {
     type: "auth";
     access_token: string;
 }
 
-interface OutPacket {
+interface IOutPacket {
     id: number;
     type: string;
 }
@@ -86,15 +86,15 @@ const CATEGORY = 'HaInterface';
 
 var logger = getLogger(CATEGORY);
 
-export interface HaInterfaceEvents {
+export interface IHaInterfaceEvents {
     'serviceevent': (eventType: any, data: any) => void;
     'connected': () => void;
     'disconnected': () => void;
 };
 
 export declare interface HaInterface {
-    on<U extends keyof HaInterfaceEvents>(event: U, listner: HaInterfaceEvents[U]): this;
-    emit<U extends keyof HaInterfaceEvents>(event: U, ...args: Parameters<HaInterfaceEvents[U]>): boolean;
+    on<U extends keyof IHaInterfaceEvents>(event: U, listner: IHaInterfaceEvents[U]): this;
+    emit<U extends keyof IHaInterfaceEvents>(event: U, ...args: Parameters<IHaInterfaceEvents[U]>): boolean;
 }
 
 export class HaInterface extends EventEmitter {
@@ -134,21 +134,21 @@ export class HaInterface extends EventEmitter {
                         logger.warn(`Unrecognized message type: ${typeof message}`);
                     }
                     else {
-                        let msg: ServiceParent = this._messageFactory(message);
+                        let msg: IServiceParent = this._messageFactory(message);
 
                         if (msg.name == PacketTypesIn.ServiceEvent) {
-                            let msgEvent = msg as ServiceEvent;
+                            let msgEvent = msg as IServiceEvent;
                             logger.trace(`msg.event.event_type=${msgEvent.event.event_type};entity=${msgEvent.event.data.entity_id}`);
                             this.emit('serviceevent', msgEvent.event.event_type, msgEvent.event.data);
                             return;
                         }
                         
-                        let msgResponse: ServiceSuccess | ServiceError | ServicePong;
+                        let msgResponse: IServiceSuccess | IServiceError | IServicePong;
 
                         switch (msg.name) {
                             case PacketTypesIn.ServiceAuthRequired:
                                 logger.info('Authenticating');
-                                let auth = <ServiceAuth> { type: 'auth', access_token: this._accessToken };
+                                let auth = <IServiceAuth> { type: 'auth', access_token: this._accessToken };
                                 this._client.send(JSON.stringify(auth));
                                 break;
                             case PacketTypesIn.ServiceAuthOk:
@@ -156,16 +156,16 @@ export class HaInterface extends EventEmitter {
                                 this._waitAuth.EventSet();
                                 break;
                             case PacketTypesIn.ServiceAuthInvalid:
-                                logger.fatal(`Authentication failed: ${(msg as ServiceAuthInvalid).message}`);
-                                throw new AuthenticationError((msg as ServiceAuthInvalid).message);
+                                logger.fatal(`Authentication failed: ${(msg as IServiceAuthInvalid).message}`);
+                                throw new AuthenticationError((msg as IServiceAuthInvalid).message);
                             case PacketTypesIn.ServiceSuccess:
-                                msgResponse = msg as ServiceSuccess;
+                                msgResponse = msg as IServiceSuccess;
                                 break;
                             case PacketTypesIn.ServiceError:
-                                msgResponse = msg as ServiceError;
+                                msgResponse = msg as IServiceError;
                                 break;
                             case PacketTypesIn.ServicePong:
-                                msgResponse = msg as ServicePong;
+                                msgResponse = msg as IServicePong;
                                 break;
                         }
 
@@ -235,8 +235,8 @@ export class HaInterface extends EventEmitter {
         return this._running;
     }
 
-    private _makePacket(packetType: string): OutPacket {
-        let packet: OutPacket = { id: ++this._id, type: packetType };
+    private _makePacket(packetType: string): IOutPacket {
+        let packet: IOutPacket = { id: ++this._id, type: packetType };
         logger.trace(`id=${packet.id};type=${packet.type}`);
         return packet;
     }
@@ -389,24 +389,24 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    private _messageFactory(msgJSON: string): ServiceAuthOk | ServiceAuthRequired | ServiceAuthInvalid | ServiceError | ServicePong | ServiceSuccess | ServiceEvent {
+    private _messageFactory(msgJSON: string): IServiceAuthOk | IServiceAuthRequired | IServiceAuthInvalid | IServiceError | IServicePong | IServiceSuccess | IServiceEvent {
         let msg: any = JSON.parse(msgJSON);
 
         switch (msg.type) {
             case "auth_required":
-                return <ServiceAuthRequired> { name: PacketTypesIn.ServiceAuthRequired, type: msg.type, ha_version: msg.ha_version };
+                return <IServiceAuthRequired> { name: PacketTypesIn.ServiceAuthRequired, type: msg.type, ha_version: msg.ha_version };
             case "result":
                 return msg.success == true 
-                    ? <ServiceSuccess> { name: PacketTypesIn.ServiceSuccess, id: msg.id, type: "result", success: true, result: msg.result }
-                    : <ServiceError> { name: PacketTypesIn.ServiceError, id: msg.id, type: "result", success: false, error: <ServiceErrorDetails> msg.error };
+                    ? <IServiceSuccess> { name: PacketTypesIn.ServiceSuccess, id: msg.id, type: "result", success: true, result: msg.result }
+                    : <IServiceError> { name: PacketTypesIn.ServiceError, id: msg.id, type: "result", success: false, error: <IServiceErrorDetails> msg.error };
             case "event":
-                return <ServiceEvent> { name: PacketTypesIn.ServiceEvent, type: msg.type, event: msg.event };
+                return <IServiceEvent> { name: PacketTypesIn.ServiceEvent, type: msg.type, event: msg.event };
             case "pong":
-                return <ServicePong> { name: PacketTypesIn.ServicePong, id: msg.id, type: "pong" };
+                return <IServicePong> { name: PacketTypesIn.ServicePong, id: msg.id, type: "pong" };
             case "auth_ok":
-                return <ServiceAuthOk> { name: PacketTypesIn.ServiceAuthOk, type: msg.type, ha_version: msg.ha_version };
+                return <IServiceAuthOk> { name: PacketTypesIn.ServiceAuthOk, type: msg.type, ha_version: msg.ha_version };
             case "auth_invalid":
-                return <ServiceAuthInvalid> { name: PacketTypesIn.ServiceAuthInvalid, type: msg.type, message: msg.message };
+                return <IServiceAuthInvalid> { name: PacketTypesIn.ServiceAuthInvalid, type: msg.type, message: msg.message };
             default:
                 let errMsg = `Unrecognized server response: ${msgJSON}`;
                 logger.error(errMsg);
@@ -449,8 +449,8 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    private async _sendPacket(packet: OutPacket, handler?:Function): Promise<ServiceSuccess | ServiceError | ServicePong> {
-        return new Promise<ServiceSuccess | ServiceError | ServicePong>(async (resolve, reject) => {
+    private async _sendPacket(packet: IOutPacket, handler?:Function): Promise<IServiceSuccess | IServiceError | IServicePong> {
+        return new Promise<IServiceSuccess | IServiceError | IServicePong>(async (resolve, reject) => {
             await this._waitAuthenticated();
             logger.trace(`Sending packet id=${packet.id};type=${packet?.type || 'none'}`);
             let timer = setTimeout((packet) => {
@@ -460,7 +460,7 @@ export class HaInterface extends EventEmitter {
             }, 10000, packet);
             this._tracker.set(packet.id, {
                 packet: packet,
-                handler: (response: ServiceSuccess | ServiceError | ServicePong) => {
+                handler: (response: IServiceSuccess | IServiceError | IServicePong) => {
                     clearTimeout(timer);
                     if (handler) {
                         handler(response);

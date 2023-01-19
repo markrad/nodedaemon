@@ -1,4 +1,4 @@
-import { IHaItemEditable } from "../../haitems/IHaItemEditable";
+import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { HaMain } from "../../hamain";
 import http from 'http';
 import https from 'https'

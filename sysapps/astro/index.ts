@@ -22,7 +22,7 @@ const logger = getLogger(CATEGORY);
     Values for daystart and dayend will determine the isDark timespan.
 \* -------------------------------------------------------------------------- */
 
-export interface AstroEvents {
+export interface IAstroEvents {
     'astroEvent': (event: string) => void;
     'moonPhase': (phase: string) => void;
     'isLight': () => void;
@@ -30,8 +30,8 @@ export interface AstroEvents {
 }
 
 export declare interface Astro {
-    on<U extends keyof AstroEvents>(event: U, listner: AstroEvents[U]): this;
-    emit<U extends keyof AstroEvents>(event: U, ...args: Parameters<AstroEvents[U]>): boolean;
+    on<U extends keyof IAstroEvents>(event: U, listner: IAstroEvents[U]): this;
+    emit<U extends keyof IAstroEvents>(event: U, ...args: Parameters<IAstroEvents[U]>): boolean;
 }
 
 type EventTime = {

@@ -6,7 +6,7 @@ import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
 import { ServicePromise } from '../../haitems/haparentitem';
-import { IHaItemEditable } from "../../haitems/IHaItemEditable";
+import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
