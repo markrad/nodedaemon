@@ -78,9 +78,9 @@ export default class ContainerVersionCheck extends AppParent {
             config.registries.forEach((registry: any) => {
                 let name: string = stringValidator.isValid(registry.name, { name: 'registry' });
                 stringValidator.isValid(registry.url, { name: registry.name });
-                registry.userId = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
-                registry.password = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
-                this._registries[name] = { name: registry.name, url: registry.url, userId: registry.userId ?? null, password: registry.password ?? null };
+                let userId = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
+                let password = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
+                this._registries[name] = { name: registry.name, url: registry.url, userId: userId ?? null, password: password ?? null };
             });
 
             if (!config.hosts || !Array.isArray(config.hosts)) {
