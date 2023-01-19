@@ -1,6 +1,7 @@
 import { existsSync } from "fs";
 import { HaMain } from "../hamain";
 import { IHaItem } from "../haitems/ihaitem";
+import { URL } from "node:url";
 
 type validatorOptions = {
     name?: string;
@@ -69,5 +70,16 @@ export class numberValidator {
         if (opt.minValue && work < opt.minValue) throw new Error(`${opt.name} is less than the allowed minimum`);
         if (opt.maxValue && work > opt.maxValue) throw new Error(`${opt.name} is greater than the allowed maximum`);
         return work;
+    }
+}
+
+export class urlValidator {
+    static isValid(urlstring: string): URL {
+        try {
+            return new URL(urlstring);
+        }
+        catch (err) {
+            throw new Error(`${urlstring} is invalid - ${err.message}`);
+        }
     }
 }
