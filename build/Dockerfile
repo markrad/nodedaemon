@@ -4,7 +4,7 @@ RUN apt update && apt -y upgrade
 RUN apt install -y git
 RUN npm install -g npm@9.3.0
 RUN npm install -g typescript
-RUN git clone -b v1.2.3 https://github.com/markrad/nodedaemon.git
+RUN git clone -b v1.3.0 https://github.com/markrad/nodedaemon.git
 
 WORKDIR /nodedaemon
 
