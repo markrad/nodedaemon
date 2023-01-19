@@ -5,27 +5,19 @@ import https from 'https'
 import { getLogger, Logger } from "log4js";
 import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
-import { entityValidator } from "../../common/validator";
+import { entityValidator, stringValidator, urlValidator } from "../../common/validator";
+import { Url } from "url";
+import { isValidCron } from 'cron-validator'
+import * as schedule from 'node-schedule';
 
 const CATEGORY = 'UpdateExternalIP';
 var logger: Logger = getLogger(CATEGORY);
 
-type IPServer = {
-    protocol: string,
-    url: string,
-    port?: number,
-    path?: string;
-}
-
 export default class UpdateExternalIP extends AppParent {
     private _external_ip: IHaItemEditable;
-    private _interval: NodeJS.Timer = null;
-    private _multiplier: number = 24;
-    private _delay: number = 5;
-    private static readonly servers: IPServer[] = [
-        { protocol: 'http', url: 'api.ipify.org' },
-        { protocol: 'https', url: 'api.my-ip.io', path: 'ip' }
-    ]
+    private _urls: Url[] = [];
+    private _schedule: schedule.Job;
+    private _cron: string;
     public constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         logger.info('Constructed');
@@ -37,6 +29,12 @@ export default class UpdateExternalIP extends AppParent {
         }
         try {
             this._external_ip = entityValidator.isValid(config.ip, { entityType: HaGenericUpdateableItem, name: 'external IP'});
+            this._cron = stringValidator.isValid(config.cron, { name: 'cron', noValueOk: false });
+            if (!isValidCron(this._cron)) throw new Error(`Cron string ${this._cron} is invalid`);
+            if (!config.servers || !Array.isArray(config.servers)) throw new Error('Servers are missing or invalid');
+            this._urls = config.servers.map((server: any) => {
+                return urlValidator.isValid(server.url)
+            });
         }
         catch (err) {
             logger.error(err.message);
@@ -47,40 +45,45 @@ export default class UpdateExternalIP extends AppParent {
     }
 
     public async run(): Promise<boolean> {
-        let counter = 0;
-
-        this._interval = setInterval(async (multiplier) => {
-            if (++counter % multiplier == 0) {
-                counter = 0;
-                try {
-                    let currentIP = await this._whatsMyIP(UpdateExternalIP.servers[0]);
-
-                    logger.info(`Updating external IP address to ${currentIP}`);
-                    this._external_ip.updateState(currentIP, false);
+        return new Promise<boolean>((resolve, _reject) => {
+            let updater: () => void = async (): Promise<void> => {
+                let success: boolean = false;
+                for (let i = 0; i < this._urls.length; i++) {
+                    try {
+                        let currentIP: string = await this._whatsMyIP(this._urls[i]);
+                        logger.info(`Updating external IP address to ${currentIP}`);
+                        this._external_ip.updateState(currentIP, false);
+                        success = true;
+                        break;
+                    }
+                    catch (err) {
+                        logger.warn(`Server ${this._urls[i].hostname} returned an error - ${err}`);
+                    }
                 }
-                catch (err) {
-                    logger.error(`Could not get IP address: ${err}`);
-                }
+
+                if (!success) logger.error('Failed to contact any IP servers');
             }
-        }, this._delay * 1000, this._multiplier);
-
-        return true;
+            this._schedule = schedule.scheduleJob(this._cron, updater);
+            updater();
+            resolve(true);
+        });
     }
 
     public async stop(): Promise<void> {
-        clearInterval(this._interval);
+        // clearInterval(this._interval);
+        this._schedule.cancel();
     }
 
-    private async _whatsMyIP(server: IPServer): Promise<string> {
+    private async _whatsMyIP(url: Url): Promise<string> {
         const IP_HOST = 'api.ipify.org';
         return new Promise((resolve, reject) => {
             const options = {
-                host: server.url,
-                port: (server.port? server.port : server.protocol == 'https'? 443 : 80),
-                path: (server.path? server.path : '/'),
+                host: url.hostname,
+                port: url.protocol == 'https'? 443 : 80,
+                path: url.path,
             };
 
-            let client = server.protocol == 'https'? https : http;
+            let client = url.protocol == 'https'? https : http;
     
             let allchunks: string = '';
     
