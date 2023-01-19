@@ -10,15 +10,15 @@ import { dumpError } from './errorUtil';
 const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);
 
-export interface WSWrapperEvents {
+export interface IWSWrapperEvents {
     'connected': () => void;
     'disconnected': () => void;
     'message': (data: WebSocket.Data) => void;
 };
 
 export declare interface WSWrapper {
-    on<U extends keyof WSWrapperEvents>(event: U, listner: WSWrapperEvents[U]): this;
-    emit<U extends keyof WSWrapperEvents>(event: U, ...args: Parameters<WSWrapperEvents[U]>): boolean;
+    on<U extends keyof IWSWrapperEvents>(event: U, listner: IWSWrapperEvents[U]): this;
+    emit<U extends keyof IWSWrapperEvents>(event: U, ...args: Parameters<IWSWrapperEvents[U]>): boolean;
 }
 
 export class WSWrapper extends EventEmitter {
