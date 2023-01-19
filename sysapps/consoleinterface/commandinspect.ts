@@ -5,6 +5,7 @@ import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
 import { IChannelWrapper } from './ichannelwrapper';
 import { getLogger, Logger } from 'log4js';
+import { HaGenericSwitchItem } from "../../haitems/hagenericswitchitem";
 
 const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);
@@ -43,6 +44,10 @@ export class CommandInspect extends CommandBase {
                 sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
                 sock.write(`State = ${item.state}\r\n`);
+                let sw = that.items.getItemAsEx(inputArray[1], HaGenericSwitchItem, false);
+                if (sw) {
+                    sock.write(`Off time: ${sw.isTimerRunning? sw.timeBeforeOff / 1000 : 'inactive'}\r\n`);
+                }
                 sock.write(`Last Changed = ${item.lastChanged.toISOString()}\r\n`);
                 sock.write(`Last Updated = ${item.lastUpdated.toISOString()}\r\n`);
                 sock.write('Attributes:\r\n');
