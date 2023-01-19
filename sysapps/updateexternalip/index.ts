@@ -70,24 +70,16 @@ export default class UpdateExternalIP extends AppParent {
     }
 
     public async stop(): Promise<void> {
-        // clearInterval(this._interval);
         this._schedule.cancel();
     }
 
     private async _whatsMyIP(url: Url): Promise<string> {
         const IP_HOST = 'api.ipify.org';
         return new Promise((resolve, reject) => {
-            const options = {
-                host: url.hostname,
-                port: url.protocol == 'https'? 443 : 80,
-                path: url.path,
-            };
-
             let client = url.protocol == 'https'? https : http;
-    
             let allchunks: string = '';
     
-            client.get(options, (res: any) => {
+            client.get(url, (res: any) => {
                 if (res.statusCode != 200) {
                     let err: Error = new Error(`Error status code returned from IP server ${res.statusCode}`);
                     logger.error(err.message);
