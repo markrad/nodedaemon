@@ -6,11 +6,8 @@ import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
 import { HaParentItem, ServicePromise } from '../../haitems/haparentitem';
-// import { IHaItemEditable } from "../../haitems/ihaitemeditable";
-// import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
-// import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import HaItemButton from '../../haitems/haitembutton';
 
 const CATEGORY: string = 'CommandSet';
@@ -61,17 +58,11 @@ export class CommandSet extends CommandBase {
             }
             logger.debug(`set called with ${inputArray.join(' ')}`);
             let item: HaParentItem = that.items.getItemAsEx(inputArray[2], HaParentItem, true);
-            // let item: IHaItem[] = that.items.getItemByEntityId(inputArray[2], false);
-
-            // if (item.length != 1) {
-            //     throw new Error(`Item ${inputArray[2]} was not found`);
-            // }
 
             if (!item.isEditable && inputArray[1] != 'log') {
                 throw new Error(`Specified item ${inputArray[2]} is not editable`);
             }
 
-            // let target: IHaItemEditable = item[0] as HaGenericUpdateableItem;
             let rc: ServicePromise;
 
             switch (inputArray[1]) {
