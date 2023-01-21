@@ -14,6 +14,7 @@ export interface IWSWrapperEvents {
     'connected': () => void;
     'disconnected': () => void;
     'message': (data: WebSocket.Data) => void;
+    'fatal': (err: any) => void;
 };
 
 export declare interface WSWrapper {
@@ -57,8 +58,11 @@ export class WSWrapper extends EventEmitter {
                 }
                 catch (err) {
                     if (err instanceof DNSError) {
-                        if (err.code != 'ENOTFOUND') {
+                        dumpError(err, logger);
+                        // Retry on ENOTFOUND
+                        if (err.errno != -3008) {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
+                            this.emit('fatal', err);
                             reject(err);
                             break;
                         }
@@ -66,17 +70,20 @@ export class WSWrapper extends EventEmitter {
                             logger.info(`${err.message} - retrying`);
                         }
                         logger.fatal(`Unable to resolve host address: ${this._url}`);
+                        this.emit('fatal', err);
                         reject(err);
                         break;
                     }
                     else if (err instanceof GenericSyscallError) {
                         logger.fatal(`Unhandled syscall error: ${err.syscall}`);
+                        this.emit('fatal', err);
                         reject(err);
                         break;
                     }
                     else if (err instanceof ConnectionError) {
                         if (!(handled.includes(err.code))) {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
+                            this.emit('fatal', err);
                             reject(err);
                             break;
                         }
