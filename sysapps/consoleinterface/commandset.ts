@@ -5,12 +5,12 @@ import ConsoleInterface from ".";
 import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from './commandbase';
 import { ICommand } from './icommand';
-import { ServicePromise } from '../../haitems/haparentitem';
-import { IHaItemEditable } from "../../haitems/ihaitemeditable";
-import { IHaItem } from '../../haitems/ihaitem';
+import { HaParentItem, ServicePromise } from '../../haitems/haparentitem';
+// import { IHaItemEditable } from "../../haitems/ihaitemeditable";
+// import { IHaItem } from '../../haitems/ihaitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
-import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
+// import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import HaItemButton from '../../haitems/haitembutton';
 
 const CATEGORY: string = 'CommandSet';
@@ -22,7 +22,7 @@ export class CommandSet extends CommandBase {
     }
 
     public get helpText(): string {
-        return `${this.commandName}\tlog <item> <loglevel>\r\n\tstate <item>\r\n\ton <item>\r\n\toff <item>\r\n\ttoggle <item>\t\tManipulate properties of item`;
+        return `${this.commandName}\tlog <item> <loglevel>\r\n\tstate <item> <optional new state>\r\n\tpress <item>\r\n\ton <item>\r\n\toff <item>\r\n\ttoggle <item>\t\tManipulate properties of item`;
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
@@ -60,72 +60,77 @@ export class CommandSet extends CommandBase {
                 throw new Error('Requires command and target item');
             }
             logger.debug(`set called with ${inputArray.join(' ')}`);
-            let item: IHaItem[] = that.items.getItemByEntityId(inputArray[2], false);
+            let item: HaParentItem = that.items.getItemAsEx(inputArray[2], HaParentItem, true);
+            // let item: IHaItem[] = that.items.getItemByEntityId(inputArray[2], false);
 
-            if (item.length != 1) {
-                throw new Error(`Item ${inputArray[2]} was not found`);
-            }
+            // if (item.length != 1) {
+            //     throw new Error(`Item ${inputArray[2]} was not found`);
+            // }
 
-            if (!item[0].isEditable && inputArray[1] != 'log') {
+            if (!item.isEditable && inputArray[1] != 'log') {
                 throw new Error(`Specified item ${inputArray[2]} is not editable`);
             }
 
-            let target: IHaItemEditable = item[0] as HaGenericUpdateableItem;
+            // let target: IHaItemEditable = item[0] as HaGenericUpdateableItem;
             let rc: ServicePromise;
 
             switch (inputArray[1]) {
                 case "log":
                     if (inputArray.length == 3) {
-                        sock.write(`Item ${item[0].name} has log level ${item[0].logging}\r\n`);
+                        sock.write(`Item ${item.name} has log level ${item.logging}\r\n`);
                     }
                     else {
-                        item[0].logging = inputArray[3];
-                        logger.info(`Logging for ${item[0].name} has been set to ${(item[0].logging as unknown as Level).levelStr}`)
-                        sock.write(`Item ${item[0].name} has log level ${item[0].logging}\r\n`);
+                        item.logging = inputArray[3];
+                        logger.info(`Logging for ${item.name} has been set to ${(item.logging as unknown as Level).levelStr}`)
+                        sock.write(`Item ${item.name} has log level ${item.logging}\r\n`);
                     }
                 break;
                 case "state":
-                    if (inputArray.length < 4) {
-                        throw new Error(`set state requires a new state be provided`);
+                    if (inputArray.length < 3) {
+                        throw new Error(`set state requires a device and optionally a new state`);
                     }
                     if (inputArray.length > 4) {
                         throw new Error(`set state requires a new state to be a single word`);
                     }
+                    if (inputArray.length == 4) {
+                        rc = await item.updateState(inputArray[3], false);
 
-                    rc = await target.updateState(inputArray[3], false);
-
-                    if (rc.err) {
-                        sock.write(`Error: Command ${inputArray[3]} failed for ${target.entityId}: ${rc.err.message}\r\n`);
+                        if (rc.err) {
+                            sock.write(`Error: Command ${inputArray[3]} failed for ${item.entityId}: ${rc.err.message}\r\n`);
+                        }
+                        else {
+                            sock.write(`Command complete - new state ${item.state}\r\n`);
+                        }
                     }
                     else {
-                        sock.write(`Command complete - new state ${target.state}\r\n`);
+                        sock.write(`Item ${item.name} is in state ${item.state}\r\n`);
                     }
                 break;
                 case "on":
                 case "off":
                 case "toggle":
-                    if (!item[0].isSwitch) {
+                    if (!item.isSwitch) {
                         throw new Error('Subcommand can only target a switch');
                     }
                     
                     rc = inputArray[1] == 'toggle'
-                        ? await (target as HaGenericSwitchItem).toggle()
+                        ? await (item as HaGenericSwitchItem).toggle()
                         : inputArray[1] == 'on'
-                        ? await (target as HaGenericSwitchItem).turnOn()
-                        : await (target as HaGenericSwitchItem).turnOff();
+                        ? await (item as HaGenericSwitchItem).turnOn()
+                        : await (item as HaGenericSwitchItem).turnOff();
 
                     if (rc.err) {
-                        sock.write(`Error: Command ${inputArray[1]} failed for ${target.entityId}: ${rc.err.message}\r\n`);
+                        sock.write(`Error: Command ${inputArray[1]} failed for ${item.entityId}: ${rc.err.message}\r\n`);
                     }
                     else {
-                        sock.write(`Command complete - new state ${target.state}\r\n`);
+                        sock.write(`Command complete - new state ${item.state}\r\n`);
                     }
                 break;
                 case "press":
-                    if (!item[0].isButton) {
+                    if (!item.isButton) {
                         throw new Error('Subcommand can only target a button');
                     }
-                    await (target as HaItemButton).press();
+                    await (item as HaItemButton).press();
                 break;
                 default:
                     throw new Error(`Command ${inputArray[1]} is invalid`);
