@@ -54,7 +54,7 @@ npm install --dry-run || { echo 'npm install failed' ; exit 1; }
 echo Updating
 
 sed -i s/$version/$newver/ Dockerfile
-sed -i s/$version/$newver/ ../package.json
+sed -i '3,3 s/$version/$newver/' ../package.json
 git add --verbose Dockerfile ../package.json && \
 git commit -m ":bookmark: Bump version to $newver" && \
 git push && \
