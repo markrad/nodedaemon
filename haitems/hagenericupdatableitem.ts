@@ -1,5 +1,5 @@
 import { HaParentItem, ServicePromise } from './haparentitem';
-import { IHaItemEditable } from "./ihaitemeditable";
+import { IHaItemEditable } from './ihaitemeditable';
 import { State } from '../hamain/state'
 import { Level } from 'log4js';
 
@@ -8,7 +8,7 @@ export class HaGenericUpdateableItem extends HaParentItem implements IHaItemEdit
         super(item, logLevel);
     }
 
-    public updateState(_newState: string | boolean | number, _forceUpdate: boolean): Promise<ServicePromise>{
+    public async updateState(_newState: string | boolean | number, _forceUpdate: boolean): Promise<ServicePromise>{
         throw new Error('This function should be overridden');
     };
 

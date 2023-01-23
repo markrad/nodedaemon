@@ -9,7 +9,7 @@ export class HaGenericFixedItem extends HaParentItem implements IHaItemFixed {
         super(item, logLevel);
     }
 
-    public updateState(newState: string | number | boolean, forceUpdate: boolean): Promise<ServicePromise> {
+    public async updateState(newState: string | number | boolean, forceUpdate: boolean): Promise<ServicePromise> {
         return new Promise<ServicePromise>((resolve, _reject) => {
             let waitChange = (newState: string | boolean | number): void => {
                 let onChange = (that: IHaItem, _oldState: string | boolean | number) => {
