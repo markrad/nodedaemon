@@ -174,28 +174,37 @@ class actioner {
             return false;
         }
 
+        let ret: boolean;
+
         let state = this._getStateAsType(killSwitch.entity.state, killSwitch.comperand);
+
+        logger.debug(`Comparing comperand ${killSwitch.comperand} (${typeof killSwitch.comperand}) operator ${killSwitch.op} state ${state} (${typeof state})`);
 
         switch (killSwitch.op) {
             case 'eq':
-                return state == killSwitch.comperand;
+                ret = state == killSwitch.comperand;
                 break;
             case 'ne':
-                return state != killSwitch.comperand;
+                ret =  state != killSwitch.comperand;
                 break;
             case 'lt':
-                return state < killSwitch.comperand;
+                ret =  state < killSwitch.comperand;
                 break;
             case 'le':
-                return state <= killSwitch.comperand;
+                ret =  state <= killSwitch.comperand;
                 break;
             case 'gt':
-                return state > killSwitch.comperand;
+                ret =  state > killSwitch.comperand;
                 break;
             case 'ge':
-                return state >= killSwitch.comperand;
+                ret =  state >= killSwitch.comperand;
+                break;
+            default:
                 break;
         }
+
+        logger.debug(`${ret? 'Action killed' : 'Action proceeds'}`);
+        return ret;
     }
 
     private _getStateAsType(state: string | number | boolean, comperand: string | number | boolean): string | number | boolean {
