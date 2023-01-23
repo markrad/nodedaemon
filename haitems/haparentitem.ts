@@ -135,7 +135,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         this.emit('new_state', this, oldState);
     }
 
-    public updateState(_newState: string | number | boolean, _forceUpdate: boolean): Promise<ServicePromise> {
+    public async updateState(_newState: string | number | boolean | Date, _forceUpdate: boolean): Promise<ServicePromise> {
         throw new Error('This function should be overridden');
     }
 
