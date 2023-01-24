@@ -182,7 +182,7 @@ class actioner {
 
         switch (killSwitch.op) {
             case 'eq':
-                ret = state == killSwitch.comperand;
+                ret = +state == +killSwitch.comperand;
                 break;
             case 'ne':
                 ret =  state != killSwitch.comperand;
@@ -207,9 +207,10 @@ class actioner {
         return ret;
     }
 
-    private _getStateAsType(state: string | number | boolean, comperand: string | number | boolean): string | number | boolean {
+    private _getStateAsType(state: string | number | boolean | Date, comperand: string | number | boolean | Date): string | number | boolean | Date {
         if (typeof comperand == 'string') return state as string;
         if (typeof comperand == 'number') return parseFloat(state as string);
         if (typeof comperand == 'boolean') return !!state;
+        if (comperand instanceof Date) return new Date(state as string);
     }
 }

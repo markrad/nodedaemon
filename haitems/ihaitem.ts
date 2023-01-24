@@ -10,7 +10,8 @@ export interface IHaItem {
     get type(): string;
     get lastChanged(): Date;
     get lastUpdated(): Date;
-    get state(): string | number | boolean;
+    get state(): string | number | boolean | Date;
+    get rawState(): string;
     get entityId(): string;
     get category(): string;
     get isSwitch(): boolean;

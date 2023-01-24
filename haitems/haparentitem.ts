@@ -41,7 +41,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
     private _friendlyName: string;
     private _lastChanged: Date;
     private _lastUpdated: Date;
-    private _state: string | number | boolean;
+    private _state: string; // | number | boolean;
     private _logger: Logger;
     private _support: number;
     protected _stateChangeFn: (item: HaParentItem, state: State) => void;
@@ -90,7 +90,11 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         return this._lastUpdated;
     }
 
-    public get state(): string | number | boolean {
+    public get state(): string | number | boolean | Date {
+        return this._state;
+    }
+
+    public get rawState(): string {
         return this._state;
     }
 
@@ -123,7 +127,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
             entity_id: newState.entity_id,
             context: newState.context,
             attributes: this.attributes,
-            state: this.state,
+            state: this.rawState,
             last_updated: this.lastUpdated.toISOString().substr(0, 23) + '+00:00',
             last_changed: this.lastChanged.toISOString().substr(0, 23) + '+00:00',
         };

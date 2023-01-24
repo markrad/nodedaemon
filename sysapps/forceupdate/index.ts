@@ -55,7 +55,7 @@ export default class ForceUpdate extends AppParent {
                 logger.debug(`${tracker.entity.friendlyName} state was updated less than ${Math.ceil(tracker.interval / 2)} minutes ago - not updated`);
             }
             else {
-                let state: boolean | number | string = tracker.entity.state;
+                let state: string = tracker.entity.rawState;
                 let rc: ServicePromise = await tracker.entity.updateState(state, true);
 
                 if (rc.err) {
