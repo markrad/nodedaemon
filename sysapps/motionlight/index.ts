@@ -176,9 +176,9 @@ class actioner {
 
         let ret: boolean;
 
-        let state = this._getStateAsType(killSwitch.entity.state, killSwitch.comperand);
+        let state: string | number | boolean | Date = this._getStateAsType(killSwitch.entity.state, killSwitch.comperand);
 
-        logger.debug(`Comparing comperand ${killSwitch.comperand} (${typeof killSwitch.comperand}) operator ${killSwitch.op} state ${state} (${typeof state})`);
+        logger.debug(`Comparing comperand ${+killSwitch.comperand} (${typeof killSwitch.comperand}) operator ${killSwitch.op} state ${+state} (${typeof state})`);
 
         switch (killSwitch.op) {
             case 'eq':
