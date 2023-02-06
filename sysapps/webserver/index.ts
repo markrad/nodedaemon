@@ -66,10 +66,12 @@ export default class WebServer extends AppParent {
         this._app.use(Express.static(path.join(this._root, "styles")));
         this._app.use('/styles', Express.static(path.join(this._root, 'styles')));
         this._app.use('/icons', Express.static(path.join(this._root, 'icons')))
+        this._app.use('/files', Express.static(path.join(this._root, 'files')));
 
         this._app.get('/', (_req, res) => {
             res.status(200).render('index', { title: 'Useful Links'});
         });
+
 /*
         this._app.get('/zwavedata', (_req, res) => {
             let data = this.getZWaveList();
