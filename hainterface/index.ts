@@ -440,8 +440,14 @@ export class HaInterface extends EventEmitter {
             }
             else {
                 while ('RUNNING' != (await this.getConfig()).state) {
-                    logger.info('Waiting for HA to signal RUNNING');
-                    await this._wait(1);
+                    try {
+                        logger.info('Waiting for HA to signal RUNNING');
+                        await this._wait(1);
+                    }
+                    catch (err) {
+                        logger.warn(`Failed to get config - will delay ten seconds`);
+                        await this._wait(10);
+                    }
                 }
 
                 resolve();
