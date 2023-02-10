@@ -5,7 +5,6 @@ import { HaMain } from '../../hamain';
 import { Docker } from 'node-docker-api';
 import DockerModem from 'docker-modem';
 import { getTags } from '@snyk/docker-registry-v2-client';
-import { readFileSync } from 'fs';
 import { Container } from 'node-docker-api/lib/container';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { fileValidator, numberValidator, stringValidator, entityValidator } from '../../common/validator';
@@ -20,6 +19,7 @@ type Registry = {
     url: string;
     userId: string;
     password: string;
+    ca: string;
 }
 
 type RegistryType = {
@@ -80,7 +80,8 @@ export default class ContainerVersionCheck extends AppParent {
                 stringValidator.isValid(registry.url, { name: registry.name });
                 let userId = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
                 let password = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
-                this._registries[name] = { name: registry.name, url: registry.url, userId: userId ?? null, password: password ?? null };
+                let ca = fileValidator.isValid(registry.ca, { name: 'registry CA', noValueOk: true, returnContent: true });
+                this._registries[name] = { name: registry.name, url: registry.url, userId: userId ?? null, password: password ?? null, ca: ca };
             });
 
             if (!config.hosts || !Array.isArray(config.hosts)) {
@@ -96,9 +97,6 @@ export default class ContainerVersionCheck extends AppParent {
                 let caFile: string = Path.isAbsolute(host.caFile) ? host.caFile : Path.join(this._configRoot, host.caFile);
                 let certFile: string = Path.isAbsolute(host.certFile) ? host.certFile : Path.join(this._configRoot, host.certFile);
                 let keyFile: string = Path.isAbsolute(host.keyFile) ? host.keyFile : Path.join(this._configRoot, host.keyFile);
-                fileValidator.isValid(caFile);
-                fileValidator.isValid(certFile);
-                fileValidator.isValid(keyFile);
                 if (!host.containers || !Array.isArray(host.containers)) throw new Error(`${host.host} containers array is required`);
                 let containers: ContainerEntry[] = [];
                 host.containers.forEach((container: any) => {
@@ -113,9 +111,9 @@ export default class ContainerVersionCheck extends AppParent {
                     host: host.host, 
                     port: host.port, 
                     protocol: host.protocol, 
-                    caFile: readFileSync(caFile, { encoding: 'utf8' }),
-                    certFile: readFileSync(certFile, { encoding: 'utf8' }),
-                    keyFile: readFileSync(keyFile, { encoding: 'utf8' }),
+                    caFile: fileValidator.isValid(caFile, { returnContent: true }),
+                    certFile: fileValidator.isValid(certFile, { returnContent: true }),
+                    keyFile: fileValidator.isValid(keyFile, { returnContent: true }),
                     containers: containers,
                     names: containers.map((container) => container.name),
                 });
@@ -134,6 +132,8 @@ export default class ContainerVersionCheck extends AppParent {
         let updateFunc: () => Promise<boolean> = async () => {
             return new Promise<boolean>(async (resolve, _reject) => {
                 this._hosts.forEach(async (host) => {
+                    logger.debug(`Processing host ${host.host}`);
+                    let containerList: ContainerWrapper[] = [];
                     try {
                         const dockerOptions: DockerModem.ConstructorOptions = {
                             ca: host.caFile,
@@ -141,10 +141,10 @@ export default class ContainerVersionCheck extends AppParent {
                             key: host.keyFile,
                             host: host.host,
                             port: host.port,
-                            protocol: host.protocol
+                            protocol: host.protocol,
                         };
                         const docker = new Docker(dockerOptions);
-                        let containerList: ContainerWrapper[] = ((await docker.container.list())
+                        containerList = ((await docker.container.list())
                             .map((entry: Container) => {
                                 let parts: string[] = (entry.data as any)['Image'].split(':');
                                 return { name: parts[0], version: parts[1] };
@@ -156,25 +156,41 @@ export default class ContainerVersionCheck extends AppParent {
                                 return { container: entry, containerEntry: host.containers.find((hostentry: ContainerEntry) => {
                                     return entry.name == hostentry.name;
                                 }) }
-                            }));
-                        for (let i = 0; i < containerList.length; i++) {
+                            })
+                        );
+                    }
+                    catch (err) {
+                        logger.error(`Failed to retreive local containers from ${host.host}: ${err}`);
+                    }
+                    try {
+                        for (let i = 0; i < containerList.length ?? 0; i++) {
                             let repo: string = containerList[i].container.name.includes('/')
                                 ? containerList[i].container.name
                                 : 'library/' + containerList[i].container.name;
+                                if (repo.startsWith(containerList[i].containerEntry.registry.url)) {
+                                    repo = repo.substring(containerList[i].containerEntry.registry.url.length + 1);
+                                }
                             try {
                                 const initalValue: string = '';
+                                logger.debug(`Registry: ${containerList[i].containerEntry.registry.url} Repo: ${repo}`)
                                 let tags = (await getTags(containerList[i].containerEntry.registry.url, 
                                                             repo, 
                                                             containerList[i].containerEntry.registry.userId, 
-                                                            containerList[i].containerEntry.registry.password))
+                                                            containerList[i].containerEntry.registry.password,
+                                                            undefined, 
+                                                            undefined,
+                                                            { ca: containerList[i].containerEntry.registry.ca }))
+                                                            // { ca: readFileSync('/usr/local/share/ca-certificates/radrealm.crt') }))
                                     .filter((item: string) => this._re.exec(item))
                                     .sort((left: string, right: string) => {
                                         return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
                                                 right.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) 
                                                 ? 1
                                                 : -1;
-                                    });
-                                logger.debug(`Image ${containerList[i].container.name}: Current ${containerList[i].container.version} Latest ${tags[0]}`);
+                                    }
+                                );
+                                let updated: string = containerList[i].container.version == tags[0]? '' : ' - update available';
+                                logger.debug(`Image ${containerList[i].container.name}: Current ${containerList[i].container.version} Latest ${tags[0]}${updated}`);
                                 containerList[i].containerEntry.currentEntity.updateState(containerList[i].container.version, false);
                                 containerList[i].containerEntry.dockerEntity.updateState(tags[0], false);
                             }
