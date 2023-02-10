@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { HaMain } from "../hamain";
 import { IHaItem } from "../haitems/ihaitem";
 import { URL } from "node:url";
@@ -25,14 +25,22 @@ export class stringValidator {
     }
 }
 
+type fileValidatorOptions = validatorOptions & {
+    returnContent?: boolean;
+    encoding?: string;
+}
+
 export class fileValidator {
-    static isValid(value: any, options?: stringValidatorOptions) {
-        let opt = { ...{ name: ''}, ...options };
+    static isValid(value: any, options?: fileValidatorOptions): string  {
+        let opt = { ...{ name: '', encoding: 'utf8', returnContent: false }, ...options };
         let work = stringValidator.isValid(value, opt);
         if (work) {
             if (!existsSync(work)) throw new Error(`${opt.name ?? ''} file ${value} does not exist`);
+            if (opt.returnContent == true) return readFileSync(work, { encoding: 'utf8' });
         }
-        return work;
+        else {
+            return work;
+        }
     }
 }
 
