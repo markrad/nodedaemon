@@ -114,7 +114,7 @@ export class HaMain extends EventEmitter {
                 for (let key in newConfig) {
                     if (key != 'main') {
                         if (this._config[key] === undefined) {
-                            logger.info(`New application found: ${key}`);
+                            logger.info(`New application found: ${key}`);   // TODO Bring new app up in Stopped mode
                         }
                         else if (!objectEquals(newConfig[key], this._config[key])) {
                             logger.info(`Found config update for application ${key}`);
