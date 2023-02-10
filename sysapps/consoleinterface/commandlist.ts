@@ -124,7 +124,15 @@ export class CommandList extends CommandBase {
         logger.debug('listapps called');
         let maxNameLen = 2 + Math.max(...that.controller.apps.map((item) => item.name.length));
         let maxPathLen = 2 + Math.max(...that.controller.apps.map((item) => item.path.length));
-        that.controller.apps.forEach((app: AppInfo) => {
+        that.controller.apps
+            .sort((l, r) => {
+                return l.name < r.name
+                ? -1
+                : l.name > r.name
+                ? 1
+                : 0;
+            })
+            .forEach((app: AppInfo) => {
             sock.write(`${app.name}${' '.repeat(maxNameLen - app.name.length)}${app.path}${' '.repeat(maxPathLen - app.path.length)}${app.status}\r\n`);
         });
     }
