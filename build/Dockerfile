@@ -8,9 +8,12 @@ RUN git -c advice.detachedHead=false clone -b v1.4.0 https://github.com/markrad/
 
 WORKDIR /nodedaemon
 
-# RUN npm install -g npm@8.5.1
+RUN npm install -g npm@9.4.2
 RUN npm install
 RUN tsc
 
+COPY ./startup.sh ./
+
 # CMD [ "tail", "-f", "/etc/passwd"]
-CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
+# CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
+CMD [ "/bin/bash", "./startup.sh" ]
