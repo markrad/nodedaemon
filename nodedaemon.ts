@@ -88,6 +88,7 @@ try {
         .option('-r, --replace', 'replace config file appsdir with command line appsdir - default is to merge them')
         .option('-c, --config <locaton>', 'name and location of config.yaml', './config.yaml')
         .option('-l --loglevel <type>', `logging level [${LogLevels().join(' | ')}]\n(default: if present the value from config.yaml logLevel otherwise ${defaultLogLevel.levelStr})`)
+        .option('-s', '--scriptpid <number>', 'when run under docker kill this script to terminate the container')
         .parse(process.argv);
 
     configFile = Path.resolve(program.opts().config ?? './config.yaml');
@@ -164,6 +165,16 @@ try {
 
     if (program.opts().logLevel && !LogLevelValidator(program.opts().debug)) {
         fatalExit(`Debug argument is invalid. Must be one of [${LogLevels().join(' | ')}]`, 4, defaultLogger);
+    }
+
+    if (program.opts().scriptpid) {
+        let pid: number = parseInt(program.opts().scriptpid);
+        if (isNaN(pid)) {
+            fatalExit(`Invalid value passed for --scriptpid: ${program.opts().scriptpid}`, 4, defaultLogger);
+        }
+        else {
+            config.main.scriptPid = pid;
+        }
     }
 
     if (program.opts().loglevel) {

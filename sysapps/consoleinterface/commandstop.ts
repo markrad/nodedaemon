@@ -4,6 +4,7 @@ import { IChannelWrapper } from "./ichannelwrapper";
 import { getLogger } from "log4js";
 import { CommandBase } from './commandbase'; 
 
+// TODO deprecate for system command
 const CATEGORY: string = 'CommandStop';
 var logger = getLogger(CATEGORY);
 

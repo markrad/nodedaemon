@@ -6,6 +6,7 @@ import { getLogger, Logger } from 'log4js';
 const CATEGORY: string = 'CommandUptime';
 var logger: Logger = getLogger(CATEGORY);
 
+// TODO Deprecate for system
 export class CommandUptime extends CommandBase {
     public constructor() {
         super('uptime');

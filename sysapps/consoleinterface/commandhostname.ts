@@ -7,6 +7,7 @@ import os from 'os';
 const CATEGORY: string = 'CommandHostname';
 var logger: Logger = getLogger(CATEGORY);
 
+// TODO Deprecate for system
 export class CommandHostname extends CommandBase {
     public constructor() {
         super('hostname');

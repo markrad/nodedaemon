@@ -126,6 +126,7 @@ export default class ConsoleInterface extends AppParent {
             new (require('./commandha')).CommandHa(),
             new (require('./commandlogs')).CommandLogs(),
             new (require('./commandevents')).CommandEvents(),
+            new (require('./commandsystem')).CommandSystem(),
         ];
         await this._transport.start();
 

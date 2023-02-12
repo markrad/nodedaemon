@@ -3,6 +3,7 @@ import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase } from "./commandbase";
 import { getLogger, Logger } from "log4js";
 
+// TODO deprecate for system command
 const CATEGORY: string = 'CommandVersion';
 var logger: Logger = getLogger(CATEGORY);
 
