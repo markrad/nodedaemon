@@ -14,6 +14,27 @@ type Keys = {
     action: (data?: Buffer) => void;
 }
 
+class Console {
+    private _lineLength: number = 0;
+    private _cursorPosition: number = 0;
+    private _lineContent: Buffer = Buffer.alloc(256);
+
+    constructor (lineLength: number, cursorPosition: number, lineContent?: string) {
+        if (lineLength) this._lineLength = lineLength;
+        if (cursorPosition) this.cursorPosition = cursorPosition;
+        if (lineContent) this._lineContent.write(lineContent);
+    }
+
+    cursorInc() { return ++this._cursorPosition; }
+    cursorDec() { return --this._cursorPosition; }
+    get lineLength() { return this._lineLength; }
+    get cursorPosition() { return this._cursorPosition; }
+    set cursorPosition(value: number) { this._cursorPosition = value; }
+    get lineContent() { return this._lineContent; }
+    get cursorAtStart() { return this._cursorPosition == 0; }
+    get cursorAtEnd() { return this._cursorPosition == this._lineLength; }
+}
+
 const CATEGORY: string = 'TransportSSHClient';
 const logger = getLogger(CATEGORY);
 
@@ -129,6 +150,17 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 }
             })
             .once('shell', (accept, _reject, _info) => {
+                const rightarrow: Buffer = Buffer.from([27, 91, 67]);
+                const leftarrow: Buffer = Buffer.from([27, 91, 68]);
+                const uparrow: Buffer = Buffer.from([27, 91, 65]);
+                const downarrow: Buffer = Buffer.from([27, 91, 66])
+                const backspace: Buffer = Buffer.from([127]);
+                const tab: Buffer = Buffer.from([9]);
+                const ctrlc: Buffer = Buffer.from([3]);
+                const enter: Buffer = Buffer.from([13]);
+                const escape: Buffer = Buffer.from([27]);
+                const normal: string = 'QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890';
+
                 let stream: IChannelWrapper = new ChannelWrapper(accept());
                 this._canStream = true;
                 stream.writeGreen(TransportSSHClient.LOGO + '\n');
@@ -139,13 +171,10 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 let history: string[] = [];
                 let historyPointer: number = -1;
                 let sig: boolean = false;
-                const rightarrow: Buffer = Buffer.from([27, 91, 67]);
-                const leftarrow: Buffer = Buffer.from([27, 91, 68]);
-                const normal: string = 'QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890';
                 let tabCount: number = 0;
                 let keys: Keys[] = [
                     {
-                        name: "uparrow", value: Buffer.from([27, 91, 65]), action: () => {
+                        name: "uparrow", value: uparrow, action: () => {
                             if (historyPointer + 1 < history.length) {
                                 while (cursor < len) {
                                     stream.write(rightarrow);
@@ -165,7 +194,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                     {
-                        name: "downarrow", value: Buffer.from([27, 91, 66]), action: () => {
+                        name: "downarrow", value: downarrow, action: () => {
                             while (cursor < len) {
                                 stream.write(rightarrow);
                                 cursor++;
@@ -190,7 +219,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                     {
-                        name: "rightarrow", value: Buffer.from([27, 91, 67]), action: (data) => {
+                        name: "rightarrow", value: rightarrow, action: (data) => {
                             if (cursor < len) {
                                 stream.write(data);
                                 cursor++;
@@ -198,7 +227,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                     {
-                        name: "leftarrow", value: Buffer.from([27, 91, 68]), action: (data) => {
+                        name: "leftarrow", value: leftarrow, action: (data) => {
                             if (cursor > 0) {
                                 stream.write(data);
                                 cursor--;
@@ -226,7 +255,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                     {
-                        name: "backspace", value: Buffer.from([127]), action: () => {
+                        name: "backspace", value: backspace, action: () => {
                             if (len > 0 && cursor != 0) {
                                 stream.write('\b \b');
                                 if (cursor < len) {
@@ -275,12 +304,13 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                     {
-                        name: "tab", value: Buffer.from([9]), action: () => {
+                        name: "tab", value: tab, action: () => {
+                            // BUG does not work if line has leading blanks
                             let allCmds: string[];
                             let cmdWords: string[] = line.slice(0, cursor).toString().split(' ');
                             if (len == 0 || cmdWords.length == 1 || !sig) {
                                 if (++tabCount > 1) {
-                                    allCmds = this._commander.commands.map((cmd: ICommand) => cmd.commandName).filter((cmd) => cmd.startsWith(cmdWords[0]));
+                                    allCmds = this._commander.commands.map((cmd: ICommand) => cmd.commandName).filter((cmd) => cmd.startsWith(cmdWords[0])).sort();
                                     switch (allCmds.length) {
                                         case 0:
                                             break;
@@ -343,9 +373,9 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                     {
-                        name: "enter", value: Buffer.from([13]), action: async () => {
+                        name: "enter", value: enter, action: async () => {
                             if (sig && len > 0) {
-                                let cmd: string = line.toString().substr(0, len);
+                                let cmd: string = line.toString().slice(0, len).trim(); 
                                 if (cmd == 'exit') {
                                     stream.write('\r\n');
                                     stream.exit(0);
@@ -354,14 +384,14 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                                 }
                                 else {
                                     stream.write('\r\n');
-                                    await this._commander.parseAndSend(this, stream, line.slice(0, len).toString());
+                                    await this._commander.parseAndSend(this, stream, cmd);
                                     this.lastCommand = null;
                                 }
                                 if (history.length == 0 || cmd != history[0]) {
                                     history.unshift(cmd);
                                 }
                             }
-                            if (!sig) {
+                            else if (!sig) {
                                 stream.write('\r\n');
                             }
                             stream.write('$ ');
@@ -371,9 +401,9 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                             historyPointer = -1;
                         }
                     },
-                    { name: 'escape', value: Buffer.from([27]), action: () => { } },
+                    { name: 'escape', value: escape, action: () => { } },
                     {
-                        name: 'ctrl-c', value: Buffer.from([3]), action: () => {
+                        name: 'ctrl-c', value: ctrlc, action: () => {
                             if (this.lastCommand){
                                 this.lastCommand.terminate(this._commander, stream);
                             }
@@ -387,14 +417,14 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         }
                     },
                 ];
-                const tab = Buffer.from([9]);
                 stream.on('data', (data: Buffer) => {
                     if (Buffer.compare(tab, data) != 0) {
                         tabCount = 0;
                     }
-                    if (this.lastCommand != null && Buffer.compare(Buffer.from([3]), data) != 0) {
-                        return;
-                    }
+                    // BUG I don't think this does anything
+                    // if (this.lastCommand != null && Buffer.compare(ctrlc, data) != 0) {
+                    //     return;
+                    // }
                     let handled = keys.find(key => Buffer.compare(key.value, data) == 0);
                     if (handled) {
                         handled.action(data);
