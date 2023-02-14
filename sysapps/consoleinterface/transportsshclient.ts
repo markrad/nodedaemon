@@ -2,7 +2,6 @@ import { getLogger } from "log4js";
 import { AuthContext, Connection, Session, PseudoTtyInfo, SetEnvInfo, ServerChannel, ExecInfo } from "ssh2";
 import { ICommand } from "./icommand";
 import { TransportSSH, User } from "./transportssh";
-// import { ParsedKey, utils } from 'ssh2-streams';
 import * as Crypto from 'crypto';
 import ConsoleInterface from ".";
 import { IChannelWrapper } from "./ichannelwrapper";
@@ -24,16 +23,85 @@ class Console {
         if (cursorPosition) this.cursorPosition = cursorPosition;
         if (lineContent) this._lineContent.write(lineContent);
     }
-
-    cursorInc() { return ++this._cursorPosition; }
-    cursorDec() { return --this._cursorPosition; }
-    get lineLength() { return this._lineLength; }
-    get cursorPosition() { return this._cursorPosition; }
+    lineInsertByte(data: number, location: number): number {
+        if (location > this.lineLength) throw new Error(`Value ${location} is beyond the data buffer`);
+        if (location < this.lineLength) {
+            this._lineContent.copy(this._lineContent, location + 1, location)
+        }
+        this._lineContent.writeInt8(data, location);
+        this._lineLength++;
+        // this.linePreInc();
+        return this.lineLength;
+    }
+    lineAppendByte(data: number): number {
+        return this.lineInsertByte(data, this.lineLength);
+    }
+    lineAppendString(data: string): number {
+        this._lineContent.write(data, this.lineLength);
+        this._lineLength += data.length;
+        return this.lineLength;
+    }
+    lineInsertAtCursor(data: number): number {
+        return this.lineInsertByte(data, this.cursorPosition);
+    }
+    lineRemoveByte(location: number) {
+        if (location >= this.lineLength) throw new Error(`Location is out of range ${location}`);
+        this.lineContent.copy(this._lineContent, location, location + 1);
+        this._lineLength--;
+        // this.linePreDec();
+    }
+    reset(): void {
+        this._lineLength = 0;
+        this.cursorPosition = 0;
+    }
+    setlineContent(content: string) {
+        this._lineContent.write(content);
+        this._lineLength = content.length; 
+    }
+    get lineLength(): number { return this._lineLength; }
+    // set lineLength(value) { this._lineLength = value }
+    get cursorPosition(): number { return this._cursorPosition; }
     set cursorPosition(value: number) { this._cursorPosition = value; }
-    get lineContent() { return this._lineContent; }
-    get cursorAtStart() { return this._cursorPosition == 0; }
-    get cursorAtEnd() { return this._cursorPosition == this._lineLength; }
+    get lineContent(): Buffer { return this._lineContent; }
+    get lineAsString(): string { return this.lineContent.slice(0, this.lineLength).toString() }
+    get cursorAtStart(): boolean { return this._cursorPosition == 0; }
+    get cursorAtEnd(): boolean { return this._cursorPosition == this._lineLength; }
 }
+Console;
+
+class History {
+    private _entries: string[] = [ ];
+    private _ptr: number = -1;
+
+    addEntry(entry: string): number {
+        if (entry != this._entries[0]) this._entries.unshift(entry);
+        this._ptr = -1;
+        return this._entries.length;
+    }
+
+    reset(): void {
+        this._ptr = -1;
+    }
+
+    get previousEntry(): string {
+        return this._entries.length == 0
+        ? '' 
+        : this._entries.length - 1 == this._ptr
+        ? this._entries[this._ptr] 
+        : this._entries[++this._ptr];
+    }
+
+    get nextEntry(): string {
+        this._ptr = Math.max(0, this._ptr - 1);
+        return this._entries.length == 0
+        ? ''
+        : this._ptr == -1
+        ? ''
+        : this._entries[this._ptr];
+    }
+}
+
+History;
 
 const CATEGORY: string = 'TransportSSHClient';
 const logger = getLogger(CATEGORY);
@@ -49,7 +117,6 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
     private _canStream: boolean = false;
     private _lastCommand: ICommand = null;
     private _commander: ConsoleInterface;
-    // private _transport: ITransport
     constructor(client: Connection) {
         this._client = client;
         logger.info('New client connected');
@@ -117,7 +184,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
     }
 
     newSession(commander: ConsoleInterface, session: Session) {
-        let line: Buffer = Buffer.alloc(256);
+        // let line: Buffer = Buffer.alloc(256);
 
         session
             .on('pty', (accept: () => boolean, _reject: () => boolean, _req: PseudoTtyInfo) => {
@@ -150,10 +217,14 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 }
             })
             .once('shell', (accept, _reject, _info) => {
-                const rightarrow: Buffer = Buffer.from([27, 91, 67]);
-                const leftarrow: Buffer = Buffer.from([27, 91, 68]);
                 const uparrow: Buffer = Buffer.from([27, 91, 65]);
                 const downarrow: Buffer = Buffer.from([27, 91, 66])
+                const rightarrow: Buffer = Buffer.from([27, 91, 67]);
+                const leftarrow: Buffer = Buffer.from([27, 91, 68]);
+                const ctrlrightarrow: Buffer = Buffer.from([27, 91, 49, 59, 53, 67]);
+                const ctrlleftarrow: Buffer = Buffer.from([27, 91, 49, 59, 53, 68]);
+                const end: Buffer = Buffer.from([27, 91, 70]);
+                const home: Buffer = Buffer.from([27, 91, 72]);
                 const backspace: Buffer = Buffer.from([127]);
                 const tab: Buffer = Buffer.from([9]);
                 const ctrlc: Buffer = Buffer.from([3]);
@@ -166,168 +237,152 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 stream.writeGreen(TransportSSHClient.LOGO + '\n');
                 stream.writeDefault(`\nVersion: ${this._commander.controller.version}\r\n`);
                 stream.writeDefault("$ ");
-                let len: number = 0;
-                let cursor: number = 0;
-                let history: string[] = [];
-                let historyPointer: number = -1;
                 let sig: boolean = false;
                 let tabCount: number = 0;
+                let console = new Console(0, 0);
+                let history: History = new History();
                 let keys: Keys[] = [
                     {
                         name: "uparrow", value: uparrow, action: () => {
-                            if (historyPointer + 1 < history.length) {
-                                while (cursor < len) {
+                            let newLine = history.previousEntry;
+                            while (!console.cursorAtEnd) {
+                                stream.write(rightarrow);
+                                ++console.cursorPosition;
+                            }
+                            while (console.lineLength > 0) {
+                                stream.write('\b \b');
+                                console.lineRemoveByte(console.lineLength - 1);
+                            }
+                            console.setlineContent(newLine);
+                            console.cursorPosition = newLine.length;
+                            stream.write(console.lineContent.slice(0, console.lineLength));
+                            sig = true;
+                        }
+                    },
+                    {
+                        name: "downarrow", value: downarrow, action: () => {
+                            let newLine = history.nextEntry;
+                            if (newLine.length > 0) {
+                                while (!console.cursorAtEnd) {
                                     stream.write(rightarrow);
-                                    cursor++;
+                                    ++console.cursorPosition;
                                 }
-                                while (len > 0) {
+                                while (console.lineLength > 0) {
                                     stream.write('\b \b');
-                                    len--;
+                                    console.lineRemoveByte(console.lineLength - 1);
                                 }
-                                historyPointer++;
-                                Buffer.from(history[historyPointer]).copy(line, 0, 0);
-                                cursor = len = history[historyPointer].length;
-                                line[len] = 0;
-                                stream.write(line.slice(0, len));
+                                console.setlineContent(newLine);
+                                console.cursorPosition = newLine.length;
+                                stream.write(console.lineContent.slice(0, console.lineLength));
                                 sig = true;
                             }
                         }
                     },
                     {
-                        name: "downarrow", value: downarrow, action: () => {
-                            while (cursor < len) {
-                                stream.write(rightarrow);
-                                cursor++;
-                            }
-                            while (len > 0) {
-                                stream.write('\b \b');
-                                len--;
-                            }
-                            if (historyPointer >= 0) {
-                                historyPointer--;
-                                if (historyPointer >= 0) {
-                                    Buffer.from(history[historyPointer]).copy(line, 0, 0);
-                                    cursor = len = history[historyPointer].length;
-                                    line[len] = 0;
-                                    stream.write(line.slice(0, len));
-                                    sig = true;
-                                }
-                                else {
-                                    cursor = 0;
-                                }
-                            }
-                        }
-                    },
-                    {
                         name: "rightarrow", value: rightarrow, action: (data) => {
-                            if (cursor < len) {
+                            if (!console.cursorAtEnd) {
                                 stream.write(data);
-                                cursor++;
+                                ++console.cursorPosition;
                             }
                         }
                     },
                     {
                         name: "leftarrow", value: leftarrow, action: (data) => {
-                            if (cursor > 0) {
+                            if (!console.cursorAtStart) {
                                 stream.write(data);
-                                cursor--;
+                                --console.cursorPosition;
                             }
                         }
                     },
                     {
-                        name: "ctrlrightarrow", value: Buffer.from([27, 91, 49, 59, 53, 67]), action: () => {
-                            if (cursor < len) {
+                        name: "ctrlrightarrow", value: ctrlrightarrow, action: () => {
+                            if (!console.cursorAtEnd) {
                                 do {
-                                    cursor++;
+                                    ++console.cursorPosition;
                                     stream.write(rightarrow);
-                                } while (cursor < len && normal.includes(String.fromCharCode(line[cursor])))
+                                } while (!console.cursorAtEnd && normal.includes(console.lineAsString[console.cursorPosition]));       //(String.fromCharCode(line[cursor])))
                             }
                         }
                     },
                     {
-                        name: "ctrlleftarrow", value: Buffer.from([27, 91, 49, 59, 53, 68]), action: () => {
-                            if (cursor > 0) {
+                        name: "ctrlleftarrow", value: ctrlleftarrow, action: () => {
+                            if (!console.cursorAtStart) {
                                 do {
-                                    cursor--;
+                                    --console.cursorPosition;
                                     stream.write(leftarrow);
-                                } while (cursor > 0 && normal.includes(String.fromCharCode(line[cursor - 1])))
+                                } while (!console.cursorAtStart && normal.includes(console.lineAsString[console.cursorPosition - 1]));  // (String.fromCharCode(line[cursor - 1])))
                             }
                         }
                     },
                     {
                         name: "backspace", value: backspace, action: () => {
-                            if (len > 0 && cursor != 0) {
+                            if (console.lineLength > 0 && !console.cursorAtStart) {
                                 stream.write('\b \b');
-                                if (cursor < len) {
-                                    stream.write(line.slice(cursor, len));
-                                    stream.write(' ');
-                                    for (let i = 0; i < len - cursor + 1; i++) {
-                                        stream.write(leftarrow);
-                                    }
-                                    line.copy(line, cursor - 1, cursor, len);
+                                stream.write(console.lineContent.slice(console.cursorPosition, console.lineLength));
+                                stream.write(' ');
+                                for (let i = 0; i < console.lineLength - console.cursorPosition + 1; i++) {
+                                    stream.write(leftarrow);
                                 }
-                                len--;
-                                cursor--;
+                                console.lineRemoveByte(console.cursorPosition - 1);
+                                --console.cursorPosition;
                             }
                         }
                     },
                     {
                         name: "delete", value: Buffer.from([27, 91, 51, 126]), action: () => {
-                            if (cursor < len) {
+                            if (console.lineLength > 0 && !console.cursorAtEnd) {
                                 stream.write(' \b');
-                                if (cursor < len - 1) {
-                                    stream.write(line.slice(cursor + 1, len));
-                                    stream.write(' ');
-                                    for (let i = len; i > cursor; i--) {
-                                        stream.write(leftarrow);
-                                    }
-                                    line.copy(line, cursor, cursor + 1, len);
+                                stream.write(console.lineContent.slice(console.cursorPosition + 1));
+                                stream.write(' ');
+                                for (let i = console.lineLength; i > console.cursorPosition; i--) {
+                                    stream.write(leftarrow);
                                 }
-                                len--;
+                                console.lineRemoveByte(console.cursorPosition);
                             }
                         }
                     },
                     {
-                        name: "home", value: Buffer.from([27, 91, 49, 126]), action: () => {
-                            while (cursor--) {
+                        name: "home", value: home, action: () => {
+                            while (console.cursorPosition--) {
                                 stream.write(leftarrow);
                             }
-                            cursor++;
+                            ++console.cursorPosition;
                         }
                     },
                     {
-                        name: "end", value: Buffer.from([27, 91, 52, 126]), action: () => {
-                            while (++cursor < len + 1) {
+                        name: "end", value: end, action: () => {
+                            while (++console.cursorPosition < console.lineLength + 1) {
                                 stream.write(rightarrow);
                             }
-                            cursor--;
+                            --console.cursorPosition;
                         }
                     },
                     {
                         name: "tab", value: tab, action: () => {
                             // BUG does not work if line has leading blanks
                             let allCmds: string[];
-                            let cmdWords: string[] = line.slice(0, cursor).toString().split(' ');
-                            if (len == 0 || cmdWords.length == 1 || !sig) {
+                            let cmdWords: string[] = console.lineAsString.split(' ');
+                            if (console.lineLength == 0 || cmdWords.length == 1 || !sig) {
                                 if (++tabCount > 1) {
                                     allCmds = this._commander.commands.map((cmd: ICommand) => cmd.commandName).filter((cmd) => cmd.startsWith(cmdWords[0])).sort();
                                     switch (allCmds.length) {
                                         case 0:
                                             break;
                                         case 1:
-                                            let cursorAdjust: number = allCmds[0].length - cmdWords[0].length;
-                                            line = Buffer.concat([line.slice(0, cursor), Buffer.from(allCmds[0].slice(0 - cursorAdjust))]);
-                                            stream.write(`${line.slice(0 - cursorAdjust)} `);
-                                            cursor += ++cursorAdjust;
-                                            len = cursor;
-                                            // while (cursorAdjust-- > 0) {
-                                            //     stream.write(rightarrow);
-                                            // }
+                                            let saveLen = console.lineLength;
+                                            while (!console.cursorAtEnd) {
+                                                stream.write(rightarrow);
+                                                console.cursorPosition++;
+                                            }
+                                            console.lineAppendString(allCmds[0].slice(saveLen));
+                                            console.lineAppendString(' ');
+                                            stream.write(console.lineContent.slice(saveLen, console.lineLength));
+                                            console.cursorPosition = console.lineLength;
                                             break;
                                         default:
                                             stream.write('\r\n');
                                             stream.write(`${allCmds.map((cmd) => cmd.padEnd(8)).join('\t')}\r\n`);
-                                            stream.write(`$ ${line.slice(0, len).toString()}`);
+                                            stream.write(`$ ${console.lineContent.slice(0, console.lineLength).toString()}`);
                                             break;
                                     }
                                 }
@@ -340,14 +395,15 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                                         case 0:
                                             break;
                                         case 1:
-                                            let cursorAdjust: number = line.slice(cursor, len).toString().length;
-                                            line = Buffer.concat([line.slice(0, cursor), Buffer.from(possibles[0].substring(cmdWords[cmdWords.length - 1].length)), line.slice(cursor)]);
-                                            len += possibles[0].length - cmdWords[cmdWords.length - 1].length;
-                                            stream.write(line.slice(cursor, len).toString());
-                                            cursor += possibles[0].length - cmdWords[cmdWords.length - 1].length;
-                                            while (cursorAdjust-- > 0) {
-                                                stream.write(leftarrow);
+                                            let saveLen = console.lineLength;
+                                            while (!console.cursorAtEnd) {
+                                                stream.write(rightarrow);
+                                                console.cursorPosition++;
                                             }
+                                            console.lineAppendString(possibles[0].substring(cmdWords[cmdWords.length - 1].length));
+                                            console.lineAppendString(' ');
+                                            stream.write(console.lineContent.slice(saveLen, console.lineLength));
+                                            console.cursorPosition = console.lineLength;
                                             break;
                                         default:
                                             let resultLen = possibles[0].length;
@@ -359,13 +415,12 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                                                 }
                                                 resultLen = curr;
                                             }
+                                            
                                             stream.write('\r\n');
                                             stream.writeLightMagenta(`${possibles.map((poss) => poss.padEnd(8)).join('\t')}\r\n`);
-                                            let lastLen: number = cmdWords[cmdWords.length - 1].length;
-                                            line = Buffer.concat([line.slice(0, len), Buffer.from(possibles[0].substr(lastLen, resultLen - lastLen)), line.slice(len)]);
-                                            len += resultLen - lastLen;
-                                            cursor += resultLen - lastLen;
-                                            stream.write(`$ ${line.slice(0, len).toString()}`);
+                                            stream.write('$ ');
+                                            stream.write(console.lineContent.slice(0, console.lineLength));
+                                            console.cursorPosition = console.lineLength;
                                             break;
                                     }
                                 }
@@ -374,8 +429,8 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                     },
                     {
                         name: "enter", value: enter, action: async () => {
-                            if (sig && len > 0) {
-                                let cmd: string = line.toString().slice(0, len).trim(); 
+                            if (sig && console.lineLength) {
+                                let cmd: string = console.lineAsString.trim(); 
                                 if (cmd == 'exit') {
                                     stream.write('\r\n');
                                     stream.exit(0);
@@ -387,18 +442,14 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                                     await this._commander.parseAndSend(this, stream, cmd);
                                     this.lastCommand = null;
                                 }
-                                if (history.length == 0 || cmd != history[0]) {
-                                    history.unshift(cmd);
-                                }
+                                history.addEntry(cmd);
                             }
                             else if (!sig) {
                                 stream.write('\r\n');
                             }
                             stream.write('$ ');
-                            len = 0;
-                            cursor = 0;
+                            console.reset();
                             sig = false;
-                            historyPointer = -1;
                         }
                     },
                     { name: 'escape', value: escape, action: () => { } },
@@ -409,10 +460,9 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                             }
                             else {
                                 stream.write('^C\r\n$ ');
-                                len = 0;
-                                cursor = 0;
+                                console.reset()
+                                history.reset();
                                 sig = false;
-                                historyPointer = -1;
                             }
                         }
                     },
@@ -421,10 +471,6 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                     if (Buffer.compare(tab, data) != 0) {
                         tabCount = 0;
                     }
-                    // BUG I don't think this does anything
-                    // if (this.lastCommand != null && Buffer.compare(ctrlc, data) != 0) {
-                    //     return;
-                    // }
                     let handled = keys.find(key => Buffer.compare(key.value, data) == 0);
                     if (handled) {
                         handled.action(data);
@@ -434,31 +480,19 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                         logger.debug(`Unknown key ${data.join(',')}`);
                     }
                     else {
-                        if (len == cursor) {
-                            line.writeUInt8(data[0], len++);
-                            if (data[0] != 9 && data[0] != 32) {
-                                sig = true;
-                            }
-                            if (data[0] != 9 && data.length == 1) {
-                                stream.write(data);
-                            }
+                        console.lineInsertAtCursor(data[0]);
+                        stream.write(console.lineContent.slice(console.cursorPosition, console.lineLength));
+                        ++console.cursorPosition;
+                        for (let i = 0; i < console.lineLength - console.cursorPosition; i++) {
+                            stream.write(leftarrow);
                         }
-                        else {
-                            line.copy(line, cursor + 1, cursor, len);
-                            line[cursor] = data[0];
-                            stream.write(line.slice(cursor, len + 1));
-                            for (let i = 0; i < len - cursor; i++) {
-                                stream.write(leftarrow);
-                            }
-                            len++;
-                        }
-                        cursor++;
+                        if (data[0] != 32) sig = true;
                     }
                 });
             });
     }
     get canStream() {
-        return this._canStream;            
+        return this._canStream;
     }
 
     get lastCommand() {
