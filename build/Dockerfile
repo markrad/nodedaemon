@@ -1,4 +1,5 @@
 FROM node:18.12.1-slim
+ENV DOCKER_RUNNING=true
 
 RUN apt update && apt -y upgrade
 RUN apt install -y git
@@ -16,4 +17,4 @@ COPY ./startup.sh ./
 
 # CMD [ "tail", "-f", "/etc/passwd"]
 # CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
-CMD [ "/bin/bash", "./startup.sh" ]
+CMD [ "node", "./output/keepalive.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]

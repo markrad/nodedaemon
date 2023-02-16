@@ -40,6 +40,22 @@
             }
         },
         {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch keepalive",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/output/keepalive.js",
+            "outputCapture": "std",
+            // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
+            "args": [ "./output/nodedaemon.js", "--appsdir", "./output/sysapps" ],
+            "env": {
+                "HAINTERFACE_LOGGING": "info",
+                "HAMAIN_LOGGING": "info",
+            }
+        },
+        {
             "address": "localhost",
             "localRoot": "${workspaceFolder}",
             "name": "Attach to Remote",
