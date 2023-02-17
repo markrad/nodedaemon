@@ -70,7 +70,7 @@ export default class TrashTalk extends AppParent {
                         let day = new Date(this._calEntity.startTime);
                         let desc = this._calEntity.description;
                         let dayStr = `${dayNames[day.getDay()]}, ${monthNames[day.getMonth()]} ${day.getDate()}`;
-                        let msg = `Trash will be collected on ${dayStr} and will${desc.indexOf('recycle')? ' ' : ' not '}include recycling`;
+                        let msg = `Trash will be collected on ${dayStr} and will${desc.indexOf('recycle') != -1? ' ' : ' not '}include recycling`;
                         logger.debug(msg);
                         this.emit('callservice', 'notify', 'alexa_media_' + alexa.name, { message: msg, data: { type: 'tts' } });
                     }
