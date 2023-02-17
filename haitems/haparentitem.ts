@@ -158,6 +158,10 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         }
     }
 
+    public cleanUp(): void {
+        this.removeAllListeners();
+    }
+
     protected _defaultStateChangeFn(item: HaParentItem, _oldState: State) {
         this.logger.debug(`Received new state: ${item.state}`);
     }

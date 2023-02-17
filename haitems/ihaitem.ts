@@ -22,6 +22,7 @@ export interface IHaItem {
     set logging(value: string | Level);
     setReceivedState(newState: State): void;
     updateState(newState: string | number | boolean | Date, forceUpdate: boolean): Promise<ServicePromise>;
+    cleanUp(): void;
     on(eventName: string | symbol, listener: (...args: any[]) => void): void;
     off(eventName: String | symbol, listener: (...args: any[]) => void): void;
 }

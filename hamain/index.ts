@@ -362,6 +362,35 @@ export class HaMain extends EventEmitter {
 
     public async stop(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
+            try {
+                await this._stopOrRestart(0);
+                resolve();
+            }
+            catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    public async restart(): Promise<void> {
+        return new Promise<void>(async (resolve, reject) => {
+            if (!process.env['KEEPALIVE_RUNNING']) {
+                reject(new Error('Restart only supported when running under keepalive'));
+            }
+            else {
+                try {
+                    await this._stopOrRestart(1);
+                    resolve();
+                }
+                catch (err) {
+                    reject(err);
+                }
+                }
+        });
+    }
+
+    private async _stopOrRestart(rc: number): Promise<void> {
+        return new Promise<void>(async (resolve, reject) => {
             if (this._memHandle != null) {
                 clearInterval(this._memHandle);
                 this._memHandle = null;
@@ -375,11 +404,13 @@ export class HaMain extends EventEmitter {
                     logger.error(`Failed to stop ${app.name} - ${err}`);
                 }
             });
+            this.items.items.forEach((item) => item.cleanUp());
             try {
                 if (this._haInterface.isConnected) {
                     await this._haInterface.stop();
                 }
                 resolve();
+                process.exit(rc);
             }
             catch (err) {
                 logger.error(`Error: ${err}`);

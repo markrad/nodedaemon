@@ -12,16 +12,16 @@ class KeepAlive {
     private _target: string[];
     constructor(target: string[]) {
         this._target = target;
-        this.logger(ConsoleLevel.info, 'KeepAlive constructed');
+        this.logger(ConsoleLevel.info, 'Constructed');
     }
     start(): KeepAlive {
         this.spawner();
-        this.logger(ConsoleLevel.info, 'KeepAlive started');
+        this.logger(ConsoleLevel.info, 'Started');
         return this;
     }
 
     stop(): KeepAlive {
-        this.logger(ConsoleLevel.info, 'KeepAlive stopped');
+        this.logger(ConsoleLevel.info, 'Stopped');
         process.kill(process.pid, 'SIGQUIT');
         return this;
     }
@@ -30,13 +30,13 @@ class KeepAlive {
         let now = new Date().toISOString();
         switch (level) {
             case ConsoleLevel.info:
-                console.log(now + ' [INF] ' + msg);
+                console.log(now + ' [INF] KeepAlive ' + msg);
                 break;
             case ConsoleLevel.warn:
-                console.warn(now + ' [WRN] ' + msg);
+                console.warn(now + ' [WRN] KeepAlive ' + msg);
                 break;
             case ConsoleLevel.error:
-                console.error(now + ' [ERR] ' + msg);
+                console.error(now + ' [ERR] KeepAlive ' + msg);
                 break;
             default:
                 break;
@@ -110,5 +110,4 @@ class KeepAlive {
     }
 }
 
-console.log(`parent pid: ${process.ppid}`);
 new KeepAlive(process.argv.slice(2)).start();
