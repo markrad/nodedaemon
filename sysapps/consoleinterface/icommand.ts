@@ -7,7 +7,7 @@ export interface ICommand {
     set parameters(parameters: string[]);
     tabTargets(that: ConsoleInterface, tabCount: number, parameters: string[]): string[]
     tabParameters(that: any, tabCount: any, parameters: any): string[];
-    get helpText(): string;
+    get helpTextx(): string;
     execute(inputArray: string[], that: any, sock: IChannelWrapper, commands: ICommand[]): Promise<number>;
     terminate(that: ConsoleInterface, sock: IChannelWrapper): Promise<void>;
 }

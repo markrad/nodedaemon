@@ -1,7 +1,7 @@
 "use strict";
 
 import ConsoleInterface from ".";
-import { CommandBase } from './commandbase';
+import { CommandBase, CommandInfo } from './commandbase';
 import { ICommand } from './icommand';
 import { IChannelWrapper } from './ichannelwrapper';
 import { getLogger, Logger } from 'log4js';
@@ -10,9 +10,20 @@ import { HaGenericSwitchItem } from "../../haitems/hagenericswitchitem";
 const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);
 
+const commandInfo: CommandInfo = {
+    commandName: 'inspect',
+    subcommands: [ 
+        {
+            subcommandName: '<regex>',
+            description: 'Inspect entities optionally filtered by <regex>',
+            description2: 'Note: No <regex> will display a lot of data'
+        }
+    ]
+}
+
 export class CommandInspect extends CommandBase {
     public constructor() {
-        super('inspect');
+        super(commandInfo);
     }
 
     public get helpText(): string {

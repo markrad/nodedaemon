@@ -1,5 +1,5 @@
 import { getLogger, Logger } from "log4js";
-import { CommandBase } from './commandbase'; 
+import { CommandBase, CommandInfo } from './commandbase'; 
 import ConsoleInterface from ".";
 import { IChannel } from "./ichannel";
 import { IHaItem } from "../../haitems/ihaitem";
@@ -9,9 +9,35 @@ import { AppInfo } from '../../hamain/appinfo'
 const CATEGORY: string = 'CommandList';
 var logger: Logger = getLogger(CATEGORY);
 
+const commandInfo: CommandInfo = {
+    commandName: 'list',
+    subcommands: [ 
+        {
+            subcommandName: 'apps',
+            description: 'List the apps'
+        },
+        {
+            subcommandName: 'items',
+            subcommandParm: '<regex>',
+            description: 'List entities with entity name that matches <regex>'
+        },
+        {
+            subcommandName: 'types',
+            subcommandParm: '<regex>',
+            description: 'List entities with entity type that matches <regex>'
+        },
+        {
+            subcommandName: 'names',
+            subcommandParm: '<regex>',
+            description: 'List entities with friendly name that matches <regex>'
+        },
+    ]
+}
+
 export class CommandList extends CommandBase {
     public constructor() {
-        super('list', ['apps', 'items', 'types', 'names']);
+        // super('list', ['apps', 'items', 'types', 'names']);
+        super(commandInfo);
     }
 
     public get helpText(): string {

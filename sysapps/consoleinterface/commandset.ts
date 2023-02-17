@@ -3,7 +3,7 @@
 import { getLogger, Level, Logger } from 'log4js';
 import ConsoleInterface from ".";
 import { IChannelWrapper } from './ichannelwrapper';
-import { CommandBase } from './commandbase';
+import { CommandBase, CommandInfo } from './commandbase';
 import { ICommand } from './icommand';
 import { HaParentItem, ServicePromise } from '../../haitems/haparentitem';
 import { LogLevels } from '../../common/loglevelvalidator';
@@ -13,9 +13,47 @@ import HaItemButton from '../../haitems/haitembutton';
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);
 
+const commandInfo: CommandInfo = {
+    commandName: 'set',
+    subcommands: [ 
+        {
+            subcommandName: 'log',
+            subcommandParm: '[item] <level>',
+            description: 'Get or set logging for [item]',
+            description2: 'where <level> = trace | debug | info | warn | error | fatal'
+        },
+        {
+            subcommandName: 'state',
+            subcommandParm: '[item] <state>',
+            description: 'Get or set the state of [item] to <state>'
+        },
+        {
+            subcommandName: 'on',
+            subcommandParm: '[item]',
+            description: 'Switch [itme] to on'
+        },
+        {
+            subcommandName: 'off',
+            subcommandParm: '[item]',
+            description: 'Switch [item] to off'
+        },
+        {
+            subcommandName: 'toggle',
+            subcommandParm: '[item]',
+            description: 'Invert state of [item]'
+        },
+        {
+            subcommandName: 'press',
+            subcommandParm: '[item]',
+            description: 'Momentary close of [item]'
+        },
+    ] 
+}
+
 export class CommandSet extends CommandBase {
     public constructor() {
-        super('set', ['state', 'log', 'on', 'off', 'toggle', 'press']);
+        // super('set', ['state', 'log', 'on', 'off', 'toggle', 'press']);
+        super(commandInfo);
     }
 
     public get helpText(): string {

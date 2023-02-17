@@ -1,5 +1,5 @@
 import ConsoleInterface from ".";
-import { CommandBase } from "./commandbase";
+import { CommandBase, CommandInfo } from "./commandbase";
 import { getLogger, Logger } from "log4js";
 import { logEmitter } from "../../common/emitlogger";
 import { EventWaiter } from "../../common/eventwaiter";
@@ -7,6 +7,16 @@ import { IChannelWrapper } from "./ichannelwrapper";
 
 const CATEGORY: string = 'CommandLogs';
 var logger: Logger = getLogger(CATEGORY);
+
+const commandInfo: CommandInfo = {
+    commandName: 'logs',
+    subcommands: [ 
+        {
+            subcommandName: '<regex>',
+            description: 'Follow logs that match <regex>'
+        }
+    ]
+}
 
 export class CommandLogs extends CommandBase {
     private _isRunning: boolean = false;
@@ -19,7 +29,7 @@ export class CommandLogs extends CommandBase {
         }
     }
     public constructor() {
-        super('logs');
+        super(commandInfo);
     }
 
     public get helpText(): string {

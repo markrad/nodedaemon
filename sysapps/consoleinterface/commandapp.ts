@@ -1,16 +1,48 @@
 import ConsoleInterface from ".";
 import { AppInfo, AppStatus } from '../../hamain/appinfo'
 import { getLogger, Logger } from "log4js";
-import { CommandBase } from './commandbase';
+import { CommandBase, CommandInfo } from './commandbase';
 import { IChannelWrapper } from "./ichannelwrapper";
 import { LogLevels } from '../../common/loglevelvalidator';
 
 const CATEGORY: string = 'CommandApp';
 var logger: Logger = getLogger(CATEGORY);
 
+const commandInfo: CommandInfo = {
+    commandName: 'app',
+    subcommands: [ 
+        {
+            subcommandName: 'start',
+            subcommandParm: '[appname]',
+            description: 'Start the app [appname]'
+        },
+        {
+            subcommandName: 'stop',
+            subcommandParm: '[appname]',
+            description: 'Stop the app [appname]'
+        },
+        {
+            subcommandName: 'restart',
+            subcommandParm: '[appname]',
+            description: 'Restart the app [appname]'
+        },
+        {
+            subcommandName: 'list',
+            description: 'List the apps'
+        },
+        {
+            subcommandName: 'log',
+            subcommandParm: '[appname] <level>',
+            description: 'Get or set logging for [appname]',
+            description2: 'where <level> = trace | debug | info | warn | error | fatal'
+        },
+    ] 
+}
+
 export class CommandApp extends CommandBase {
     public constructor() {
-        super('app', ['start', 'stop', 'restart', 'list', 'log']);
+        // super('app', ['start', 'stop', 'restart', 'list', 'log']);
+        super(commandInfo);
     }
 
     public get helpText(): string {

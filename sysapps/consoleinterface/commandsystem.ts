@@ -1,17 +1,29 @@
 "use strict";
 
 import ConsoleInterface from ".";
-import { CommandBase } from './commandbase'; 
+import { CommandBase, CommandInfo } from './commandbase'; 
 import { getLogger, Logger } from "log4js";
 import { IChannelWrapper } from "./ichannelwrapper";
 import os from 'os';
+// import path from 'path';
 
 const CATEGORY: string = 'CommandSystem';
 var logger: Logger = getLogger(CATEGORY);
 
+const commandInfo: CommandInfo = {
+    commandName: 'system',
+    subcommands: [ 
+        {
+            subcommandName: '<regex>',
+            description: 'Follow logs that match <regex>'
+        }
+    ] 
+}
+
 export class CommandSystem extends CommandBase {
     public constructor() {
-        super('system', ['restart', 'stop', 'status', 'uptime', 'hostname', 'version']);
+        // super('system', ['restart', 'stop', 'status', 'uptime', 'hostname', 'version']);
+        super(commandInfo);
     }
 
     public get helpText(): string {
@@ -28,25 +40,31 @@ export class CommandSystem extends CommandBase {
 
             switch (inputArray[1]) {
                 case 'restart':
-                    sock.write('Restarting Nodedaemon\r\n');
-                    sock.write(`>> TODO pid = ${that.controller.config.pid ?? 'not specified'}\r\n`);
-                    if (that.controller.config.pid) {
+                    // sock.write('Restarting Nodedaemon\r\n');
+                    // spawn(process.argv.shift(), process.argv, { cwd: process.cwd(), detached: true, stdio: "inherit" });
+                    // process.exit(0);
+                    if (process.env['KEEPALIVE_RUNNING']) {
                         try {
-                            process.kill(that.controller.config.pid, 0);
-                            sock.write('\tProcess exists\r\n');
+                            await that.controller.restart();
                         }
                         catch (err) {
-                            sock.write('Process not found - pid must be invalid\r\n');
+                            sock.write(`Restart failed: ${err}`);
                         }
+                    }
+                    else {
+                        logger.error('Restart only supported when running under keepalive');
                     }
                 break;
                 case 'stop':
                     logger.debug('Stop called');
                     sock.write('Stopping Nodedaemon in five seconds\r\n');
                     setTimeout(async () => {
-                        await that.controller.stop();
-                        // TODO Kill script when running under docker to cause container to exit
-                        process.exit(0);
+                        try {
+                            await that.controller.stop();
+                        }
+                        catch (err) {
+                            sock.write(`Stop failed: ${err}`);
+                        }
                     }, 5000);
                 break;
                 case 'status':

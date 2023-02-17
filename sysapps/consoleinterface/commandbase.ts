@@ -3,41 +3,70 @@ import { IChannelWrapper } from "./ichannelwrapper";
 import { ICommand } from './icommand';
 import { Logger } from "log4js";
 
+// type ParameterInfo = {
+//     parameter: string;
+//     description: string;
+// }
+type SubcommandInfo = {
+    subcommandName: string;
+    subcommandParm?: string;
+    description: string;
+    description2?: string;
+    // parameters: ParameterInfo[];
+}
+
+export type CommandInfo = {
+    commandName: string;
+    subcommands: SubcommandInfo[];
+}
+
 export abstract class CommandBase implements ICommand {
-    private _commandName: string;
-    private _parameters: string[];
-    public constructor(commandName: string, parameters?: string[]) {
-        this._commandName = commandName;
-        this._parameters = this._validateInputParameters(parameters);
+    // private _commandName: string;
+    // private _parameters: string[];
+    private _commandInfo: CommandInfo;
+    // public constructor(commandName: string, parameters?: string[]) {
+    public constructor(commandInfo: CommandInfo) {
+        this._commandInfo = commandInfo;
+        // this._parameters = this._validateInputParameters(parameters);
     }
 
-    public abstract get helpText(): string;
+    // public abstract get helpText(): string;
     public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, commands: ICommand[]): Promise<number>;
+
+    public get helpTextx(): string {
+        let ret: string = this._commandInfo.commandName.padEnd(8);
+        this._commandInfo.subcommands.forEach((subcommand, index) => {
+            ret += (index == 0? '' : ''.padEnd(8)) + (subcommand.subcommandName + ' ' + (subcommand.subcommandParm? subcommand.subcommandParm : '')).padEnd(24) + subcommand.description + '\r\n';
+            if (subcommand.description2) ret += ''.padEnd(32) + subcommand.description2 + '\r\n';
+        });
+        return ret;
+    }
 
     public terminate(_that: ConsoleInterface, _sock: IChannelWrapper): Promise<void> {
         return;
     }
 
     public get commandName(): string {
-        return this._commandName;
+        return this._commandInfo.commandName;
     }
 
     public get parameters(): string[] {
-        return this._parameters;
+        return this._commandInfo.subcommands.map((subcommand) => subcommand.subcommandName).filter((subcommand) => subcommand != '');
     }
 
-    public set parameters(value: string[]) {
-        this._parameters = this._validateInputParameters(value);;
-    }
+    // public set parameters(value: string[]) {
+    //     this._parameters = this._validateInputParameters(value);;
+    // }
 
     protected _validateParameters(parameters: string[]): void {
-        if (this.parameters == null) {
+        let parms = this.parameters;
+        if (parms.length == 0) {
             if (parameters.length > 1) {
                 throw new Error(`Command ${this.commandName} does not accept parameters`);
             }
         }
-        else if (this.parameters.indexOf(parameters[1]) == -1) {
-            throw new Error(`Command ${this.commandName} passed invalid parameter ${parameters[1]?? '<missing>'}`);
+        else if (parameters.length > 1 && !parms.includes(parameters[1])) {
+            throw new Error(`Command ${this.commandName} passed invalid parameter ${parameters[1]}`);
         }
     }
 
@@ -83,7 +112,7 @@ export abstract class CommandBase implements ICommand {
         logger.debug(`${err.message}`);
         sock.writeRed(`${err}\r\n`);
         sock.write('Usage:\r\n');
-        sock.write(this.helpText);
+        sock.write(this.helpTextx);
         sock.write('\r\n');
     }
 }

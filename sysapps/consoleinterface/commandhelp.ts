@@ -1,11 +1,21 @@
 import ConsoleInterface from ".";
 import { IChannel } from './ichannel';
-import { CommandBase } from './commandbase';
+import { CommandBase, CommandInfo } from './commandbase';
 import { ICommand } from './icommand';
+
+const commandInfo: CommandInfo = {
+    commandName: 'help',
+    subcommands: [ 
+        {
+            subcommandName: '',
+            description: 'Prints this message'
+        }
+    ]
+}
 
 export class CommandHelp extends CommandBase {
     public constructor() {
-        super('help');
+        super(commandInfo);
     }
 
     public get helpText(): string {
@@ -15,8 +25,9 @@ export class CommandHelp extends CommandBase {
     public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannel, commands: ICommand[]): Promise<number> {
         try {
             this._validateParameters(inputArray);
-            sock.write(`Version: ${_that.controller.version} - Available commands:\r\n`);
-            commands.forEach((item: ICommand) => sock.write(`${item.helpText}\r\n`));
+            sock.write(`Version: ${_that.controller.version}\r\n`);
+            sock.write('Items in [] are required; items in <> are optional\r\nAvailable commands:\r\n');
+            commands.forEach((item: ICommand) => sock.write(`${item.helpTextx}`));
             return 0;
         }
         catch (err) {

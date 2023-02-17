@@ -1,11 +1,21 @@
 import ConsoleInterface from ".";
 import { IChannelWrapper } from "./ichannelwrapper";
-import { CommandBase } from "./commandbase";
+import { CommandBase, CommandInfo } from "./commandbase";
 import { getLogger, Logger } from "log4js";
 import { EventWaiter } from "../../common/eventwaiter";
 
 const CATEGORY: string = 'CommandEvents';
 var logger: Logger = getLogger(CATEGORY);
+
+const commandInfo: CommandInfo = {
+    commandName: 'events',
+    subcommands: [ 
+        {
+            subcommandName: '<not> <regex>',
+            description: 'Follow events that match <regex> or don\'t match <not>'
+        }
+    ]
+}
 
 export class CommandEvents extends CommandBase {
     private _isRunning: boolean = false;
@@ -13,7 +23,7 @@ export class CommandEvents extends CommandBase {
     private _ew: EventWaiter = null;
     private messageWriter: any = null;
     public constructor() {
-        super('events');
+        super(commandInfo);
     }
 
     public get helpText(): string {
