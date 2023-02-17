@@ -14,9 +14,29 @@ const commandInfo: CommandInfo = {
     commandName: 'system',
     subcommands: [ 
         {
-            subcommandName: '<regex>',
-            description: 'Follow logs that match <regex>'
-        }
+            subcommandName: 'restart',
+            description: 'Restart nodedaemon'
+        },
+        {
+            subcommandName: 'stop',
+            description: 'Stop nodedaemon'
+        },
+        {
+            subcommandName: 'uptime',
+            description: 'Show how long nodedaemon has been running'
+        },
+        {
+            subcommandName: 'status',
+            description: 'Show connection status'
+        },
+        {
+            subcommandName: 'hostname',
+            description: 'Show name of host running nodedaemon'
+        },
+        {
+            subcommandName: 'version',
+            description: 'Show nodedaemon version'
+        },
     ] 
 }
 
