@@ -347,17 +347,20 @@ export class HaMain extends EventEmitter {
     }
 
     public async stopApp(app: AppInfo): Promise<void> {
-        try {
-            if (app.status == AppStatus.RUNNING) {
-                await app.instance.stop();
-                app.status = AppStatus.STOPPED;
-                logger.info(`Stopped app ${app.name}`);
+        return new Promise<void>(async (resolve, reject) => { 
+            try {
+                if (app.status == AppStatus.RUNNING) {
+                    await app.instance.stop();
+                    app.status = AppStatus.STOPPED;
+                    logger.info(`Stopped app ${app.name}`);
+                    resolve();
+                }
             }
-        }
-        catch (err) {
-            app.status = AppStatus.FAILED;
-            throw new Error(`Failed to stop app ${app.name}: ${err.message}`);
-        }
+            catch (err) {
+                app.status = AppStatus.FAILED;
+                reject(new Error(`Failed to stop app ${app.name}: ${err.message}`));
+            }
+        });
     }
 
     public async stop(): Promise<void> {
@@ -398,7 +401,7 @@ export class HaMain extends EventEmitter {
             this._configWatcher.clear();
             this._apps.forEach(async (app) => {
                 try {
-                    this.stopApp(app);
+                    await this.stopApp(app);
                 }
                 catch (err) {
                     logger.error(`Failed to stop ${app.name} - ${err}`);

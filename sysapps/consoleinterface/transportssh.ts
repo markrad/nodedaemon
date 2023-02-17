@@ -29,6 +29,7 @@ export class TransportSSH implements ITransport {
     _hostKey: Buffer;
     _allowedPubKeys: ParsedKey[] = [];
     _configRoot: string;
+    _clients: TransportSSHClient[] = [];
     public constructor(name: string, parent: ConsoleInterface, config: any) {
         this._name = name;
         this._parent = parent;
@@ -77,9 +78,11 @@ export class TransportSSH implements ITransport {
         this._server = new Server({ hostKeys: [this._hostKey] }, (connection: Connection) => {
             // TODO Track clients so they can be terminated at shutdown
             logger.info('New client connected');
-            let sshclient = new TransportSSHClient(connection);
-            sshclient.start(this, this._parent);
-
+            this._addClient(new TransportSSHClient(connection).start(this, this._parent)
+                .on('end', (client: TransportSSHClient) =>  { 
+                    this._removeClient(client);
+                })
+            );
         }).listen(this._port, this._host, () => {
             logger.info(`SSH server listening on port ${this._port}`);
         });
@@ -87,7 +90,10 @@ export class TransportSSH implements ITransport {
 
     public async stop(): Promise<void> {
         return new Promise((resolve, _reject) => {
+            this._clients.forEach((client) => client.kill());
             this._server.close(() => resolve());
+            logger.info('Transport stopped');
+            resolve();
         });
     }
 
@@ -98,5 +104,13 @@ export class TransportSSH implements ITransport {
     public get AllowedPublicKeys(): ParsedKey[]
     {
         return this._allowedPubKeys;
+    }
+
+    private _addClient(client: TransportSSHClient): void {
+        this._clients.push(client);
+    }
+
+    private _removeClient(client: TransportSSHClient): void {
+        this._clients = this._clients.filter((c) => c != client);
     }
 }

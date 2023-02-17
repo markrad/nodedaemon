@@ -6,6 +6,7 @@ import * as Crypto from 'crypto';
 import ConsoleInterface from ".";
 import { IChannelWrapper } from "./ichannelwrapper";
 import { ChannelWrapper } from "./channelwrapper";
+import EventEmitter from "events";
 
 type Keys = {
     name: string;
@@ -67,7 +68,6 @@ class Console {
     get cursorAtStart(): boolean { return this._cursorPosition == 0; }
     get cursorAtEnd(): boolean { return this._cursorPosition == this._lineLength; }
 }
-Console;
 
 class History {
     private _entries: string[] = [ ];
@@ -106,7 +106,16 @@ History;
 const CATEGORY: string = 'TransportSSHClient';
 const logger = getLogger(CATEGORY);
 
-export class TransportSSHClient {
+export interface ITransportSSHClientEvents {
+    'end': (client: TransportSSHClient) => void;
+};
+
+export declare interface TransportSSHClient {
+    on<U extends keyof ITransportSSHClientEvents>(event: U, listner: ITransportSSHClientEvents[U]): this;
+    emit<U extends keyof ITransportSSHClientEvents>(event: U, ...args: Parameters<ITransportSSHClientEvents[U]>): boolean;
+}
+
+export class TransportSSHClient extends EventEmitter {
     static LOGO: string = `
              |         |\r
 ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
@@ -117,19 +126,21 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
     private _canStream: boolean = false;
     private _lastCommand: ICommand = null;
     private _commander: ConsoleInterface;
+    private _user: Buffer = null;
     constructor(client: Connection) {
+        super();
         this._client = client;
         logger.info('New client connected');
     }
 
-    start(transport: TransportSSH, commander: ConsoleInterface) {
+    start(transport: TransportSSH, commander: ConsoleInterface): TransportSSHClient {
         this._commander = commander;
         // this._transport = transport;
         this._client
         .on('authentication', (ctx: AuthContext) => {
-            var user: Buffer = Buffer.from(ctx.username);
+            this._user = Buffer.from(ctx.username);
             let found: User = transport.Users.find((entry) => {
-                return entry.userid.length == user.length && Crypto.timingSafeEqual(user, entry.userid);
+                return entry.userid.length == this._user.length && Crypto.timingSafeEqual(this._user, entry.userid);
             });
             if (!found) {
                 return ctx.reject();
@@ -165,11 +176,13 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                     return ctx.reject();
             }
 
-            logger.info(`Client authenticated: ${user}`);
+            logger.info(`Client authenticated: ${this._user}`);
             ctx.accept();
         })
+        .on('close', () => logger.debug(`Client closed: ${this._user}`))
         .on('end', () => {
-            logger.info('Client disconnected');
+            this.emit('end', this);
+            logger.info(`Client disconnected: ${this._user}`);
         })
         .on('error', (err: Error) => {
             if ((err as any).errno != -104) {
@@ -181,6 +194,13 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                 this.newSession(commander, accept())
            });
         });
+
+        return this;
+    }
+
+    kill(): void {
+        this._client.end();
+        this._client.removeAllListeners();
     }
 
     newSession(commander: ConsoleInterface, session: Session) {
