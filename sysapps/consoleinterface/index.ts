@@ -114,12 +114,7 @@ export default class ConsoleInterface extends AppParent {
     public async run(): Promise<boolean> {
         this._cmds = [
             new (require('./commandhelp')).CommandHelp(),
-            new (require('./commandversion')).CommandVersion(),
-            new (require('./commandhostname')).CommandHostname(),
-            new (require('./commandgetconfig')).CommandGetConfig(),
-            new (require('./commanduptime')).CommandUptime(),
             new (require('./commandinspect')).CommandInspect(),
-            new (require('./commandstop')).CommandStop(),
             new (require('./commandlist')).CommandList(),
             new (require('./commandset')).CommandSet(),
             new (require('./commandapp')).CommandApp(),
