@@ -102,6 +102,7 @@ export class HaInterface extends EventEmitter {
     private static readonly RESTPATH = '/api';
     private _accessToken: string;
     private _client: WSWrapper = null;
+    private _protocol: string = null;
     private _hostname: string;
     private _port: number;
     private _id: number = 0;
@@ -110,9 +111,10 @@ export class HaInterface extends EventEmitter {
     private _connected: boolean = false;
     private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
-    public constructor(hostname: string, port: number,  accessToken: string, pingInterval: number = 30) {
+    public constructor(useTLS: boolean, hostname: string, port: number,  accessToken: string, pingInterval: number = 30) {
         super();
         this._accessToken = accessToken;
+        this._protocol = useTLS? 'wss://' : 'ws://';
         this._hostname = hostname;
         this._port = port;
         this._pingInterval = pingInterval;
@@ -126,7 +128,7 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(`ws://${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingInterval, logger.level as Level)
+                this._client = new WSWrapper(`${this._protocol}${this._hostname}:${this._port}${HaInterface.APIPATH}`.toString(), this._pingInterval, logger.level as Level)
                 logger.info(`Connecting to ${this._client.url}`);
 
                 this._client.on('message', async (message: string) => {

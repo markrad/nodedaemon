@@ -58,6 +58,7 @@ export class HaMain extends EventEmitter {
     private _configPath;
     private _reconnect: boolean = false;
     private _version: string = null;
+    private _useTLS: boolean;
     private _hostname: string = null;
     private _port: number = NaN;
     private _accessToken: string = null;
@@ -79,6 +80,7 @@ export class HaMain extends EventEmitter {
         this._configPath = configPath;
         this._configFile = path.join(configPath, configName);
         this._version = version;
+        this._useTLS = Boolean(this._config.main.useTLS);
         this._hostname = this._config.main.hostname ?? '127.0.0.1';
         this._port = this._config.main.port ?? 8123
         this._accessToken = this._config.main.accessToken;
@@ -198,7 +200,7 @@ export class HaMain extends EventEmitter {
                     heapUsed = mem.heapUsed;
                 }, this._memInterval * 1000);
             }
-            this._haInterface = new HaInterface(this._hostname, this._port, this._accessToken, this._pingInterval);
+            this._haInterface = new HaInterface(this._useTLS, this._hostname, this._port, this._accessToken, this._pingInterval);
             this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
             if (eventType != 'state_changed') logger.debug(`Service Event: ${eventType}`);
             if (eventType == 'state_changed') {
