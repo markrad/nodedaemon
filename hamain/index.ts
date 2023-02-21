@@ -568,7 +568,7 @@ export class HaMain extends EventEmitter {
                 await this._haInterface.updateSensor(entity, state, forceUpdate);
             }
             catch (err) {
-                logger.error(err.message);
+                logger.error(`Update sensor failed: ${err.message}`);
             }
         });
         this._items.addItem(itemInstance);
