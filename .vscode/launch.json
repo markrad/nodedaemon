@@ -37,6 +37,7 @@
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "info",
+                "NODE_OPTIONS": "--use-openssl-ca"
             }
         },
         {
@@ -53,6 +54,7 @@
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "info",
+                "NODE_OPTIONS": "--use-openssl-ca"
             }
         },
         {
