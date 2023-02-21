@@ -6,6 +6,7 @@ import { ServiceTarget } from '../haitems/haparentitem';
 import { WSWrapper } from '../common/wswrapper';
 import { EventWaiter } from '../common/eventwaiter';
 import http from 'http';
+import https from 'https';
 import { IHaItem } from '../haitems/ihaitem';
 
 enum PacketTypesIn {
@@ -102,6 +103,7 @@ export class HaInterface extends EventEmitter {
     private static readonly RESTPATH = '/api';
     private _accessToken: string;
     private _client: WSWrapper = null;
+    private _restProtocol: typeof http | typeof https;
     private _protocol: string = null;
     private _hostname: string;
     private _port: number;
@@ -115,6 +117,7 @@ export class HaInterface extends EventEmitter {
         super();
         this._accessToken = accessToken;
         this._protocol = useTLS? 'wss://' : 'ws://';
+        this._restProtocol = useTLS? https : http;
         this._hostname = hostname;
         this._port = port;
         this._pingInterval = pingInterval;
@@ -351,7 +354,7 @@ export class HaInterface extends EventEmitter {
                 parameters.body.attributes = { ...parameters.body.attributes, ...attributes };
             }
 
-            const req = http.request(parameters.options, (res) => {
+            const req = this._restProtocol.request(parameters.options, (res) => {
                 if (res.statusCode != 201) {
                     reject(new Error(`Add sensor failed with ${res.statusCode}`));
                 }
@@ -376,7 +379,7 @@ export class HaInterface extends EventEmitter {
                 parameters.body.attributes = { ...parameters.body.attributes, ...{ forcedUpdateAt: (new Date().toISOString()) } };
             }
 
-            const req = http.request(parameters.options, (res) => {
+            const req = this._restProtocol.request(parameters.options, (res) => {
                 if (res.statusCode != 200) {
                     reject(new Error(`Update sensor failed with ${res.statusCode}`));
                 }
