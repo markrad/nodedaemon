@@ -4,9 +4,14 @@ import ConsoleInterface from ".";
 import { CommandBase, CommandInfo } from './commandbase'; 
 import { getLogger, Logger } from "log4js";
 import { IChannelWrapper } from "./ichannelwrapper";
+import { ICommand } from "./icommand";
 
 const CATEGORY: string = 'CommandHa';
 var logger: Logger = getLogger(CATEGORY);
+
+export function factory(): ICommand {
+    return new CommandHa();
+}
 
 const commandInfo: CommandInfo = {
     commandName: 'ha',

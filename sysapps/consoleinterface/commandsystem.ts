@@ -5,10 +5,15 @@ import { CommandBase, CommandInfo } from './commandbase';
 import { getLogger, Logger } from "log4js";
 import { IChannelWrapper } from "./ichannelwrapper";
 import os from 'os';
+import { ICommand } from "./icommand";
 // import path from 'path';
 
 const CATEGORY: string = 'CommandSystem';
 var logger: Logger = getLogger(CATEGORY);
+
+export function factory(): ICommand {
+    return new CommandSystem();
+}
 
 const commandInfo: CommandInfo = {
     commandName: 'system',

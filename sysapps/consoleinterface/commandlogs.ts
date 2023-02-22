@@ -4,9 +4,14 @@ import { getLogger, Logger } from "log4js";
 import { logEmitter } from "../../common/emitlogger";
 import { EventWaiter } from "../../common/eventwaiter";
 import { IChannelWrapper } from "./ichannelwrapper";
+import { ICommand } from "./icommand";
 
 const CATEGORY: string = 'CommandLogs';
 var logger: Logger = getLogger(CATEGORY);
+
+export function factory(): ICommand {
+    return new CommandLogs();
+}
 
 const commandInfo: CommandInfo = {
     commandName: 'logs',

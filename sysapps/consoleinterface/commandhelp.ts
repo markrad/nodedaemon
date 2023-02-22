@@ -3,6 +3,10 @@ import { IChannel } from './ichannel';
 import { CommandBase, CommandInfo } from './commandbase';
 import { ICommand } from './icommand';
 
+export function factory(): ICommand {
+    return new CommandHelp();
+}
+
 const commandInfo: CommandInfo = {
     commandName: 'help',
     subcommands: [ 

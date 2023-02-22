@@ -10,6 +10,10 @@ import { HaGenericSwitchItem } from "../../haitems/hagenericswitchitem";
 const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);
 
+export function factory(): ICommand {
+    return new CommandInspect();
+}
+
 const commandInfo: CommandInfo = {
     commandName: 'inspect',
     subcommands: [ 

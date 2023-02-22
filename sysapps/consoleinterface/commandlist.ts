@@ -5,6 +5,11 @@ import { IChannel } from "./ichannel";
 import { IHaItem } from "../../haitems/ihaitem";
 import { IChannelWrapper } from "./ichannelwrapper";
 import { AppInfo } from '../../hamain/appinfo'
+import { ICommand } from "./icommand";
+
+export function factory(): ICommand {
+    return new CommandList();
+}
 
 const CATEGORY: string = 'CommandList';
 var logger: Logger = getLogger(CATEGORY);

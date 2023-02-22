@@ -3,9 +3,14 @@ import { IChannelWrapper } from "./ichannelwrapper";
 import { CommandBase, CommandInfo } from "./commandbase";
 import { getLogger, Logger } from "log4js";
 import { EventWaiter } from "../../common/eventwaiter";
+import { ICommand } from "./icommand";
 
 const CATEGORY: string = 'CommandEvents';
 var logger: Logger = getLogger(CATEGORY);
+
+export function factory(): ICommand {
+    return new CommandEvents();
+}
 
 const commandInfo: CommandInfo = {
     commandName: 'events',

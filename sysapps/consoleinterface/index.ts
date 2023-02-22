@@ -9,6 +9,8 @@ import { ITransport } from "./itransport";
 import { TransportSSH } from "./transportssh";
 import { TransportSSHClient } from "./transportsshclient";
 import { IChannelWrapper } from "./ichannelwrapper";
+import { readdir } from "fs";
+import  { join, extname } from "path";
 
 const CATEGORY: string = 'ConsoleInterface';
 var logger: Logger = getLogger(CATEGORY);
@@ -112,17 +114,33 @@ export default class ConsoleInterface extends AppParent {
     }
 
     public async run(): Promise<boolean> {
-        this._cmds = [
-            new (require('./commandhelp')).CommandHelp(),
-            new (require('./commandinspect')).CommandInspect(),
-            new (require('./commandlist')).CommandList(),
-            new (require('./commandset')).CommandSet(),
-            new (require('./commandapp')).CommandApp(),
-            new (require('./commandha')).CommandHa(),
-            new (require('./commandlogs')).CommandLogs(),
-            new (require('./commandevents')).CommandEvents(),
-            new (require('./commandsystem')).CommandSystem(),
-        ];
+
+        readdir(__dirname, (err, files) => {
+            if (err) {
+                console.error(`Unable to enumerate command files: ${err}`);
+                return false;
+            }
+            else {
+                files.forEach(async (file) => {
+                    logger.debug(`f=${file}; e=${extname(file)}; t=${extname(file) == '.js'}`);
+                    if (extname(file) == '.js') {
+                        try {
+                            let work = await import(join(__dirname, file));
+                            if (work.factory) {
+                                let cmd = work.factory();
+                                if (cmd.commandName != undefined) {
+                                    this._cmds.push(cmd);
+                                    logger.info(`Constructed command ${cmd.commandName}`)
+                                }
+                            }
+                        }
+                        catch (err) {
+                            console.warn(`Failed to load command: ${err}`);
+                        }
+                    }
+                });
+            }
+        });
         await this._transport.start();
 
         return true;

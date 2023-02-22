@@ -13,6 +13,10 @@ import HaItemButton from '../../haitems/haitembutton';
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);
 
+export function factory(): ICommand {
+    return new CommandSet();
+}
+
 const commandInfo: CommandInfo = {
     commandName: 'set',
     subcommands: [ 
