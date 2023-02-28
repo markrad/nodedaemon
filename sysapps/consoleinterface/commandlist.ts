@@ -118,12 +118,8 @@ export class CommandList extends CommandBase {
                 break;
                 case 'names':
                     logger.debug(`listnames called with ${inputArray.join(' ')}`);
-                    // BUG: Names can be more than one word
-                    if (inputArray.length > 3) {
-                        throw new Error(`Too many parameters passed`);
-                    }
                     items = inputArray[2]
-                        ? that.items.getItemByFriendly(inputArray[2], true) 
+                        ? that.items.getItemByFriendly(inputArray.slice(2).join(' '), true) 
                         : that.items.getItemByFriendly();
                     this._printItems(sock, items);
                 break;
