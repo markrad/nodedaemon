@@ -1,10 +1,8 @@
-"use strict";
 // TODO Fix toggle autocomplete
 import { getLogger, Level, Logger } from 'log4js';
 import ConsoleInterface from ".";
 import { IChannelWrapper } from './ichannelwrapper';
 import { CommandBase, CommandInfo } from './commandbase';
-import { ICommand } from './icommand';
 import { HaParentItem, ServicePromise } from '../../haitems/haparentitem';
 import { LogLevels } from '../../common/loglevelvalidator';
 import { HaGenericSwitchItem } from '../../haitems/hagenericswitchitem';
@@ -12,10 +10,6 @@ import HaItemButton from '../../haitems/haitembutton';
 
 const CATEGORY: string = 'CommandSet';
 var logger: Logger = getLogger(CATEGORY);
-
-export function factory(): ICommand {
-    return new CommandSet();
-}
 
 const commandInfo: CommandInfo = {
     commandName: 'set',
@@ -54,9 +48,8 @@ const commandInfo: CommandInfo = {
     ] 
 }
 
-export class CommandSet extends CommandBase {
+class CommandSet extends CommandBase {
     public constructor() {
-        // super('set', ['state', 'log', 'on', 'off', 'toggle', 'press']);
         super(commandInfo);
     }
 
@@ -92,7 +85,7 @@ export class CommandSet extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<number> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray);
             if (inputArray.length < 3) {
@@ -176,3 +169,5 @@ export class CommandSet extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandSet();

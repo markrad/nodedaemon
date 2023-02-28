@@ -127,7 +127,7 @@ export default class ConsoleInterface extends AppParent {
                         try {
                             let work = await import(join(__dirname, file));
                             if (work.factory) {
-                                let cmd = work.factory();
+                                let cmd = work.factory;
                                 if (cmd.commandName != undefined) {
                                     this._cmds.push(cmd);
                                     logger.info(`Constructed command ${cmd.commandName}`)

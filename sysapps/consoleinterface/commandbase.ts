@@ -3,16 +3,11 @@ import { IChannelWrapper } from "./ichannelwrapper";
 import { ICommand } from './icommand';
 import { Logger } from "log4js";
 
-// type ParameterInfo = {
-//     parameter: string;
-//     description: string;
-// }
 type SubcommandInfo = {
     subcommandName: string;
     subcommandParm?: string;
     description: string;
     description2?: string;
-    // parameters: ParameterInfo[];
 }
 
 export type CommandInfo = {
@@ -21,16 +16,11 @@ export type CommandInfo = {
 }
 
 export abstract class CommandBase implements ICommand {
-    // private _commandName: string;
-    // private _parameters: string[];
     private _commandInfo: CommandInfo;
-    // public constructor(commandName: string, parameters?: string[]) {
     public constructor(commandInfo: CommandInfo) {
         this._commandInfo = commandInfo;
-        // this._parameters = this._validateInputParameters(parameters);
     }
 
-    // public abstract get helpText(): string;
     public abstract execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, commands: ICommand[]): Promise<number>;
 
     public get helpTextx(): string {
@@ -53,10 +43,6 @@ export abstract class CommandBase implements ICommand {
     public get parameters(): string[] {
         return this._commandInfo.subcommands.map((subcommand) => subcommand.subcommandName).filter((subcommand) => subcommand != '');
     }
-
-    // public set parameters(value: string[]) {
-    //     this._parameters = this._validateInputParameters(value);;
-    // }
 
     protected _validateParameters(parameters: string[]): void {
         let parms = this.parameters;

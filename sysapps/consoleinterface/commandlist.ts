@@ -5,11 +5,6 @@ import { IChannel } from "./ichannel";
 import { IHaItem } from "../../haitems/ihaitem";
 import { IChannelWrapper } from "./ichannelwrapper";
 import { AppInfo } from '../../hamain/appinfo'
-import { ICommand } from "./icommand";
-
-export function factory(): ICommand {
-    return new CommandList();
-}
 
 const CATEGORY: string = 'CommandList';
 var logger: Logger = getLogger(CATEGORY);
@@ -39,9 +34,8 @@ const commandInfo: CommandInfo = {
     ]
 }
 
-export class CommandList extends CommandBase {
+class CommandList extends CommandBase {
     public constructor() {
-        // super('list', ['apps', 'items', 'types', 'names']);
         super(commandInfo);
     }
 
@@ -164,3 +158,5 @@ export class CommandList extends CommandBase {
         });
     }
 }
+
+export const factory = new CommandList();

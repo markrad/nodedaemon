@@ -4,14 +4,9 @@ import { getLogger, Logger } from "log4js";
 import { logEmitter } from "../../common/emitlogger";
 import { EventWaiter } from "../../common/eventwaiter";
 import { IChannelWrapper } from "./ichannelwrapper";
-import { ICommand } from "./icommand";
 
 const CATEGORY: string = 'CommandLogs';
 var logger: Logger = getLogger(CATEGORY);
-
-export function factory(): ICommand {
-    return new CommandLogs();
-}
 
 const commandInfo: CommandInfo = {
     commandName: 'logs',
@@ -23,7 +18,7 @@ const commandInfo: CommandInfo = {
     ]
 }
 
-export class CommandLogs extends CommandBase {
+class CommandLogs extends CommandBase {
     private _isRunning: boolean = false;
     private _sock: IChannelWrapper = null;
     private _regex: RegExp = null;
@@ -43,7 +38,6 @@ export class CommandLogs extends CommandBase {
 
     public async execute(inputArray: string[], _that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         return new Promise<number>((resolve, _reject) => {
-            // this._messageWriter = (message:string) => { if (this._sock) this._sock.write(`${message}\r\n`); }
             try {
                 if (inputArray.length > 2) throw new Error('Only one optional argument is permitted')
                 this._sock = sock;
@@ -71,3 +65,5 @@ export class CommandLogs extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandLogs;

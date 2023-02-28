@@ -1,17 +1,10 @@
-"use strict";
-
 import ConsoleInterface from ".";
 import { CommandBase, CommandInfo } from './commandbase'; 
 import { getLogger, Logger } from "log4js";
 import { IChannelWrapper } from "./ichannelwrapper";
-import { ICommand } from "./icommand";
 
 const CATEGORY: string = 'CommandHa';
 var logger: Logger = getLogger(CATEGORY);
-
-export function factory(): ICommand {
-    return new CommandHa();
-}
 
 const commandInfo: CommandInfo = {
     commandName: 'ha',
@@ -39,9 +32,8 @@ const commandInfo: CommandInfo = {
     ]
 }
 
-export class CommandHa extends CommandBase {
+class CommandHa extends CommandBase {
     public constructor() {
-        // super('ha', ['restart', 'stop', 'status', 'version', 'getconfig']);
         super(commandInfo)
     }
 
@@ -89,3 +81,5 @@ export class CommandHa extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandHa();

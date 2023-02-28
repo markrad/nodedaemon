@@ -3,14 +3,9 @@ import { IChannelWrapper } from "./ichannelwrapper";
 import { CommandBase, CommandInfo } from "./commandbase";
 import { getLogger, Logger } from "log4js";
 import { EventWaiter } from "../../common/eventwaiter";
-import { ICommand } from "./icommand";
 
 const CATEGORY: string = 'CommandEvents';
 var logger: Logger = getLogger(CATEGORY);
-
-export function factory(): ICommand {
-    return new CommandEvents();
-}
 
 const commandInfo: CommandInfo = {
     commandName: 'events',
@@ -22,7 +17,7 @@ const commandInfo: CommandInfo = {
     ]
 }
 
-export class CommandEvents extends CommandBase {
+class CommandEvents extends CommandBase {
     private _isRunning: boolean = false;
     private _sock: IChannelWrapper = null;
     private _ew: EventWaiter = null;
@@ -79,3 +74,5 @@ export class CommandEvents extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandEvents();

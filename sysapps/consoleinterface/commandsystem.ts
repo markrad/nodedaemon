@@ -1,19 +1,11 @@
-"use strict";
-
 import ConsoleInterface from ".";
 import { CommandBase, CommandInfo } from './commandbase'; 
 import { getLogger, Logger } from "log4js";
 import { IChannelWrapper } from "./ichannelwrapper";
 import os from 'os';
-import { ICommand } from "./icommand";
-// import path from 'path';
 
 const CATEGORY: string = 'CommandSystem';
 var logger: Logger = getLogger(CATEGORY);
-
-export function factory(): ICommand {
-    return new CommandSystem();
-}
 
 const commandInfo: CommandInfo = {
     commandName: 'system',
@@ -45,9 +37,8 @@ const commandInfo: CommandInfo = {
     ] 
 }
 
-export class CommandSystem extends CommandBase {
+class CommandSystem extends CommandBase {
     public constructor() {
-        // super('system', ['restart', 'stop', 'status', 'uptime', 'hostname', 'version']);
         super(commandInfo);
     }
 
@@ -65,9 +56,6 @@ export class CommandSystem extends CommandBase {
 
             switch (inputArray[1]) {
                 case 'restart':
-                    // sock.write('Restarting Nodedaemon\r\n');
-                    // spawn(process.argv.shift(), process.argv, { cwd: process.cwd(), detached: true, stdio: "inherit" });
-                    // process.exit(0);
                     if (process.env['KEEPALIVE_RUNNING']) {
                         try {
                             await that.controller.restart();
@@ -125,3 +113,5 @@ export class CommandSystem extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandSystem();

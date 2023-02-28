@@ -1,18 +1,11 @@
-"use strict";
-
 import ConsoleInterface from ".";
 import { CommandBase, CommandInfo } from './commandbase';
-import { ICommand } from './icommand';
 import { IChannelWrapper } from './ichannelwrapper';
 import { getLogger, Logger } from 'log4js';
 import { HaGenericSwitchItem } from "../../haitems/hagenericswitchitem";
 
 const CATEGORY: string = 'CommandInspect';
 var logger: Logger = getLogger(CATEGORY);
-
-export function factory(): ICommand {
-    return new CommandInspect();
-}
 
 const commandInfo: CommandInfo = {
     commandName: 'inspect',
@@ -25,7 +18,7 @@ const commandInfo: CommandInfo = {
     ]
 }
 
-export class CommandInspect extends CommandBase {
+class CommandInspect extends CommandBase {
     public constructor() {
         super(commandInfo);
     }
@@ -35,11 +28,6 @@ export class CommandInspect extends CommandBase {
     }
 
     public tabParameters(that: ConsoleInterface, tabCount: number, parameters: string[]): string[] {
-            // let possibles: string[] = (parameters[1]
-            //     ? that.items.getItemByEntytId(parameters[1], true) 
-            // : that.items.getItemByEntytId())
-            // .map((item: IHaItem) => item.entityId)
-            // .sort((l, r) => l < r? -1 : 1);
         let possibles: string[] = [ ...that.controller.items.items ]
             .filter((item) => item[1].entityId.startsWith(parameters[1]))       // TODO: Make this resolve regex expressions (maybe)
             .map((item) => item[1].entityId)
@@ -47,7 +35,7 @@ export class CommandInspect extends CommandBase {
         return (possibles.length == 1 || tabCount > 1)? possibles : [];
     }
 
-    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper, _commands: ICommand[]): Promise<number> {
+    public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
         try {
             this._validateParameters(inputArray.slice(0, inputArray.length - 1));
             if (inputArray.length != 2) {
@@ -75,3 +63,5 @@ export class CommandInspect extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandInspect();

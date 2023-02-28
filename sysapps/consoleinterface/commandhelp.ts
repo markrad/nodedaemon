@@ -1,11 +1,7 @@
 import ConsoleInterface from ".";
 import { IChannel } from './ichannel';
 import { CommandBase, CommandInfo } from './commandbase';
-import { ICommand } from './icommand';
-
-export function factory(): ICommand {
-    return new CommandHelp();
-}
+import { ICommand } from "./icommand";
 
 const commandInfo: CommandInfo = {
     commandName: 'help',
@@ -17,7 +13,7 @@ const commandInfo: CommandInfo = {
     ]
 }
 
-export class CommandHelp extends CommandBase {
+class CommandHelp extends CommandBase {
     public constructor() {
         super(commandInfo);
     }
@@ -40,3 +36,5 @@ export class CommandHelp extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandHelp();

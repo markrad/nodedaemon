@@ -39,9 +39,8 @@ const commandInfo: CommandInfo = {
     ] 
 }
 
-export class CommandApp extends CommandBase {
+class CommandApp extends CommandBase {
     public constructor() {
-        // super('app', ['start', 'stop', 'restart', 'list', 'log']);
         super(commandInfo);
     }
 
@@ -231,3 +230,5 @@ export class CommandApp extends CommandBase {
         }
     }
 }
+
+export const factory = new CommandApp();
