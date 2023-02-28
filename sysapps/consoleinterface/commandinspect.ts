@@ -59,9 +59,8 @@ export class CommandInspect extends CommandBase {
                 sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
                 sock.write(`Type = ${item.type}\r\n`);
                 sock.write(`State = ${item.state}\r\n`);
-                let sw = that.items.getItemAsEx(inputArray[1], HaGenericSwitchItem, false);
-                if (sw) {
-                    sock.write(`Off time: ${sw.isTimerRunning? sw.timeBeforeOff / 1000 : 'inactive'}\r\n`);
+                if (item.isSwitch) {
+                    sock.write(`Off time: ${(item as HaGenericSwitchItem).isTimerRunning? (item as HaGenericSwitchItem).timeBeforeOff / 1000 : 'inactive'}\r\n`);
                 }
                 sock.write(`Last Changed = ${item.lastChanged.toISOString()}\r\n`);
                 sock.write(`Last Updated = ${item.lastUpdated.toISOString()}\r\n`);
