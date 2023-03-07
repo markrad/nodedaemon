@@ -92,7 +92,7 @@ class CommandSystem extends CommandBase {
                     if (!seconds.startsWith('01')) seconds += 's';
                     if (!minutes.startsWith('01')) minutes += 's';
                     if (!hours.startsWith('01')) hours += 's';
-                    if (!days.startsWith('1')) days += 's';
+                    if (!days.startsWith('1') && days.length == 1) days += 's';
                     sock.write(`${days} ${hours} ${minutes} ${seconds}\r\n`);
                 break;
                 case 'hostname':
