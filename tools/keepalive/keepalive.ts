@@ -1,12 +1,5 @@
 import { ChildProcess, spawn } from 'node:child_process';
-
-// FUTURE Use log4js?
-
-enum ConsoleLevel {
-    info = 0,
-    warn = 1,
-    error = 2,
-};
+import { ConsoleLevel } from './consolelevel';
 
 class KeepAlive {
     private _target: string[];
@@ -26,7 +19,7 @@ class KeepAlive {
         return this;
     }
 
-    private logger(level: ConsoleLevel, msg: string) {
+    private logger(level: ConsoleLevel, msg: string): void {
         let now = new Date().toISOString();
         switch (level) {
             case ConsoleLevel.info:
@@ -43,7 +36,7 @@ class KeepAlive {
         }
     }
 
-    private spawner(code?: number, signal?: NodeJS.Signals) {
+    private spawner(code?: number, signal?: NodeJS.Signals): void {
         try {
             let spawned: ChildProcess = null;
 

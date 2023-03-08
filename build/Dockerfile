@@ -13,6 +13,6 @@ RUN npm install -g npm@9.4.2
 RUN npm install
 RUN tsc
 
-# CMD [ "tail", "-f", "/etc/passwd"]
 # CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
-CMD [ "node", "./output/keepalive.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
+# TODO Add --inspect as arg between keepalive and nodedaemon
+CMD [ "node", "./output/tools/keepalive/keepalive.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
