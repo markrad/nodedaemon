@@ -122,7 +122,7 @@ export default class ConsoleInterface extends AppParent {
             }
             else {
                 files.forEach(async (file) => {
-                    logger.debug(`f=${file}; e=${extname(file)}; t=${extname(file) == '.js'}`);
+                    logger.trace(`f=${file}; e=${extname(file)}; t=${extname(file) == '.js'}`);
                     if (extname(file) == '.js') {
                         try {
                             let work = await import(join(__dirname, file));

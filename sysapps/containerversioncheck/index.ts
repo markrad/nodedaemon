@@ -180,7 +180,6 @@ export default class ContainerVersionCheck extends AppParent {
                                                             undefined, 
                                                             undefined,
                                                             { ca: containerList[i].containerEntry.registry.ca }))
-                                                            // { ca: readFileSync('/usr/local/share/ca-certificates/radrealm.crt') }))
                                     .filter((item: string) => this._re.exec(item))
                                     .sort((left: string, right: string) => {
                                         return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
@@ -190,7 +189,7 @@ export default class ContainerVersionCheck extends AppParent {
                                     }
                                 );
                                 let updated: string = containerList[i].container.version == tags[0]? '' : ' - update available';
-                                logger.debug(`Image ${containerList[i].container.name}: Current ${containerList[i].container.version} Latest ${tags[0]}${updated}`);
+                                logger.info(`Image ${containerList[i].container.name}: Current ${containerList[i].container.version} Latest ${tags[0]}${updated}`);
                                 containerList[i].containerEntry.currentEntity.updateState(containerList[i].container.version, false);
                                 containerList[i].containerEntry.dockerEntity.updateState(tags[0], false);
                             }
