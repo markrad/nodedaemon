@@ -163,23 +163,23 @@ export default class ContainerVersionCheck extends AppParent {
                         logger.error(`Failed to retreive local containers from ${host.host}: ${err}`);
                     }
                     try {
-                        for (let i = 0; i < containerList.length ?? 0; i++) {
-                            let repo: string = containerList[i].container.name.includes('/')
-                                ? containerList[i].container.name
-                                : 'library/' + containerList[i].container.name;
-                                if (repo.startsWith(containerList[i].containerEntry.registry.url)) {
-                                    repo = repo.substring(containerList[i].containerEntry.registry.url.length + 1);
-                                }
+                        containerList.forEach(async (cwValue) => {
+                            let repo: string = cwValue.container.name.includes('/')
+                                ? cwValue.container.name
+                                : 'library/' + cwValue.container.name;
+                            if (repo.startsWith(cwValue.containerEntry.registry.url)) {
+                                repo = repo.substring(cwValue.containerEntry.registry.url.length + 1);
+                            }
                             try {
                                 const initalValue: string = '';
-                                logger.debug(`Registry: ${containerList[i].containerEntry.registry.url} Repo: ${repo}`)
-                                let tags = (await getTags(containerList[i].containerEntry.registry.url, 
+                                logger.debug(`Registry: ${cwValue.containerEntry.registry.url} Repo: ${repo}`)
+                                let tags = (await getTags(cwValue.containerEntry.registry.url, 
                                                             repo, 
-                                                            containerList[i].containerEntry.registry.userId, 
-                                                            containerList[i].containerEntry.registry.password,
+                                                            cwValue.containerEntry.registry.userId, 
+                                                            cwValue.containerEntry.registry.password,
                                                             undefined, 
                                                             undefined,
-                                                            { ca: containerList[i].containerEntry.registry.ca }))
+                                                            { ca: cwValue.containerEntry.registry.ca }))
                                     .filter((item: string) => this._re.exec(item))
                                     .sort((left: string, right: string) => {
                                         return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
@@ -188,15 +188,15 @@ export default class ContainerVersionCheck extends AppParent {
                                                 : -1;
                                     }
                                 );
-                                let updated: string = containerList[i].container.version == tags[0]? '' : ' - update available';
-                                logger.info(`Image ${containerList[i].container.name}: Current ${containerList[i].container.version} Latest ${tags[0]}${updated}`);
-                                containerList[i].containerEntry.currentEntity.updateState(containerList[i].container.version, false);
-                                containerList[i].containerEntry.dockerEntity.updateState(tags[0], false);
+                                let updated: string = cwValue.container.version == tags[0]? '' : ' - update available';
+                                logger.info(`Image ${cwValue.container.name}: Current ${cwValue.container.version} Latest ${tags[0]}${updated}`);
+                                cwValue.containerEntry.currentEntity.updateState(cwValue.container.version, false);
+                                cwValue.containerEntry.dockerEntity.updateState(tags[0], false);
                             }
                             catch (err) {
                                 logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
                             }
-                        }
+                        });
                     }
                     catch (err) {
                         logger.error(`Failed to connect to docker: ${(err as Error).message}`)
