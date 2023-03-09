@@ -50,6 +50,9 @@ class CommandSystem extends CommandBase {
         try {
             this._validateParameters(inputArray);
 
+            if (inputArray.length == 1) {
+                throw new Error('No subcommand specified for system');
+            }
             if (inputArray.length != 2) {
                 throw new Error(`Too many parameters passed for ${inputArray[1]}`)
             }
@@ -61,10 +64,11 @@ class CommandSystem extends CommandBase {
                             await that.controller.restart();
                         }
                         catch (err) {
-                            sock.write(`Restart failed: ${err}`);
+                            sock.write(`Restart failed: ${err}\r\n`);
                         }
                     }
                     else {
+                        sock.write(`Restart is not available\r\n`);
                         logger.error('Restart only supported when running under keepalive');
                     }
                 break;
