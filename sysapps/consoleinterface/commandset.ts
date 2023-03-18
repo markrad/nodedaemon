@@ -115,11 +115,8 @@ class CommandSet extends CommandBase {
                     if (inputArray.length < 3) {
                         throw new Error(`set state requires a device and optionally a new state`);
                     }
-                    if (inputArray.length > 4) {
-                        throw new Error(`set state requires a new state to be a single word`);
-                    }
-                    if (inputArray.length == 4) {
-                        rc = await item.updateState(inputArray[3], false);
+                    if (inputArray.length > 3) {
+                        rc = await item.updateState(inputArray.slice(3).join(' '), false);
 
                         if (rc.err) {
                             sock.write(`Error: Command ${inputArray[3]} failed for ${item.entityId}: ${rc.err.message}\r\n`);
