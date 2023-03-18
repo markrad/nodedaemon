@@ -2,7 +2,7 @@
 import { Logger } from 'log4js';
 import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
-import { entityValidator } from '../../common/validator';
+import { entityValidator, stringValidator } from '../../common/validator';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { HaMain } from '../../hamain';
@@ -14,6 +14,7 @@ const logger: Logger = require('log4js').getLogger(CATEGORY);
 
 export default class AstroHelper extends AppParent {
     private _astro: Astro = null;
+    private _timezone: string;
     private _lastEvent: IHaItemEditable = null;
     private _lastUpdate: IHaItemEditable = null;
     private _dark: IHaItemEditable = null;
@@ -31,6 +32,7 @@ export default class AstroHelper extends AppParent {
             return false;
         }
         try {
+            this._timezone = stringValidator.isValid(config.timezone, { name: 'timezone', noValueOk: true });
             this._lastEvent = entityValidator.isValid(config.lastevent, { entityType: HaGenericUpdateableItem, name: 'lastevent' });
             this._lastUpdate =  entityValidator.isValid(config.lastupdate, { entityType: HaGenericUpdateableItem, name: 'lastupdate' });
             this._dark =  entityValidator.isValid(config.dark, { entityType: HaGenericUpdateableItem,  name: 'dark' });
@@ -50,6 +52,9 @@ export default class AstroHelper extends AppParent {
 
     async run(): Promise<boolean> {
         return new Promise<boolean>((resolve, _reject) => {
+            if (this._timezone) {
+                process.env.TZ = this._timezone;
+            }
             this.controller.once('appsinitialized', () => {
                 if (!(this._astro = this.controller.getApp('Astro')?.instance as Astro)) {
                     logger.error('Astro module has not been loaded - cannot continue');
