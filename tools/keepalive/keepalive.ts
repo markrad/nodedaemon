@@ -1,39 +1,24 @@
+import { Logger } from 'log4js';
 import { ChildProcess, spawn } from 'node:child_process';
-import { ConsoleLevel } from './consolelevel';
 
-class KeepAlive {
+export class KeepAlive {
     private _target: string[];
-    constructor(target: string[]) {
+    private _logger: Logger;
+    constructor(target: string[], logger: Logger) {
         this._target = target;
-        this.logger(ConsoleLevel.info, 'Constructed');
+        this._logger = logger;
+        this._logger.info('Constructed');
     }
     start(): KeepAlive {
         this.spawner();
-        this.logger(ConsoleLevel.info, 'Started');
+        this._logger.info('Started');
         return this;
     }
 
     stop(): KeepAlive {
-        this.logger(ConsoleLevel.info, 'Stopped');
+        this._logger.info('Stopped');
         process.kill(process.pid, 'SIGQUIT');
         return this;
-    }
-
-    private logger(level: ConsoleLevel, msg: string): void {
-        let now = new Date().toISOString();
-        switch (level) {
-            case ConsoleLevel.info:
-                console.log(now + ' [INF] KeepAlive ' + msg);
-                break;
-            case ConsoleLevel.warn:
-                console.warn(now + ' [WRN] KeepAlive ' + msg);
-                break;
-            case ConsoleLevel.error:
-                console.error(now + ' [ERR] KeepAlive ' + msg);
-                break;
-            default:
-                break;
-        }
     }
 
     private spawner(code?: number, signal?: NodeJS.Signals): void {
@@ -52,7 +37,7 @@ class KeepAlive {
                 spawned.kill('SIGTERM');
             }
             var sigquitHandler = () => {
-                this.logger(ConsoleLevel.info, 'Quit called');
+                this._logger.info('Quit called');
                 handlerCleanup();
                 spawned.kill('SIGTERM');
             }
@@ -62,29 +47,29 @@ class KeepAlive {
             }
             var messageHandler = (m: Object) => {
                 // FUTURE Implementation does nothing - possibly use for future enhancements
-                this.logger(ConsoleLevel.info, `Message from child: '${JSON.stringify(m)}'`);
+                this._logger.info(`Message from child: '${JSON.stringify(m)}'`);
             }
             var spawnErrorHandler = (err: Error) => {
-                this.logger(ConsoleLevel.error, `Spawn error - ${err}`);
+                this._logger.error(`Spawn error - ${err}`);
                 process.exit(4);
             }
         
             if (code != undefined) {
-                this.logger(ConsoleLevel.warn, `Previous instance exited with ${code}`);
+                this._logger.warn(`Previous instance exited with ${code}`);
                 if (code == 0) {
-                    this.logger(ConsoleLevel.info, 'Treating zero return code as request to end');
+                    this._logger.info('Treating zero return code as request to end');
                     return;
                 }
                 else if (code >= 32) {
-                    this.logger(ConsoleLevel.warn, `Code ${code} is 32 or greater - treating as unrecoverable error`);
+                    this._logger.warn(`Code ${code} is 32 or greater - treating as unrecoverable error`);
                     return;
                 }
             }    
             else if (signal != undefined) {
-                this.logger(ConsoleLevel.warn, `Previous instance terminated with ${signal}`);
+                this._logger.warn(`Previous instance terminated with ${signal}`);
             }
 
-            if (code != undefined || signal != undefined) this.logger(ConsoleLevel.info, 'Restarting Child');
+            if (code != undefined || signal != undefined) this._logger.info('Restarting Child');
 
             process.on('SIGHUP', sighupHandler);
             process.on('SIGQUIT', sigquitHandler);
@@ -97,10 +82,8 @@ class KeepAlive {
             spawned.on('exit', childExitHandler);
         }
         catch (err) {
-            this.logger(ConsoleLevel.error, `Caught error spawning: ${err}`);
+            this._logger.error(`Caught error spawning: ${err}`);
             process.exit(4);
         }
     }
 }
-
-new KeepAlive(process.argv.slice(2)).start();
