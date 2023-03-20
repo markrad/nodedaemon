@@ -52,9 +52,6 @@ export default class AstroHelper extends AppParent {
 
     async run(): Promise<boolean> {
         return new Promise<boolean>((resolve, _reject) => {
-            if (this._timezone) {
-                process.env.TZ = this._timezone;
-            }
             this.controller.once('appsinitialized', () => {
                 if (!(this._astro = this.controller.getApp('Astro')?.instance as Astro)) {
                     logger.error('Astro module has not been loaded - cannot continue');
