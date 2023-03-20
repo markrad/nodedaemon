@@ -2,7 +2,7 @@
 import { Logger } from 'log4js';
 import * as schedule from 'node-schedule';
 import { AppParent } from '../../common/appparent';
-import { entityValidator, stringValidator } from '../../common/validator';
+import { entityValidator } from '../../common/validator';
 import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { IHaItemEditable } from "../../haitems/ihaitemeditable";
 import { HaMain } from '../../hamain';
@@ -31,7 +31,6 @@ export default class AstroHelper extends AppParent {
             return false;
         }
         try {
-            this._timezone = stringValidator.isValid(config.timezone, { name: 'timezone', noValueOk: true });
             this._lastEvent = entityValidator.isValid(config.lastevent, { entityType: HaGenericUpdateableItem, name: 'lastevent' });
             this._lastUpdate =  entityValidator.isValid(config.lastupdate, { entityType: HaGenericUpdateableItem, name: 'lastupdate' });
             this._dark =  entityValidator.isValid(config.dark, { entityType: HaGenericUpdateableItem,  name: 'dark' });
