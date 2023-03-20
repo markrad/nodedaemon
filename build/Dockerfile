@@ -5,11 +5,11 @@ RUN apt update && apt -y upgrade
 RUN apt install -y git
 RUN npm install -g npm@9.3.0
 RUN npm install -g typescript
-RUN git -c advice.detachedHead=false clone -b v1.6.21 https://github.com/markrad/nodedaemon.git
+RUN git -c advice.detachedHead=false clone -b v1.6.22 https://github.com/markrad/nodedaemon.git
 
 WORKDIR /nodedaemon
 
-RUN npm install -g npm@9.4.2
+# RUN npm install -g npm@9.4.2
 RUN npm install
 RUN tsc
 
