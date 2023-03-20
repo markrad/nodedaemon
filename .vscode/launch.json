@@ -47,7 +47,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/output/keepalive.js",
+            "program": "${workspaceFolder}/output/tools/keepalive/index.js",
             "outputCapture": "std",
             // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
             "args": [ "./output/nodedaemon.js", "--appsdir", "./output/sysapps" ],

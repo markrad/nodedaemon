@@ -15,4 +15,4 @@ RUN tsc
 
 # CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
 # TODO Add --inspect as arg between keepalive and nodedaemon
-CMD [ "node", "./output/tools/keepalive/keepalive.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
+CMD [ "node", "./output/tools/keepalive/index.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
