@@ -14,7 +14,6 @@ const logger: Logger = require('log4js').getLogger(CATEGORY);
 
 export default class AstroHelper extends AppParent {
     private _astro: Astro = null;
-    private _timezone: string;
     private _lastEvent: IHaItemEditable = null;
     private _lastUpdate: IHaItemEditable = null;
     private _dark: IHaItemEditable = null;
