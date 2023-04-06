@@ -248,7 +248,8 @@ export class HaInterface extends EventEmitter {
 
     public async subscribe() {
         return new Promise(async (resolve, reject) => {
-            await this._waitHaRunning();
+            //await this._waitHaRunning();
+            await this._waitAuthenticated();
             this._sendPacket(this._makePacket('subscribe_events'))
                 .then((response: any) => {
                     logger.info('Subscribed to events');
@@ -447,7 +448,7 @@ export class HaInterface extends EventEmitter {
                 while ('RUNNING' != (await this.getConfig()).state) {
                     try {
                         logger.info('Waiting for HA to signal RUNNING');
-                        await this._wait(1);
+                        await this._wait(3);
                     }
                     catch (err) {
                         logger.warn(`Failed to get config - will delay ten seconds`);
