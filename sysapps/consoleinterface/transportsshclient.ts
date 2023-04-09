@@ -216,7 +216,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
             .on('sftp', (_accept: () => ServerChannel, _reject: () => boolean, _info: ExecInfo) => {
                 logger.warn('sftp request ignored');
             })
-            .once('exec', (accept, _reject, info) => {
+            .once('exec', async (accept, _reject, info) => {
                 try {
                     this._canStream = false;
                     let ending: boolean = false;
@@ -227,8 +227,9 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
                             logger.warn(`Stream failed: ${err}`)
                         }
                     });
-                    commander.parseAndSend(this, stream, info.command);
-                    stream.exit(0);    
+                    let rc = await commander.parseAndSend(this, stream, info.command);
+                    logger.info(`Return code = ${rc}`);
+                    stream.exit(rc);    
                     ending = true;
                     stream.end();
                 }
