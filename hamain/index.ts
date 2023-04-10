@@ -414,6 +414,7 @@ export class HaMain extends EventEmitter {
                 if (this._haInterface.isConnected) {
                     await this._haInterface.stop();
                 }
+                this.removeAllListeners();
                 resolve();
                 process.exit(rc);
             }

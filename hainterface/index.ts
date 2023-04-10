@@ -209,7 +209,7 @@ export class HaInterface extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        return new Promise<void>((resolve, _reject) => {
+        return new Promise<void>(async (resolve, _reject) => {
             logger.info('Closing');
 
             // let timer = setTimeout(() => {
@@ -222,7 +222,8 @@ export class HaInterface extends EventEmitter {
             //     resolve();
             // });
             this._kill();
-            this._client.close();
+            await this._client.close();
+            this.removeAllListeners();
             logger.info('Closed');
             resolve();
         });
