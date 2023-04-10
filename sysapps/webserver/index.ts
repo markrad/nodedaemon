@@ -10,6 +10,9 @@ import path from 'path';
 import http from 'http';
 import { getLogger, Logger } from "log4js";
 import { AppParent } from '../../common/appparent';
+import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
+import { entityValidator } from "../../common/validator";
+import { ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
 
 const CATEGORY = 'WebServer';
 
@@ -70,6 +73,27 @@ export default class WebServer extends AppParent {
 
         this._app.get('/', (_req, res) => {
             res.status(200).render('index', { title: 'Useful Links'});
+        });
+
+        this._app.get('/healthcheck', async (_req, res) => {
+            let rc: any = {};
+            try {
+                let testvar = entityValidator.isValid('var.healthcheck', { entityType: HaGenericUpdateableItem, name: 'Health Check'});
+                let now = new Date().toISOString();
+                let result: ServicePromise = await testvar.updateState(now, false);
+
+                if (result.result != ServicePromiseResult.Success) {
+                    throw result.err;
+                }
+                rc.status = 200;
+                rc.message = 'Healthy';
+            }
+            catch (err) {
+                rc.status = 500;
+                rc.message = err.message;
+            }
+
+            return res.status(rc.status).json(rc);
         });
 
 /*
