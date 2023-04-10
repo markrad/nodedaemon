@@ -24,27 +24,32 @@ export class HaItemFactory {
 
     public getItemObject(item: any): IHaItem {
         // BUG This breaks when Home Assistant is restarted due to trying to get events during that restart period
-        let itemType: string = item.entity_id.split('.')[0];
-        let logLevel: string = null;
+        try {
+            let itemType: string = item.entity_id.split('.')[0];
+            let logLevel: string = null;
 
-        if (this._loggerLevels) {
-            let ll: LoggerLevel = null;
-            if ((ll = this._loggerLevels.find((value: LoggerLevel) => value.entityId == item.entity_id))) {
-                logLevel = ll.level;
-                ll.used = true;
+            if (this._loggerLevels) {
+                let ll: LoggerLevel = null;
+                if ((ll = this._loggerLevels.find((value: LoggerLevel) => value.entityId == item.entity_id))) {
+                    logLevel = ll.level;
+                    ll.used = true;
+                }
+            }
+            
+            if (logLevel) logger.info(`Set logging to ${logLevel} for ${item.entity_id}`);
+
+            if (item?.attributes?.addedBy == 'nodedaemon') {
+                return new this._itemClasses['usersensor'](item, logLevel);
+            }
+            else if (itemType in this._itemClasses) {
+                return new this._itemClasses[itemType](item, logLevel);
+            }
+            else {
+                return new this._itemClasses['unknown'](item , logLevel);
             }
         }
-        
-        if (logLevel) logger.info(`Set logging to ${logLevel} for ${item.entity_id}`);
-
-        if (item?.attributes?.addedBy == 'nodedaemon') {
-            return new this._itemClasses['usersensor'](item, logLevel);
-        }
-        else if (itemType in this._itemClasses) {
-            return new this._itemClasses[itemType](item, logLevel);
-        }
-        else {
-            return new this._itemClasses['unknown'](item , logLevel);
+        catch (err) {
+            logger.error(`This should not happen: ${err.message}`);
         }
     }
 
