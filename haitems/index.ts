@@ -23,6 +23,7 @@ export class HaItemFactory {
     }
 
     public getItemObject(item: any): IHaItem {
+        // BUG This breaks when Home Assistant is restarted due to trying to get events during that restart period
         let itemType: string = item.entity_id.split('.')[0];
         let logLevel: string = null;
 
