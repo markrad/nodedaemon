@@ -9,6 +9,7 @@ import { entityValidator, stringValidator, urlValidator } from "../../common/val
 import { Url } from "url";
 import { isValidCron } from 'cron-validator'
 import * as schedule from 'node-schedule';
+import { ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
 
 const CATEGORY = 'UpdateExternalIP';
 var logger: Logger = getLogger(CATEGORY);
@@ -52,7 +53,11 @@ export default class UpdateExternalIP extends AppParent {
                     try {
                         let currentIP: string = await this._whatsMyIP(this._urls[i]);
                         logger.info(`Updating external IP address to ${currentIP}`);
-                        this._external_ip.updateState(currentIP, false);
+                        let updateResult: ServicePromise = await this._external_ip.updateState(currentIP, false);
+
+                        if (updateResult.result == ServicePromiseResult.Error) {
+                            throw updateResult.err;
+                        }
                         success = true;
                         break;
                     }

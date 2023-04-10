@@ -1,5 +1,5 @@
 import { State } from '../hamain/state'
-import { ActionAndNewState, ServicePromise } from './haparentitem';
+import { ActionAndNewState, ServicePromise, ServicePromiseResult } from './haparentitem';
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
 import { Level } from 'log4js';
 
@@ -15,7 +15,7 @@ export default class HaItemInputDateTime extends HaGenericUpdateableItem {
             if (action == 'error') {
                 let err: Error = new Error(`Bad value passed to updateState - ${newState}`);
                 this.logger.error(`${err.message}`);
-                resolve({ message: action, err: err });
+                resolve({ result: ServicePromiseResult.Error, err: err });
             }
             else {
                 this._callServicePromise(resolve, newState, expectedNewState, 'var', action, { entity_id: this.entityId, value: expectedNewState });

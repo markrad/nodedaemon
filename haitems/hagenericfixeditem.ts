@@ -1,4 +1,4 @@
-import { HaParentItem, ServicePromise } from './haparentitem';
+import { HaParentItem, ServicePromise, ServicePromiseResult } from './haparentitem';
 import { IHaItem } from './ihaitem';
 import { State } from '../hamain/state'
 import { IHaItemFixed } from './ihaitemfixed';
@@ -16,7 +16,7 @@ export class HaGenericFixedItem extends HaParentItem implements IHaItemFixed {
                     if (that.state == newState) {
                         clearTimeout(timer);
                         this.off('new_state', onChange);
-                        resolve({ message: 'success', err: null })
+                        resolve({ result: ServicePromiseResult.Success })
                     }
                 };
                 this.on('new_state', onChange);
@@ -24,7 +24,7 @@ export class HaGenericFixedItem extends HaParentItem implements IHaItemFixed {
                     let msg = 'Time out before state change';
                     this.logger.error(msg);
                     this.off('new_state', onChange);
-                    resolve({ message: 'error', err: new Error(msg)});
+                    resolve({ result: ServicePromiseResult.Error, err: new Error(msg)});
                 }, 30000);
             }
             waitChange(newState);

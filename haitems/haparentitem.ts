@@ -13,9 +13,16 @@ export type ServiceTarget = {
     [key: string]: number | string;
 }
 
+export enum ServicePromiseResult {
+    Success,
+    NoChange,
+    Warn,
+    Error,
+}
+
 export type ServicePromise = {
-    message: string;
-    err: Error;
+    result: ServicePromiseResult;
+    err?: Error;
 }
 
 export type ActionAndNewState = {
@@ -175,7 +182,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         if (service == 'error') {
             let err: Error = new Error(`Bad value passed to updateState - ${newState}`);
             this.logger.error(`${err.message}`);
-            resolve({ message: 'error', err: err });
+            resolve({ result: ServicePromiseResult.Error, err: err });
             return;
         }
 
@@ -184,26 +191,26 @@ export class HaParentItem extends EventEmitter implements IHaItem {
             let newState = (that: HaParentItem, _oldState: string | boolean | number) => {
                 clearTimeout(timer);
                 if (that.state == expectedState || expectedState == '**') {
-                    resolve({ message: 'success', err: null });
+                    resolve({ result: ServicePromiseResult.Success, err: null });
                 }
                 else {
                     var err = new Error('New state did not match expected state');
                     this.logger.info(`${err.message}`);
-                    resolve({ message: 'warn', err: err });
+                    resolve({ result:ServicePromiseResult.Warn, err: err });
                 }
             }                
             timer = setTimeout(() => {
                 var err = new Error('Timeout waiting for state change');
                 this.logger.warn(`${err.message}`);
                 this.off('new_state', newState);
-                resolve({ message: 'error', err: err });
+                resolve({ result: ServicePromiseResult.Error, err: err });
             }, RESPONSE_TIMEOUT);
             this.once('new_state', newState);
             this._callService(domain, service, state);
         }
         else {
             this.logger.debug(`Already in state ${this.state}`);
-            resolve({ message: 'nochange', err: null });
+            resolve({ result: ServicePromiseResult.NoChange, err: null });
         }
     }
 

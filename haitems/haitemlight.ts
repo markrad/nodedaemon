@@ -1,7 +1,7 @@
 import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
-import { ServiceTarget, ServicePromise, HaParentItem } from './haparentitem';
+import { ServiceTarget, ServicePromise, HaParentItem, ServicePromiseResult } from './haparentitem';
 
 // enum SUPPORT {
 //     SUPPORT_BRIGHTNESS = 1,
@@ -64,10 +64,10 @@ export default class HaItemLight extends HaGenericSwitchItem {
     }
 
     private async _updateBrightness(newValue: number | string): Promise<ServicePromise> {
-        return new Promise((resolve, _reject) => {
+        return new Promise<ServicePromise>((resolve, _reject) => {
             var level = Number(newValue);
             if (isNaN(level)) {
-                resolve({ message: 'Error', err: new Error('Brightness value must be a number between 1 and 254') });
+                resolve({ result: ServicePromiseResult.Error, err: new Error('Brightness value must be a number between 1 and 254') });
             }
             else {
                 if (level < 0) level = 0;
@@ -79,10 +79,10 @@ export default class HaItemLight extends HaGenericSwitchItem {
     }
 
     private async _updateTemperature(newValue: number | string): Promise<ServicePromise> {
-        return new Promise<any>((resolve, _reject) => {
+        return new Promise<ServicePromise>((resolve, _reject) => {
             var temp = Number(newValue);
             if (isNaN(temp)) {
-                resolve({ message: 'Error', err: new Error('Color temperature must be numeric') });
+                resolve({ result: ServicePromiseResult.Error, err: new Error('Color temperature must be numeric') });
             }
             else {
                 if (temp < this.attributes.min_mireds) temp = this.attributes.min_mireds;

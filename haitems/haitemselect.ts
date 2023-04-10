@@ -1,7 +1,7 @@
 import { Level } from 'log4js';
 import { State } from '../hamain/state'
 import { HaGenericUpdateableItem } from './hagenericupdatableitem';
-import { ActionAndNewState, ServicePromise } from './haparentitem';
+import { ActionAndNewState, ServicePromise, ServicePromiseResult } from './haparentitem';
 
 export default class HaItemSelect extends HaGenericUpdateableItem {
     private _allowedStates: string[];
@@ -17,7 +17,7 @@ export default class HaItemSelect extends HaGenericUpdateableItem {
             if (action == 'error') {
                 let err: Error = new Error(`Value is not included in select list - ${newState}`);
                 this.logger.error(`${err.message}`);
-                resolve({ message: action, err: err });
+                resolve({ result: ServicePromiseResult.Error, err: err });
             }
             else {
                 this._callServicePromise(resolve, newState, expectedNewState, 'var', action, { entity_id: this.entityId, value: expectedNewState });

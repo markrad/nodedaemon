@@ -1,6 +1,6 @@
 import { State } from '../hamain/state'
 import { HaGenericSwitchItem } from './hagenericswitchitem';
-import { ServicePromise, HaParentItem } from './haparentitem';
+import { ServicePromise, HaParentItem, ServicePromiseResult } from './haparentitem';
 
 enum SUPPORT {
     SET_SPEED = 1,
@@ -54,7 +54,7 @@ export default class HaItemFan extends HaGenericSwitchItem {
         return new Promise((resolve, _reject) => {
             var level = Number(newValue);
             if (isNaN(level)) {
-                resolve({ message: 'Error', err: new Error('Speed value must be a number between 1 and 100') });
+                resolve({ result: ServicePromiseResult.Error, err: new Error('Speed value must be a number between 1 and 100') });
             }
             else {
                 if (level < 0) level = 0;
