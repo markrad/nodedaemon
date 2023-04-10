@@ -163,6 +163,7 @@ export class WSWrapper extends EventEmitter {
             this.emit('disconnected');
             clearTimeout(timer);
             this._client.removeAllListeners();
+            logger.info('Closed');
             resolve();
         });
     }
