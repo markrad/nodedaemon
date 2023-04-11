@@ -1,8 +1,11 @@
-FROM node:18.12.1-slim
+# FROM node:18.12.1-slim
+FROM node:18.12.1-alpine3.17
 ENV DOCKER_RUNNING=true
 
-RUN apt update && apt -y upgrade
-RUN apt install -y git curl jq
+# RUN apt update && apt -y upgrade
+# RUN apt install -y git curl jq
+RUN apk update
+RUN apk add curl jq git
 RUN npm install -g npm@9.3.0
 RUN npm install -g typescript
 RUN git -c advice.detachedHead=false clone -b v1.6.29 https://github.com/markrad/nodedaemon.git
