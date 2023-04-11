@@ -1,0 +1,34 @@
+version: "3.9"
+services:
+
+  nodedaemon:
+    container_name: NodeDaemon
+    networks:
+      - privatenet
+    hostname: rr-nodedaemon
+    image: nodedaemon:devtest
+    user: 1006:1006
+    restart: always
+    environment:
+      - NODE_OPTIONS=--use-openssl-ca
+      - TZ=America/Los_Angeles        
+    volumes:
+      - /home/markrad/source/nodedaemon/build/test/config:/config:ro
+      - /home/markrad/source/nodedaemon/build/test/logs:/nodedaemon/logs
+      - /usr/local/share/ca-certificates/radrealm.crt:/etc/ssl/certs/a89eff1e.0      # RadRealm root certificate
+    ports:
+      - 8822:8822
+      - 9229:9229   # Debug
+      - 4526:4526
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  privatenet:
+    driver: bridge
+    ipam:
+      driver: default
+      

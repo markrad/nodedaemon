@@ -33,7 +33,7 @@
             "program": "${workspaceFolder}/output/nodedaemon.js",
             "outputCapture": "std",
             // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
-            "args": [ "--appsdir", "./output/sysapps" ],
+            "args": [ "--appsdir", "./output/sysapps", "--config", "./build/test/config.yaml" ],
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "info",
