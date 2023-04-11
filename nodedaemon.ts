@@ -250,6 +250,7 @@ try {
     defaultLogger.info(`log level = ${config.main.logLevel}`);
 }
 catch (err) {
+    defaultLogger.error(err.stack);
     fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
 }
 
