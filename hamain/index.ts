@@ -39,6 +39,7 @@ export interface IHaMainEvents {
     'itemadded': (item: IHaItem) => void;
     'serviceevent': (eventType: string, data: any) => void;
     'appsinitialized': () => void;
+    'homeassistantstarted': () => void;
 };
 
 export declare interface HaMain {
@@ -145,7 +146,7 @@ export class HaMain extends EventEmitter {
 
         if (process.env.HAMAIN_LOGGING) {
             logger.level = process.env.HAMAIN_LOGGING;
-            logger.log(logger.level, 'Logging level overridden');
+            logger.log(logger.level, `Logging level overridden: ${logger.level}`);
         }
 
         if (isNaN(this._port)) {
@@ -202,96 +203,121 @@ export class HaMain extends EventEmitter {
             }
             this._haInterface = new HaInterface(this._useTLS, this._hostname, this._port, this._accessToken, this._pingInterval);
             this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
-            if (eventType != 'state_changed') logger.debug(`Service Event: ${eventType}`);
-            if (eventType == 'state_changed') {
-                let state: StateChange = data;
-                if (this._items.getItem(state.entity_id)) {
-                    if (state.new_state != null) {
-                        logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
-                        this.items.getItem(state.entity_id).setReceivedState(state.new_state);
+                // if (eventType != 'state_changed') logger.info(`Service Event: ${eventType}`);
+                if (eventType == 'state_changed') {
+                    let state: StateChange = data;
+                    if (this._items.getItem(state.entity_id)) {
+                        if (state.new_state != null) {
+                            logger.trace(`${state.entity_id} New state: ${state.new_state.state}`);
+                            this.items.getItem(state.entity_id).setReceivedState(state.new_state);
+                        }
+                        else {
+                            let item = this.items.getItem(state.entity_id);
+                            this.items.deleteItem(state.entity_id);
+                            this.emit('itemdeleted', item);
+                            logger.info(`Item ${state.entity_id} has been dropped`);
+                        }
                     }
                     else {
-                        let item = this.items.getItem(state.entity_id);
-                        this.items.deleteItem(state.entity_id);
-                        this.emit('itemdeleted', item);
-                        logger.info(`Item ${state.entity_id} has been dropped`);
+                        if (state.new_state != null) {
+                            let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
+                            let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
+                            this._setupItem(itemInstance); 
+                            logger.info(`Item ${state.entity_id} not found - added`);
+                        }
                     }
+                }
+                else if (eventType == 'call_service') {
+                    logger.debug(`Call Service ${JSON.stringify(data, null, 4)}`);
+                    logger.debug(`Ignored event "${eventType}"`)
+                }
+                // else if (eventType == 'entity_registry_updated') {
+                //     if (data.action == 'create') {
+                //         logger.info(`Adding new device ${data.entity_id}`);
+                //         let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
+                //         let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
+                //         this._setupItem(itemInstance); 
+                //     }
+                //     else if (data.action == 'remove') {
+                //         logger.info(`Removing deleted device ${data.entity_id}`);
+                //         let item = this.items.getItem(data.entity_id);
+                //         this.items.deleteItem(data.entity_id);
+                //         this.emit('itemdeleted', item);
+                //     }
+                //     else {
+                //         // TODO: Handle this
+                //         logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
+                //     }
+                // }
+                else if (eventType == 'component_loaded') {
+                    logger.trace(`${eventType}: ${JSON.stringify(data)}`);
+                }
+                else if (eventType == 'service_registered') {
+                    logger.trace(`${eventType}: ${JSON.stringify(data)}`);
+                }
+                else if (eventType == 'panels_updated') {
+                    logger.trace(`${eventType}: ${JSON.stringify(data)}`);
+                }
+                else if (eventType == 'homeassistant_start') {
+                    logger.trace(`${eventType}: ${JSON.stringify(data)}`);
+                }
+                else if (eventType == 'core_config_updated') {
+                    logger.trace(`${eventType}: ${JSON.stringify(data)}`);
+                }
+                else if (eventType == 'homeassistant_started') {
+                    logger.info(`${eventType}: ${JSON.stringify(data)}`);
+                    this.emit('homeassistantstarted');
                 }
                 else {
-                    if (state.new_state != null) {
-                        let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
-                        let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
-                        this._setupItem(itemInstance); 
-                        logger.info(`Item ${state.entity_id} not found - added`);
-                    }
+                    logger.debug(`Event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
                 }
-            }
-            else if (eventType == 'call_service') {
-                logger.debug(`Call Service ${JSON.stringify(data, null, 4)}`);
-                logger.debug(`Ignored event "${eventType}"`)
-            }
-            // else if (eventType == 'entity_registry_updated') {
-            //     if (data.action == 'create') {
-            //         logger.info(`Adding new device ${data.entity_id}`);
-            //         let item = ((await this._haInterface.getStates()).filter((value: any) => value.entity_id == data.entity_id))[0];
-            //         let itemInstance: IHaItem = this._haItemFactory.getItemObject(item);
-            //         this._setupItem(itemInstance); 
-            //     }
-            //     else if (data.action == 'remove') {
-            //         logger.info(`Removing deleted device ${data.entity_id}`);
-            //         let item = this.items.getItem(data.entity_id);
-            //         this.items.deleteItem(data.entity_id);
-            //         this.emit('itemdeleted', item);
-            //     }
-            //     else {
-            //         // TODO: Handle this
-            //         logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
-            //     }
-            // }
-            else {
-                logger.debug(`Event "${eventType}"\n${JSON.stringify(data, null, 4)}`);
-            }
-            this.emit('serviceevent', eventType, data);
-        });
+                this.emit('serviceevent', eventType, data);
+            });
 
-        this._haInterface.on('connected', async () => {
-            if (this._reconnect) {
-                this._processItems(await this._haInterface.getStates());
+            this._haInterface.on('connected', async () => {
+                if (this._reconnect) {
+                    this._processItems(await this._haInterface.getStates());
+                }
+                else {
+                    await this._haInterface.subscribe();
+                    logger.info('Subscribed to events');
+                    this._reconnect = false;
+                }
+            });
+
+            this._haItemFactory = new HaItemFactory(this._loggerLevels);
+            await this._haInterface.start();
+            this._haConfig = await this._haInterface.getConfig();
+            
+            if (this._haConfig.state != 'RUNNING') {
+                await this._waitHomeAssistantStarted();
+                this._haConfig = await this._haInterface.getConfig();
             }
-            else {
-                await this._haInterface.subscribe();
-                logger.info('Subscribed to events');
-                this._reconnect = false;
-            }
-        });
 
-        this._haItemFactory = new HaItemFactory(this._loggerLevels);
-        await this._haInterface.start();
-        this._haConfig = await this._haInterface.getConfig();
-        this._processItems(await this._haInterface.getStates());
-        logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
+            this._processItems(await this._haInterface.getStates());
+            logger.info(`Items loaded: ${Array.from(this._items.items.values()).length}`);
 
-        let itemTypes: any = {};
-        
-        Array.from(this._items.items.values()).forEach((value: IHaItem) => {
-            if (!(value.type in itemTypes)) {
-                itemTypes[value.type] = 0;
-            }
-            itemTypes[value.type] += 1;
-        });
+            let itemTypes: any = {};
+            
+            Array.from(this._items.items.values()).forEach((value: IHaItem) => {
+                if (!(value.type in itemTypes)) {
+                    itemTypes[value.type] = 0;
+                }
+                itemTypes[value.type] += 1;
+            });
 
-        Object.keys(itemTypes).sort().forEach((value, _index) => {
-            logger.info(`${value}: ${itemTypes[value]}`);
-        }); 
+            Object.keys(itemTypes).sort().forEach((value, _index) => {
+                logger.info(`${value}: ${itemTypes[value]}`);
+            }); 
 
-        let appPromises: Promise<AppInfo[]>[] = [];
-        this._config.main.appsDir.forEach(async (item: string) => {
-            // this._setWatcher(item);
-        
-            appPromises.push(this._getApps(this._config.main.ignoreApps, item));
-        });
+            let appPromises: Promise<AppInfo[]>[] = [];
+            this._config.main.appsDir.forEach(async (item: string) => {
+                // this._setWatcher(item);
+            
+                appPromises.push(this._getApps(this._config.main.ignoreApps, item));
+            });
 
-        Promise.all(appPromises)
+            Promise.all(appPromises)
             .then((results) => {
                 results.forEach(result => this._apps = this._apps.concat(result));
                 // Construct all apps
@@ -307,6 +333,14 @@ export class HaMain extends EventEmitter {
             logger.info(`Stack:\n${err.stack}`);
             throw err;
         }
+    }
+
+    private async _waitHomeAssistantStarted(): Promise<void> {
+        return new Promise<void>((resolve, _reject) => {
+            this.once('homeassistantstarted', () => {
+                resolve();
+            });
+        });
     }
 
     public async restartApp(app: AppInfo): Promise<void> {

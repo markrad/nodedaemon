@@ -111,7 +111,7 @@ export class HaInterface extends EventEmitter {
     private _tracker: Map<number, any> = new Map<number, any>();
     private _pingInterval: number;
     private _connected: boolean = false;
-    private _running: boolean = false;
+    // private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
     public constructor(useTLS: boolean, hostname: string, port: number,  accessToken: string, pingInterval: number = 30) {
         super();
@@ -124,7 +124,7 @@ export class HaInterface extends EventEmitter {
 
         if (process.env.HAINTERFACE_LOGGING) {
             logger.level = process.env.HAINTERFACE_LOGGING;
-            logger.log(logger.level, 'Logging level overridden');
+            logger.log(logger.level, `Logging level overridden: ${logger.level}`);
         }
     }
 
@@ -237,9 +237,9 @@ export class HaInterface extends EventEmitter {
         return this._waitAuth.EventIsResolved;
     }
 
-    public get isHaRunning() {
-        return this._running;
-    }
+    // public get isHaRunning() {
+    //     return this._running;
+    // }
 
     private _makePacket(packetType: string): IOutPacket {
         let packet: IOutPacket = { id: ++this._id, type: packetType };
@@ -265,7 +265,7 @@ export class HaInterface extends EventEmitter {
 
     public async getStates(): Promise<any []> {
         return new Promise<any []>(async (resolve, reject) => {
-            await this._waitHaRunning();
+            // await this._waitHaRunning();
             this._sendPacket(this._makePacket('get_states'))
                 .then((response: any) => {
                     logger.info('States acquired');
@@ -283,7 +283,7 @@ export class HaInterface extends EventEmitter {
             this._sendPacket(this._makePacket('get_config'))
                 .then((response: any) => {
                     logger.debug('Config acquired');
-                    this._running = 'RUNNING' == response.result.state;
+                    // this._running = 'RUNNING' == response.result.state;
                     resolve(response.result);
                 })
                 .catch((err) => {
@@ -295,7 +295,7 @@ export class HaInterface extends EventEmitter {
 
     public async getPanels(): Promise<string> {
         return new Promise<string>(async (resolve, reject) => {
-            await this._waitHaRunning();
+            // await this._waitHaRunning();
             this._sendPacket(this._makePacket('get_panels'))
                 .then((response: any) => {
                     logger.info('Panels acquired');
@@ -421,13 +421,13 @@ export class HaInterface extends EventEmitter {
         }
     }
 
-    private async _wait(seconds: number) {
-        return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-    }
+    // private async _wait(seconds: number) {
+    //     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    // }
 
     private _kill() {
         this._connected = false;
-        this._running = false;
+        // this._running = false;
         // clearTimeout(this._pingInterval);
     }
 
@@ -440,27 +440,27 @@ export class HaInterface extends EventEmitter {
         })
     }
 
-    private async _waitHaRunning(): Promise<void> {
-        return new Promise<void>(async (resolve, _reject) => {
-            if (this._running) {
-                resolve();
-            }
-            else {
-                while ('RUNNING' != (await this.getConfig()).state) {
-                    try {
-                        logger.info('Waiting for HA to signal RUNNING');
-                        await this._wait(3);
-                    }
-                    catch (err) {
-                        logger.warn(`Failed to get config - will delay ten seconds`);
-                        await this._wait(10);
-                    }
-                }
+    // private async _waitHaRunningx(): Promise<void> {
+    //     return new Promise<void>(async (resolve, _reject) => {
+    //         if (this._running) {
+    //             resolve();
+    //         }
+    //         else {
+    //             while ('RUNNING' != (await this.getConfig()).state) {
+    //                 try {
+    //                     logger.info('Waiting for HA to signal RUNNING');
+    //                     await this._wait(3);
+    //                 }
+    //                 catch (err) {
+    //                     logger.warn(`Failed to get config - will delay ten seconds`);
+    //                     await this._wait(10);
+    //                 }
+    //             }
 
-                resolve();
-            }
-        });
-    }
+    //             resolve();
+    //         }
+    //     });
+    // }
 
     private async _sendPacket(packet: IOutPacket, handler?:Function): Promise<IServiceSuccess | IServiceError | IServicePong> {
         return new Promise<IServiceSuccess | IServiceError | IServicePong>(async (resolve, reject) => {
