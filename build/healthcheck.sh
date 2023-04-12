@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 X=$(curl http://localhost:4526/healthcheck | jq '.status')
 
