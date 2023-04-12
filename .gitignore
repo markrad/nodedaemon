@@ -110,7 +110,7 @@ dist
 .tern-port
 
 # Config files
-config.yaml
+config*.yaml
 secrets.yaml
 
 # Certificates
@@ -119,3 +119,6 @@ dockercerts/
 
 # Code counter extension file
 .VSCodeCounter/
+
+# Test directories
+haconfig/

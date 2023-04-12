@@ -19,6 +19,5 @@ RUN tsc
 ADD healthcheck.sh ./healthcheck.sh
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "./healthcheck.sh" ]
 
-# CMD [ "node", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
 # TODO Add --inspect as arg between keepalive and nodedaemon
 CMD [ "node", "./output/tools/keepalive/index.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
