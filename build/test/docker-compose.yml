@@ -1,6 +1,30 @@
 version: "3.9"
 services:
 
+  homeassitant:
+    image: homeassistant/home-assistant:2023.4.2
+    container_name: homeassistant
+    networks:
+      - privatenet
+    restart: always
+    # dns:
+    #   - 192.168.1.2
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/markrad/source/nodedaemon/build/test/haconfig:/config
+      # - /home/markrad/ha/hass/certs:/certs
+      # - /home/markrad/ha/hass/ca-certificates-plus-radrealm.crt:/etc/ssl/certs/ca-certificates.crt      # Includes RadRealm root certificate
+    # devices: 
+    #   - '/dev/ttyS0:/dev/ttyS0'
+    ports:
+      - 8123:8123
+      - 6053:6053   # ESPHome
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   nodedaemon:
     container_name: NodeDaemon
     networks:
@@ -20,6 +44,7 @@ services:
       - 8822:8822
       - 9229:9229   # Debug
       - 4526:4526
+    command: [ "node", "./output/tools/keepalive/index.js", "--inspect=0.0.0.0:9229", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
     logging:
       driver: "json-file"
       options:
