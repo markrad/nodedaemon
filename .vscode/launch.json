@@ -33,7 +33,7 @@
             "program": "${workspaceFolder}/output/nodedaemon.js",
             "outputCapture": "std",
             // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
-            "args": [ "--appsdir", "./output/sysapps", "--config", "./build/test/config.yaml" ],
+            "args": [ "--appsdir", "./output/sysapps", "--config", "./build/test/config/configTest.yaml" ],
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "info",
@@ -48,9 +48,9 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/output/tools/keepalive/index.js",
-            "outputCapture": "std",
+            // "outputCapture": "std",
             // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
-            "args": [ "./output/nodedaemon.js", "--appsdir", "./output/sysapps" ],
+            "args": [ "./output/nodedaemon.js", "--appsdir", "./output/sysapps", "--config", "./build/test/configTest.yaml" ],
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "info",
