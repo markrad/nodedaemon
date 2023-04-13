@@ -100,34 +100,38 @@ export class WSWrapper extends EventEmitter {
                 }
                 await new Promise<void>((resolve) => setTimeout(resolve, 1000));
             }
-            // TODO: Control should not pass to here if the above fails
-            logger.debug(`Connected to ${this._url}`);
-            
-            this._client
-            .on('message', (data) => {
-                logger.trace(`Data received:\n${JSON.stringify(data, null, 2)}`);
-                this.emit('message', data);
-            })
-            .on('close', async (code, reason) => {
-                this._connected = false;
-                this.emit('disconnected');
+            if (this.connected) {
+                logger.debug(`Connected to ${this._url}`);
+                
+                this._client
+                .on('message', (data) => {
+                    logger.trace(`Data received:\n${JSON.stringify(data, null, 2)}`);
+                    this.emit('message', data);
+                })
+                .on('close', async (code, reason) => {
+                    this._connected = false;
+                    this.emit('disconnected');
 
-                if (!this._closing) {
-                    logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
+                    if (!this._closing) {
+                        logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
+                        await this.open();
+                    }
+                })
+                .on('error', async (err) => {
+                    logger.warn(`Connection error: ${err.message} - reconnecting`);
+                    await this.close();
                     await this.open();
-                }
-            })
-            .on('error', async (err) => {
-                logger.warn(`Connection error: ${err.message} - reconnecting`);
-                await this.close();
-                await this.open();
-            })
-            .on('unexpected-response', (_clientRequest, _incomingMessage) => {
-                logger.warn('Unexpected response');
-            });
-            this.emit('connected');
-            this._runPings();
-            resolve();
+                })
+                .on('unexpected-response', (_clientRequest, _incomingMessage) => {
+                    logger.warn('Unexpected response');
+                });
+                this.emit('connected');
+                this._runPings();
+                resolve();
+            }
+            else {
+                logger.fatal('Unrecoverable connect error');
+            }
         });
     }
 

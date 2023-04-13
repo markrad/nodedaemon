@@ -76,7 +76,6 @@ export class TransportSSH implements ITransport {
 
     public async start(): Promise<void> {
         this._server = new Server({ hostKeys: [this._hostKey] }, (connection: Connection) => {
-            // TODO Track clients so they can be terminated at shutdown
             logger.info('New client connected');
             this._addClient(new TransportSSHClient(connection).start(this, this._parent)
                 .on('end', (client: TransportSSHClient) =>  { 
