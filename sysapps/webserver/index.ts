@@ -75,10 +75,14 @@ export default class WebServer extends AppParent {
             res.status(200).render('index', { title: 'Useful Links'});
         });
 
-        this._app.get('/healthcheck', async (_req, res) => {
+        this._app.get('/healthcheck', async (req, res) => {
             let rc: any = {};
+            logger.debug(req);
             try {
-                let testvar = entityValidator.isValid('var.healthcheck', { entityType: HaGenericUpdateableItem, name: 'Health Check'});
+                if (this.controller.isConnected == false) {
+                    throw new Error('Not connected to home assistant');
+                }
+                let testvar = entityValidator.isValid(req.query.entity, { entityType: HaGenericUpdateableItem, name: 'Health Check'});
                 let now = new Date().toISOString();
                 let result: ServicePromise = await testvar.updateState(now, false);
 
