@@ -8,80 +8,20 @@ import { EventWaiter } from '../common/eventwaiter';
 import http from 'http';
 import https from 'https';
 import { IHaItem } from '../haitems/ihaitem';
-
-enum PacketTypesIn {
-    ServiceAuthRequired,
-    ServiceAuthOk,
-    ServiceAuthInvalid,
-    ServiceError,
-    ServiceSuccess,
-    ServicePong,
-    ServiceEvent,
-}
-interface IServiceParent {
-    type: string;
-    name: PacketTypesIn;
-}
-interface IServiceAuthRequired extends IServiceParent {
-    type: "auth_required";
-    ha_version: "string";
-}
-
-interface IServiceAuthOk extends IServiceParent {
-    type: "auth_ok";
-    ha_version: "string";
-}
-
-interface IServiceAuthInvalid extends IServiceParent{
-    type: "auth_invalid";
-    message: "string";
-}
-
-interface IServiceErrorDetails {
-    code: string;
-    message: string;
-}
-
-interface IServiceError extends IServiceParent {
-    id: number;
-    type: "result";
-    "success": false;
-    error: IServiceErrorDetails;
-}
-
-interface IServiceSuccess extends IServiceParent {
-    id: number;
-    type: "result";
-    success: true;
-    result: any;
-}
-
-interface IServiceEvent extends IServiceParent {
-    id: number;
-    type: "event";
-    event: any;
-}
-
-interface IServicePong extends IServiceParent {
-    id: number;
-    type: "pong";
-}
-
-interface IServiceAuth extends IServiceParent {
-    type: "auth";
-    access_token: string;
-}
-
-interface IOutPacket {
-    id: number;
-    type: string;
-}
-
-class AuthenticationError extends Error {
-    public constructor(message: string) {
-        super(message);
-    }
-}
+import { PacketTracker } from './packetTracker';
+import { IServiceParent } from './IServiceParent';
+import { IServiceAuthRequired } from './IServiceAuthRequired';
+import { IServiceAuthOk } from './IServiceAuthOk';
+import { IServiceAuthInvalid } from './IServiceAuthInvalid';
+import { IServiceErrorDetails } from './IServiceErrorDetails';
+import { IServiceError } from './IServiceError';
+import { IServiceSuccess } from './IServiceSuccess';
+import { IServiceEvent } from './IServiceEvent';
+import { IServicePong } from './IServicePong';
+import { IServiceAuth } from './IServiceAuth';
+import { IOutPacket } from './IOutPacket';
+import { AuthenticationError } from './AuthenticationError';
+import { PacketTypesIn } from './PacketTypesIn';
 
 const CATEGORY = 'HaInterface';
 
@@ -108,11 +48,12 @@ export class HaInterface extends EventEmitter {
     private _hostname: string;
     private _port: number;
     private _id: number = 0;
-    private _tracker: Map<number, any> = new Map<number, any>();
+    // private _tracker: Map<number, any> = new Map<number, any>();
     private _pingInterval: number;
     private _connected: boolean = false;
     // private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
+    private _packetTracker: PacketTracker = new PacketTracker();
     public constructor(useTLS: boolean, hostname: string, port: number,  accessToken: string, pingInterval: number = 30) {
         super();
         this._accessToken = accessToken;
@@ -177,8 +118,7 @@ export class HaInterface extends EventEmitter {
                         if (msgResponse) {
                             try {
                                 logger.trace(`Response to id=${msgResponse?.id ?? "none"};type=${msgResponse?.type ?? 'none'}${msgResponse?.type == 'result'? ";success=" + msgResponse.success : ''}`);
-                                this._tracker.get(msgResponse.id).handler(msgResponse);
-                                this._tracker.delete(msgResponse.id);
+                                this._packetTracker.deliverResponse(msgResponse.id, msgResponse);
                             }
                             catch (err: any) {
                                 logger.error('Message received with no response handler - probably timed out waiting for it');
@@ -211,17 +151,8 @@ export class HaInterface extends EventEmitter {
     public async stop(): Promise<void> {
         return new Promise<void>(async (resolve, _reject) => {
             logger.info('Closing');
-
-            // let timer = setTimeout(() => {
-            //     logger.warn('Failed to close before timeout')
-            //     reject(new Error('Failed to close connection'));
-            // }, 500000000);
-            // this._client.once('close', (_reason, _description) => {
-            //     logger.info('Closed');
-            //     clearTimeout(timer);
-            //     resolve();
-            // });
             this._kill();
+            this._packetTracker.cleanup();
             await this._client.close();
             this.removeAllListeners();
             logger.info('Closed');
@@ -462,31 +393,11 @@ export class HaInterface extends EventEmitter {
     //     });
     // }
 
-    private async _sendPacket(packet: IOutPacket, handler?:Function): Promise<IServiceSuccess | IServiceError | IServicePong> {
+    private async _sendPacket(packet: IOutPacket/*, handler?:Function*/): Promise<IServiceSuccess | IServiceError | IServicePong> {
         return new Promise<IServiceSuccess | IServiceError | IServicePong>(async (resolve, reject) => {
             await this._waitAuthenticated();
             logger.trace(`Sending packet id=${packet.id};type=${packet?.type || 'none'}`);
-            let timer = setTimeout((packet) => {
-                logger.error(`No reponse received for packet ${JSON.stringify(packet)}`);
-                this._tracker.delete(packet.id);
-                reject(new Error(`No response to ${JSON.stringify(packet)}`));
-            }, 10000, packet);
-            this._tracker.set(packet.id, {
-                packet: packet,
-                handler: (response: IServiceSuccess | IServiceError | IServicePong) => {
-                    clearTimeout(timer);
-                    if (handler) {
-                        handler(response);
-                    }
-
-                    if (response.type == 'pong' || (response.type == 'result' && response.success)) {
-                        resolve(response);
-                    }
-                    else {
-                        reject(new Error('Bad response:' + JSON.stringify(response)));
-                    }
-                },
-            });
+            this._packetTracker.addInFlight(packet.id, { packet: packet, resolve: resolve, reject: reject });
             this._client.send(JSON.stringify(packet));
         });
     }
