@@ -19,8 +19,16 @@ export function getConfig(configFile: string): any {
             }
         },
     }
+    const include: ScalarTag = {
+        identify: value => value instanceof String,
+        default: false,
+        tag: '!include',
+        resolve(str) {
+            return YAML.parse(fs.readFileSync(Path.join(Path.dirname(configFile), str), 'utf8'), { customTags: [ secret, include ] });;
+        }
+    }
     
     secrets = YAML.parse(fs.readFileSync(Path.join(Path.dirname(configFile), 'secrets.yaml'), 'utf8'));
-    config = YAML.parse(fs.readFileSync(configFile, 'utf8'),  { customTags: [secret] });
+    config = YAML.parse(fs.readFileSync(configFile, 'utf8'),  { customTags: [ secret, include ] });
     return config;
 }
