@@ -100,7 +100,7 @@ try {
     var config: any;
     var configPath = Path.dirname(configFile);
     var log4js: Log4js;
-
+// TODO Wrap config in class and emit hound events
     try {
         config = getConfig(configFile);
     }
