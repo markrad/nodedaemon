@@ -156,16 +156,6 @@ export class Astro extends AppParent
             return false;
         }
         try {
-            if (config.logLevel) {
-                try {
-                    this.logging = config.logLevel;
-                    logger.info(`Set log level to ${config.logLevel}`);
-                }
-                catch (err: any) {
-                    logger.error(`Failed to set log level to ${config.logLevel}`);
-                }
-            }
-
             this._longitude = this.controller.haConfig.longitude;
             this._latitude = this.controller.haConfig.latitude;
 
