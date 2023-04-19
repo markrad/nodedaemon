@@ -15,9 +15,8 @@ import { ServiceTarget } from '../haitems/haparentitem';
 import { IApplication } from '../common/IApplication';
 import { LogLevelValidator } from '../common/loglevelvalidator';
 import { AppInfo, AppStatus } from './appinfo';
-import { getConfig } from '../common/yamlscaler';
+import { ConfigWrapper } from '../common/ConfigWrapper';
 
-const hound = require('hound');
 var reload: NodeRequire = require('require-reload');
 
 const CATEGORY: string = 'HaMain';
@@ -51,12 +50,11 @@ export class HaMain extends EventEmitter {
     private static _instance: HaMain = null;
     private _haInterface: HaInterface = null;
     private _items: ItemsManager = new ItemsManager();
-    private _config: any;
+    private _config: ConfigWrapper;
     private _apps: AppInfo[] = [];
     private _haItemFactory: HaItemFactory = null;
     private _haConfig: any = null;
     private _starttime: Date = new Date();
-    private _configPath;
     private _reconnect: boolean = false;
     private _version: string = null;
     private _useTLS: boolean;
@@ -66,7 +64,6 @@ export class HaMain extends EventEmitter {
     private _pingInterval: number = NaN;
     private _memInterval: number = NaN;
     private _memHandle: NodeJS.Timer = null;
-    private _configFile: string = null;
     private _configWatcher: any;
     private _loggerLevels: LoggerLevel[];
     public static getInstance(): HaMain {
@@ -75,72 +72,38 @@ export class HaMain extends EventEmitter {
         }
         return HaMain._instance;
     }
-    constructor(config: any, configPath: string, configName: string, version: string) {
+    constructor(config: ConfigWrapper, version: string) {
         super();
         this._config = config;
-        this._configPath = configPath;
-        this._configFile = path.join(configPath, configName);
         this._version = version;
-        this._useTLS = Boolean(this._config.main.useTLS);
-        this._hostname = this._config.main.hostname ?? '127.0.0.1';
-        this._port = this._config.main.port ?? 8123
-        this._accessToken = this._config.main.accessToken;
-        this._pingInterval = this._config.main.pintInterval ?? 0;
-        this._memInterval = this._config.main.memInterval ?? 0;
-        this._configWatcher = hound.watch(this._configFile);
-        this._loggerLevels = this._config.main.loggerLevelOverrides;
+        this._useTLS = Boolean(this._config.getConfigSection('main').useTLS);
+        this._hostname = this._config.getConfigSection('main').hostname ?? '127.0.0.1';
+        this._port = this._config.getConfigSection('main').port ?? 8123
+        this._accessToken = this._config.getConfigSection('main').accessToken;
+        this._pingInterval = this._config.getConfigSection('main').pintInterval ?? 0;
+        this._memInterval = this._config.getConfigSection('main').memInterval ?? 0;
+        // this._configWatcher = hound.watch(this._configFile);
+        this._loggerLevels = this._config.getConfigSection('main').loggerLevelOverrides;
 
-        this._configWatcher.on('change', async (file: string, _stats: any) => {
-            try {
-                let countProps: (o: Object) => number = (o: Object): number => {
-                    let count: number = 0;
-                    for (let k in o) {
-                        if (o.hasOwnProperty(k)) count++;
-                    }
-                    return count;
-                }
-                let objectEquals: (l: any, r: any) => boolean = (l, r): boolean => {
-                    if (l instanceof Object && r instanceof Object) {
-                        if (countProps(l) != countProps(r)) return false;
-                        let ret: boolean;
-                        for (let k in l) {
-                            ret = objectEquals(l[k], r[k]);
-                            if (!ret) return false;
-                        }
-                        return true;
-                    }
-                    else {
-                        return l == r;
-                    }
-                }
-                let newConfig = getConfig(file);
-                for (let key in newConfig) {
-                    if (key != 'main') {
-                        if (this._config[key] === undefined) {
-                            logger.info(`New application found: ${key} - to load a restart is required`);
-                        }
-                        else if (!objectEquals(newConfig[key], this._config[key])) {
-                            logger.info(`Found config update for application ${key}`);
-                            let app: AppInfo = this.getAppByDirent(key);
-                            if (!app) {
-                                logger.info(`Application ${key} is in the ignore list`);
-                            }
-                            else {
-                                app.config = newConfig[key];
-                                
-                                if (app.status == AppStatus.RUNNING) {
-                                    this.restartApp(app);
-                                }
-                                else {
-                                    logger.info(`Not starting stopped application ${app.name}`);
-                                }
-                            }
-                        }
-                    }
-                }
+        this._config.on('new', (key) => {
+            logger.info(`New application found: ${key} - to load a restart is required`);
+        });
+
+        this._config.on('changed', (key) => {
+            logger.info(`Found config update for application ${key}`);
+            let app: AppInfo = this.getAppByDirent(key);
+            if (!app) {
+                logger.info(`Application ${key} is in the ignore list`);
             }
-            catch (err) {
-                logger.error(`Failed to acquire new config file: ${err}`);
+            else {
+                app.config = this._config.getConfigSection(key);
+                
+                if (app.status == AppStatus.RUNNING) {
+                    this.restartApp(app);
+                }
+                else {
+                    logger.info(`Not starting stopped application ${app.name}`);
+                }
             }
         });
 
@@ -311,10 +274,9 @@ export class HaMain extends EventEmitter {
             }); 
 
             let appPromises: Promise<AppInfo[]>[] = [];
-            this._config.main.appsDir.forEach(async (item: string) => {
-                // this._setWatcher(item);
+            this._config.getConfigSection('main').appsDir.forEach(async (item: string) => {
             
-                appPromises.push(this._getApps(this._config.main.ignoreApps, item));
+                appPromises.push(this._getApps(this._config.getConfigSection('main').ignoreApps, item));
             });
 
             Promise.all(appPromises)
@@ -322,7 +284,7 @@ export class HaMain extends EventEmitter {
                 results.forEach(result => this._apps = this._apps.concat(result));
                 // Construct all apps
                 this._apps.forEach(async (app) => {
-                    await this._startApp(app, this._config.main.norunApps);
+                    await this._startApp(app, this._config.getConfigSection('main').norunApps);
                 });
                 logger.info(`Apps loaded: ${this._apps.length}`);
                 this.emit('appsinitialized');
@@ -496,13 +458,13 @@ export class HaMain extends EventEmitter {
                 resolve();
             }
             catch (err) {
-                reject(err);
+                reject(err); 
             }
         });
     }
 
     public get configPath(): string {
-        return this._configPath;
+        return this._config.configPath;
     }
 
     public get items(): ItemsManager {
@@ -609,80 +571,7 @@ export class HaMain extends EventEmitter {
         this._items.addItem(itemInstance);
         this.emit('itemadded', this.items.getItem(itemInstance.entityId));
 }
-/*        
 
-    private _setWatcher(_item: unknown) {
-        hound.watch(item)
-            .on('create', (file, stats) => {
-                if (this._isApp(this.config.main.appsDir, file, stats)) {
-                    logger.debug(`App ${file} created - will attempt to load`);
-                    let appobject;
-                    try {
-                        let app = reload(file);
-                        appobject = new app(this, this.config);
-                        this._apps.push({ name: appobject.__proto__.constructor.name, path: path.dirname(file), instance: appobject, status: 'constructed' });
-                        appobject.run();
-                        this._apps[this.apps.length - 1].status = 'running';
-                        logger.info(`App ${file} loaded`);
-                    }
-                    catch (err) {
-                        this._apps.push({ name: appobject.__proto__.constructor.name, path: path.join(dir.path, dirent.name), instance: appobject, status: 'failed' });
-                        logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
-                    }
-                }
-            })
-            .on('change', async (file, stats) => {
-                if (this._isApp(this.config.main.appsDir, file, stats)) {
-                    logger.debug(`App ${file} changed - will attempt to reload`);
-                    let appIndex = this._apps.findIndex(element => path.join(element.path, 'index.js') == file);
-                    
-                    if (appIndex != -1) {
-                        let appEntry = this._apps[appIndex];
-                        if (appEntry.status == 'running') {
-                            await appEntry.instance.stop();
-                        }
-                        try {
-                            let appObject = reload(file);
-                            appEntry.instance = new appObject(this, this.config);
-                            appEntry.instance.run();
-                            appEntry.status = 'running';
-                            logger.info(`App ${file} reloaded`);
-                        }
-                        catch (err) {
-                            logger.error(`Failed to refreshh app ${appEntry.name}: ${err}`);
-                            appEntry.status = 'failed';
-                        }
-                    }
-                }
-            })
-            .on('delete', async (file) => {
-                if (this._isApp(this.config.main.appsDir, file)) {
-                    logger.debug(`App ${file} deleted - will stop and remove`);
-                    let appIndex = this._apps.findIndex(element => path.join(element.path, 'index.js') == file);
-
-                    if (appIndex != -1) {
-                        let app = this._apps.splice(appIndex, 1);
-                        if (app.status == 'running') {
-                            await app.instance.stop();
-                            logger.info(`App ${file} stopped`);
-                        }
-                    }
-                }
-            });
-    }
-*/
-/*
-    private _isApp(appsDir: string[], file: string, stats?: any) {
-        stats = stats ?? { isFile: () => { return true; } }
-        return stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length;
-        // if (stats.isFile() && path.basename(file) == 'index.js' && 1 == appsDir.filter(item => file.startsWith(item) && file.endsWith(path.relative(item, file))).length) {
-        //     return true;
-        // }
-        // else {
-        //     return false;
-        // }
-    }
-*/
     private async _getApps(ignoreApps: string[], appsDirectory: string): Promise<AppInfo[]> {
         let ret = new Promise<AppInfo[]>(async (resolve, reject) => {
             try {
@@ -703,7 +592,7 @@ export class HaMain extends EventEmitter {
                                     let app = reload(fullname).default;
                                     let loc: string = path.join(dir.path, dirent.name);
                                     try {
-                                        if (this._config[dirent.name] === undefined) {
+                                        if (this._config.getConfigSection(dirent.name) === undefined) {
                                             logger.warn(`Ignoring ${dirent.name} - no config`);
                                         }
                                         else {
@@ -716,25 +605,11 @@ export class HaMain extends EventEmitter {
                                                     // Error already logged
                                                 }
                                             });
-                                            apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.CONSTRUCTED, config: this._config[dirent.name] });
-                                            // if (appobject.validate == undefined || appobject.validate(this._config[dirent.name])) {
-                                            //     appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
-                                            //         try {
-                                            //             await this._haInterface.callService(domain, service, data)
-                                            //         }
-                                            //         catch (err) {
-                                            //             // Error already logged
-                                            //         }
-                                            //     });
-                                            //     apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.CONSTRUCTED });
-                                            // }
-                                            // else {
-                                            //     apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.BADCONFIG });
-                                            // }
+                                            apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.CONSTRUCTED, config: this._config.getConfigSection(dirent.name) });
                                         }
                                     }
                                     catch (err) {
-                                        apps.push({ name: appobject?.constructor.name, path: loc, instance: appobject, status: AppStatus.FAILED, config: this._config[dirent.name] });
+                                        apps.push({ name: appobject?.constructor.name, path: loc, instance: appobject, status: AppStatus.FAILED, config: this._config.getConfigSection(dirent.name) });
                                         logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                                     }
                                 }

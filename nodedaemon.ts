@@ -4,11 +4,11 @@ import { Command } from 'commander';
 import Path from 'path';
 import { HaMain } from './hamain';
 import { LogLevelValidator, LogLevels } from './common/loglevelvalidator';
-import { getConfig } from './common/yamlscaler';
+import { ConfigWrapper } from './common/ConfigWrapper';
 
 const CATEGORY: string = 'main';
 
-async function main(version: string, config: any, configPath: string, configName: string, log4js: Log4js) {
+async function main(version: string, config: ConfigWrapper, log4js: Log4js) {
     const LOGO: string = `
                                                   
              |         |                         
@@ -31,7 +31,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 
     try {
-        var haMain: HaMain = new HaMain(config, configPath, configName, version);
+        var haMain: HaMain = new HaMain(config, version);
 
         process.stdin.resume();
         ['SIGINT', 'SIGUSR1', 'SIGUSR2', 'SIGTERM'].forEach((eventType) => {
@@ -97,12 +97,10 @@ try {
         fatalExit(`Config file ${configFile} not found`, 4);
     }
 
-    var config: any;
-    var configPath = Path.dirname(configFile);
+    var config: ConfigWrapper;
     var log4js: Log4js;
-// TODO Wrap config in class and emit hound events
     try {
-        config = getConfig(configFile);
+        config = new ConfigWrapper(configFile);
     }
     catch (err) {
         fatalExit(`Config file ${program.opts().config} is invalid: ${err}`, 4);
@@ -120,24 +118,24 @@ try {
         }
     }
 
-    if (config.main.loggers?.mqtt ?? null) {
+    if (config.getConfigSection('main').loggers?.mqtt ?? null) {
         loggerOptions.appenders.mqtt = { 
             type: 'common/mqttlogger', 
-            host: config.main.loggers.mqtt.host,
-            clientid: config.main.loggers.mqtt.clientid,
-            username: config.main.loggers.mqtt.username,
-            password: config.main.loggers.mqtt.password
+            host: config.getConfigSection('main').loggers.mqtt.host,
+            clientid: config.getConfigSection('main').loggers.mqtt.clientid,
+            username: config.getConfigSection('main').loggers.mqtt.username,
+            password: config.getConfigSection('main').loggers.mqtt.password
         }
         loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('mqtt');
     }
 
-    if (config.main.loggers?.file ?? null) {
+    if (config.getConfigSection('main').loggers?.file ?? null) {
         loggerOptions.appenders.dateFile = {
             type: 'file',
-            filename: config.main.loggers.file.name,
-            pattern: config.main.loggers.file.pattern ?? ".yyyy-MM-dd",
-            backups: config.main.loggers.file.backups ?? 5,
-            mode: config.main.loggers.file.mode ?? 0o644,
+            filename: config.getConfigSection('main').loggers.file.name,
+            pattern: config.getConfigSection('main').loggers.file.pattern ?? ".yyyy-MM-dd",
+            backups: config.getConfigSection('main').loggers.file.backups ?? 5,
+            mode: config.getConfigSection('main').loggers.file.mode ?? 0o644,
             keepFileExt: true
         } as any;                                                           // Typescript types are broken
         loggerOptions.categories.default.appenders = loggerOptions.categories.default.appenders.concat('dateFile');
@@ -147,20 +145,20 @@ try {
 
     defaultLogger = getLogger();
 
-    if (!config.main.hostname) {
+    if (!config.getConfigSection('main').hostname) {
         fatalExit(`Config file ${program.opts().config} is missing the url value`, 4, defaultLogger);
     }
 
-    if (!config.main.port) {
-        config.main.port = 8123;
+    if (!config.getConfigSection('main').port) {
+        config.getConfigSection('main').port = 8123;
     }
 
-    if (!config.main.accessToken) {
+    if (!config.getConfigSection('main').accessToken) {
         fatalExit(`Config file ${program.opts().config} is missing the accessToken value`, 4, defaultLogger);
     }
 
-    if (config.main.logLevel && !LogLevelValidator(config.main.logLevel)) {
-        fatalExit(`Config file ${program.opts().config} has an invalid logLevel value of ${config.main.logLevel}`, 4, defaultLogger);
+    if (config.getConfigSection('main').logLevel && !LogLevelValidator(config.getConfigSection('main').logLevel)) {
+        fatalExit(`Config file ${program.opts().config} has an invalid logLevel value of ${config.getConfigSection('main').logLevel}`, 4, defaultLogger);
     }
 
     if (program.opts().logLevel && !LogLevelValidator(program.opts().debug)) {
@@ -173,22 +171,22 @@ try {
             fatalExit(`Invalid value passed for --scriptpid: ${program.opts().scriptpid}`, 4, defaultLogger);
         }
         else {
-            config.main.scriptPid = pid;
+            config.getConfigSection('main').scriptPid = pid;
         }
     }
 
     if (program.opts().loglevel) {
-        config.main.logLevel = program.opts().loglevel;
+        config.getConfigSection('main').logLevel = program.opts().loglevel;
     }
-    else if (!config.main.logLevel) {
-        config.main.logLevel = defaultLogLevel.levelStr;
+    else if (!config.getConfigSection('main').logLevel) {
+        config.getConfigSection('main').logLevel = defaultLogLevel.levelStr;
     }
 
-    if (!config.main.appsDir) {
-        config.main.appsDir = [];
+    if (!config.getConfigSection('main').appsDir) {
+        config.getConfigSection('main').appsDir = [];
     }
-    else if (!Array.isArray(config.main.appsDir)) {
-        config.main.appsDir = [ config.main.appsDir ];
+    else if (!Array.isArray(config.getConfigSection('main').appsDir)) {
+        config.getConfigSection('main').appsDir = [ config.getConfigSection('main').appsDir ];
     }
 
     let cmdAppsDir = [];
@@ -202,56 +200,56 @@ try {
         cmdAppsDir = program.opts().appsdir;
     }
 
-    config.main.appsDir = program.opts().replace? cmdAppsDir : config.main.appsDir.concat(cmdAppsDir);
+    config.getConfigSection('main').appsDir = program.opts().replace? cmdAppsDir : config.getConfigSection('main').appsDir.concat(cmdAppsDir);
 
-    if (config.main.appsDir.length == 0) {
-        config.main.appsDir.push('./apps');
+    if (config.getConfigSection('main').appsDir.length == 0) {
+        config.getConfigSection('main').appsDir.push('./apps');
     }
 
-    config.main.appsDir = config.main.appsDir.map((item: string) => {
+    config.getConfigSection('main').appsDir = config.getConfigSection('main').appsDir.map((item: string) => {
         if (typeof item != 'string') {
             fatalExit(`appsDir ${item} is invalid`, 4, defaultLogger);
         }
         return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
     });
 
-    config.main.appsDir = Array.from(new Set(config.main.appsDir));
+    config.getConfigSection('main').appsDir = Array.from(new Set(config.getConfigSection('main').appsDir));
 
-    config.main.appsDir.forEach((item: string, index: number) => {
+    config.getConfigSection('main').appsDir.forEach((item: string, index: number) => {
         if (!fs.existsSync(item)) {
-            config.main.appsDir[index] = null;
+            config.getConfigSection('main').appsDir[index] = null;
             defaultLogger.error(`Specified appsdir ${item} does not exist`);
         }
     });
 
-    config.main.appsDir = config.main.appsDir.filter((item: string) => item != null);
+    config.getConfigSection('main').appsDir = config.getConfigSection('main').appsDir.filter((item: string) => item != null);
 
-    if (config.main.appsDir.length == 0) {
+    if (config.getConfigSection('main').appsDir.length == 0) {
         fatalExit('No valid apps directories were found', 4, defaultLogger);
     }
 
-    if (!config.main.ignoreApps) {
-        config.main.ignoreApps = [];
+    if (!config.getConfigSection('main').ignoreApps) {
+        config.getConfigSection('main').ignoreApps = [];
     }
-    else if (!Array.isArray(config.main.ignoreApps)) {
-        config.main.ignoreApps = [ config.main.ignoreApps ];
+    else if (!Array.isArray(config.getConfigSection('main').ignoreApps)) {
+        config.getConfigSection('main').ignoreApps = [ config.getConfigSection('main').ignoreApps ];
     }
 
-    config.main.ignoreApps = config.main.ignoreApps.map((item: string) => {
+    config.getConfigSection('main').ignoreApps = config.getConfigSection('main').ignoreApps.map((item: string) => {
         if (typeof item != 'string') {
             fatalExit(`ignoreApps ${item} is invalid`, 4, defaultLogger);
         }
         return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
     });
 
-    defaultLogger.level = config.main.logLevel;
+    defaultLogger.level = config.getConfigSection('main').logLevel;
     defaultLogger.info(`config file = ${configFile}`);
-    defaultLogger.info(`apps directory = ${config.main.appsDir}`);
-    defaultLogger.info(`log level = ${config.main.logLevel}`);
+    defaultLogger.info(`apps directory = ${config.getConfigSection('main').appsDir}`);
+    defaultLogger.info(`log level = ${config.getConfigSection('main').logLevel}`);
 }
 catch (err) {
     defaultLogger.error(err.stack);
     fatalExit(`Unexpected error ${err}`, 4, defaultLogger);
 }
 
-main(packageJSON.version, config, configPath, Path.basename(configFile), log4js);
+main(packageJSON.version, config, log4js);
