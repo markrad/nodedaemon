@@ -119,7 +119,6 @@ export class Astro extends AppParent
 
         this._events.forEach((event) => logger.debug(`Firing event ${event.eventName} at ${(event.eventTime as Date)}`));
 
-        let now: Date = new Date();
         let nextEvent = -1;
         // let lastEvent: number = this._events.findIndex((event: EventTime, index: number, events: EventTime[]) => {
         //     if (Number(now) > Number(event.eventTime) && index + 1 < events.length && Number(now) < Number(events[index + 1].eventTime)) {
@@ -130,7 +129,7 @@ export class Astro extends AppParent
         let i: number;
 
         for (i = 0; i < this._events.length; i++) {
-            if (Number(now) < Number(this._events[i].eventTime)) break;
+            if (Number(today) < Number(this._events[i].eventTime)) break;
         }
 
         nextEvent = i < this._events.length? i : -1;
