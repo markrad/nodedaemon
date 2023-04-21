@@ -79,12 +79,11 @@ export class Astro extends AppParent
     private _lastMoonPhaseSave: string = '';
     private _longitude: number;
     private _latitude: number;
-    private _midnightSched: schedule.Job = null;
     private _moonSched: schedule.Job = null;
     private _nextEvent: schedule.Job = null;
     private _dayStart: number = null;
     private _dayEnd: number = null;
-    private _getEvents: () => void = (): void => {
+    private _getEvents: (tomorrow?: boolean) => void = (tomorrow?: boolean): void => {
         const fireEvent = () => {
             logger.debug(`Firing event ${this._events[nextEvent].eventName}`);
             this.emit('astroEvent', this._events[nextEvent].eventName);
@@ -96,12 +95,18 @@ export class Astro extends AppParent
             }
             else {
                 logger.debug(`All events fired - refreshing`);
-                this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._getEvents());
+                this._getEvents();
             }
         }
         var today: Date = new Date();
+        if (tomorrow) today.setDate(today.getDate() + 1);
         var solar = new SolarCalc(today, this._latitude, this._longitude);
         var otherSolar = new SolarCalc(today, this._latitude * -1, this._longitude < 0? this._longitude + 180 : this._longitude - 180);
+        if (otherSolar.solarNoon < today) {
+            let workDate = new Date();
+            workDate.setDate(workDate.getDate() + 1);
+            var otherSolar = new SolarCalc(workDate, this._latitude * -1, this._longitude < 0? this._longitude + 180 : this._longitude - 180);
+        }
         this._events[EventNames.NIGHTEND].eventTime = solar.nightEnd;
         this._events[EventNames.NAUTICALDAWN].eventTime = solar.nauticalDawn;
         this._events[EventNames.DAWN].eventTime = solar.dawn;
@@ -117,32 +122,25 @@ export class Astro extends AppParent
         this._events[EventNames.NIGHTSTART].eventTime = solar.nightStart;
         this._events[EventNames.NADIR].eventTime = otherSolar.solarNoon;
 
-        this._events.forEach((event) => logger.debug(`Firing event ${event.eventName} at ${(event.eventTime as Date)}`));
-
         let nextEvent = -1;
-        // let lastEvent: number = this._events.findIndex((event: EventTime, index: number, events: EventTime[]) => {
-        //     if (Number(now) > Number(event.eventTime) && index + 1 < events.length && Number(now) < Number(events[index + 1].eventTime)) {
-        //         return true;
-        //     }
-        // });
-
-        let i: number;
-
-        for (i = 0; i < this._events.length; i++) {
-            if (Number(today) < Number(this._events[i].eventTime)) break;
-        }
-
-        nextEvent = i < this._events.length? i : -1;
-        this._lastEventSave = nextEvent < 1? this._events[EventNames.NADIR].eventName : this._events[nextEvent - 1].eventName;
+        this._events.forEach((event, index) => {
+            if (event.eventTime > today) {
+                logger.debug(`Firing event ${event.eventName} at ${(event.eventTime as Date)}`);
+                if (nextEvent == -1) nextEvent = index;
+            } 
+            else {
+                logger.debug(`Skipping event ${event.eventName} at ${(event.eventTime as Date)}`);
+            }
+        });
 
         if (nextEvent == -1) {
-            logger.debug('Scheduling event refresh')
-            this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._getEvents());
+            this._getEvents(true);
+            return;
         }
-        else {
-            logger.debug(`Scheduling ${this._events[nextEvent].eventName} at ${(this._events[nextEvent].eventTime as Date)}`);
-            this._nextEvent = schedule.scheduleJob(this._events[nextEvent].eventTime, fireEvent);
-        }
+
+        this._lastEventSave = nextEvent < 1? this._events[EventNames.NADIR].eventName : this._events[nextEvent - 1].eventName;
+        logger.debug(`Scheduling ${this._events[nextEvent].eventName} at ${(this._events[nextEvent].eventTime as Date)}`);
+        this._nextEvent = schedule.scheduleJob(this._events[nextEvent].eventTime, fireEvent);
     }
 
     public constructor(controller: HaMain) {
@@ -189,14 +187,12 @@ export class Astro extends AppParent
     public async run(): Promise<boolean> {
         this._getEvents();
         this._updateMoon();
-        // this._midnightSched = schedule.scheduleJob({hour: 0, minute: 0, second: 0 }, () => this._midnight());
         this._moonSched = schedule.scheduleJob({ minute: 15 }, () => this._updateMoon());
 
         return true;
     }
 
     public async stop(): Promise<void> {
-        if (this._midnightSched) this._midnightSched.cancel(); else logger.warn('Midnight schedule is null');
         if (this._moonSched) this._moonSched.cancel(); else logger.warn('Moon schedule is null');
         if (this._nextEvent) this._nextEvent.cancel(); else logger.warn('Next event schedule is null');
     }
