@@ -12,11 +12,27 @@ import { getLogger, Logger } from "log4js";
 import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
 import { entityValidator } from "../../common/validator";
-import { ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
+import { HaParentItem, ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
 
 const CATEGORY = 'WebServer';
 
 const logger: Logger = getLogger(CATEGORY);
+
+type GetResponseError = {
+    status: number;
+    error: string;
+}
+
+type GetResponseSuccess = {
+    status: number;
+    message: string;
+}
+// type GetResponse = {
+//     status: number;
+//     response: GetResponseError | GetResponseSuccess;
+//     // message?: string;
+//     // data?: string;
+// }
 
 export default class WebServer extends AppParent {
     private _port: number;
@@ -65,18 +81,19 @@ export default class WebServer extends AppParent {
             next();
         });
 
-        this._app.use(serveFavicon(path.join(this._root, "icons/server.ico")));
+        this._app.use(serveFavicon(path.join(this._root, "icons/server.ico"), { maxAge: 2592000000 }));
         this._app.use(Express.static(path.join(this._root, "styles")));
         this._app.use('/styles', Express.static(path.join(this._root, 'styles')));
         this._app.use('/icons', Express.static(path.join(this._root, 'icons')))
         this._app.use('/files', Express.static(path.join(this._root, 'files')));
 
         this._app.get('/', (_req, res) => {
-            res.status(200).render('index', { title: 'Useful Links'});
+            res.set('Cache-Control', 'public, max-age=60');
+            res.status(200).render('index', { title: 'Useful Links' });
         });
 
         this._app.get('/healthcheck', async (req, res) => {
-            let rc: any = {};
+            let rc: GetResponseSuccess | GetResponseError;
             logger.debug(req);
             try {
                 if (this.controller.isConnected == false) {
@@ -89,15 +106,30 @@ export default class WebServer extends AppParent {
                 if (result.result != ServicePromiseResult.Success) {
                     throw result.err;
                 }
-                rc.status = 200;
-                rc.message = 'Healthy';
+
+                rc = { status: 200, message: 'Healthy'};
             }
             catch (err) {
-                rc.status = 500;
-                rc.message = err.message;
+                rc = { status: 500, error: err.message };
             }
 
-            return res.status(rc.status).json(rc);
+            return res.status(rc.status).setHeader('Cache-Control', 'no-cache').json(rc);
+        });
+
+        this._app.get('/getentity', async (req, res) => {
+            let rc: GetResponseError | GetResponseSuccess;
+            try {
+                if (this.controller.isConnected == false) { 
+                    throw new Error('Not connected to home assistant');
+                }
+                let testvar = entityValidator.isValid(req.query.entity, { entityType: HaParentItem, name: 'Get Entity'});
+                rc = { status: 200, message: testvar.state.toString() };
+            }
+            catch (err) {
+                rc = { status: 404, error: err.message };
+            }
+
+            return res.status(rc.status).setHeader('Cache-Control', 'no-cache').json(rc);
         });
 
 /*

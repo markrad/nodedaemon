@@ -39,6 +39,12 @@ div.NavButtons {
  border-radius: 25px;
 }
 
+div.time {
+  font-size: 18pt;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  text-align: center;
+}
+
 .column {
   float: left;
   padding: 5px;
