@@ -222,6 +222,7 @@ export default class ContainerVersionCheck extends AppParent {
     async stop(): Promise<void> {
         return new Promise(async (resolve, _reject) => {
             this._job.cancel();
+            this._hosts = [];
             resolve();
         });
     }
