@@ -1,9 +1,9 @@
 "use strict";
 
 import EventEmitter from 'events';
-import { getLogger, Level } from 'log4js';
+import { getLogger } from 'log4js';
 import { ServiceTarget } from '../haitems/haparentitem';
-import { WSWrapper } from '../common/wswrapper';
+import { WSWrapper, WSWrapperOptions } from '../common/wswrapper';
 import { EventWaiter } from '../common/eventwaiter';
 import http from 'http';
 import https from 'https';
@@ -47,20 +47,21 @@ export class HaInterface extends EventEmitter {
     private _protocol: string = null;
     private _hostname: string;
     private _port: number;
+    private _proxy: string | URL;
     private _id: number = 0;
-    // private _tracker: Map<number, any> = new Map<number, any>();
     private _pingInterval: number;
     private _connected: boolean = false;
     // private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
     private _packetTracker: PacketTracker = new PacketTracker();
-    public constructor(useTLS: boolean, hostname: string, port: number,  accessToken: string, pingInterval: number = 30) {
+    public constructor(useTLS: boolean, hostname: string, port: number,  accessToken: string, proxy: string | URL = null, pingInterval: number = 30) {
         super();
         this._accessToken = accessToken;
         this._protocol = useTLS? 'wss://' : 'ws://';
         this._restProtocol = useTLS? https : http;
         this._hostname = hostname;
         this._port = port;
+        this._proxy = proxy;
         this._pingInterval = pingInterval;
 
         if (process.env.HAINTERFACE_LOGGING) {
@@ -72,7 +73,13 @@ export class HaInterface extends EventEmitter {
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
-                this._client = new WSWrapper(`${this._protocol}${this._hostname}:${this._port}${HaInterface.APIPATH}`, this._pingInterval, logger.level as Level);
+                let options: WSWrapperOptions = {
+                    url: this._protocol + this._hostname + ':' + this._port.toString() + HaInterface.APIPATH,
+                    proxyUrl: this._proxy,
+                    pingInterval: this._pingInterval,
+                    level: logger.level
+                };
+                this._client = new WSWrapper(options);
                 logger.info(`Connecting to ${this._client.url}`);
 
                 this._client.on('message', async (message: string) => {
