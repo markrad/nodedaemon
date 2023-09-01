@@ -69,31 +69,24 @@ export class WSWrapper extends EventEmitter {
                         dumpError(err, logger);
                         // Retry on ENOTFOUND
                         if (err.errno != -3008) {
-                            logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
+                            logger.fatal(`Unhandled DNS error ${err.syscall} - ${err.errno}`);
                             this.emit('fatal', err);
                             reject(err);
-                            break;
                         }
                         else {
                             logger.info(`${err.message} - retrying`);
                         }
-                        logger.fatal(`Unable to resolve host address: ${this._url}`);
-                        this.emit('fatal', err);
-                        reject(err);
-                        break;
                     }
                     else if (err instanceof GenericSyscallError) {
                         logger.fatal(`Unhandled syscall error: ${err.syscall}`);
                         this.emit('fatal', err);
                         reject(err);
-                        break;
                     }
                     else if (err instanceof ConnectionError) {
                         if (!(handled.includes(err.code))) {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
                             this.emit('fatal', err);
                             reject(err);
-                            break;
                         }
                         else {
                             logger.info(`${err.message} - retrying`);
@@ -103,7 +96,6 @@ export class WSWrapper extends EventEmitter {
                         logger.fatal(`Unhandled error ${err.message}`);
                         dumpError(err, logger, 'FATAL');
                         reject(err);
-                        break;
                     }
                 }
                 await new Promise<void>((resolve) => setTimeout(resolve, 1000));
