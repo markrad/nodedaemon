@@ -65,7 +65,6 @@ export default class ContainerVersionCheck extends AppParent {
     private _hosts: HostEntry[] = [];
     private _job: schedule.Job = null;
     private _configRoot: string;
-    private readonly _re: RegExp = /^\d{1,4}\.\d{1,2}\.\d{1,2}$/;
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         this._configRoot = controller.configPath;
@@ -190,7 +189,6 @@ export default class ContainerVersionCheck extends AppParent {
                                 repo = repo.substring(cwValue.containerEntry.registry.url.length + 1);
                             }
                             try {
-                                const initalValue: string = '';
                                 let token = null;
                                 logger.debug(`Registry: ${cwValue.containerEntry.registry.url} Repo: ${repo}`)
                                 let tagOptions: { ca?: string, headers?: any } = {};
