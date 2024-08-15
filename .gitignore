@@ -123,3 +123,6 @@ dockercerts/
 # Test directories
 haconfig/
 build/test
+
+# Internal sites
+sites.json

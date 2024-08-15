@@ -13,6 +13,7 @@ import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
 import { entityValidator } from "../../common/validator";
 import { HaParentItem, ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
+import { readFileSync } from "fs";
 
 const CATEGORY = 'WebServer';
 
@@ -34,11 +35,17 @@ type GetResponseSuccess = {
 //     // data?: string;
 // }
 
+type Site = {
+    name: string;
+    url: string;
+}
+
 export default class WebServer extends AppParent {
     private _port: number;
     private _app: Express.Application;
     private _server: http.Server;
     private _root: string;
+    private _sites: Site[];
     public constructor(controller: HaMain, config: any) {
         super(controller, logger);
         this._port = config.webserver?.port ?? 4526;
@@ -68,10 +75,58 @@ export default class WebServer extends AppParent {
         this._root = path.normalize(this._root);
         logger.info('Validated successfully');
 
+        try {
+            let siteLoc = path.join(this._root, '/sites/sites.json');
+            logger.debug(`Reading sites from ${siteLoc}`);
+            this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' }));
+        }
+        catch (err) {
+            logger.error(`Failed to read sites file ${err}`);
+            this._sites = [];
+        }
+
         return true;
     }
+
+    private _responseInterceptor(req: any, res: any, next: any): void {
+        let originalSend = res.send;
+        let self = this;
+
+        let sitesToHtml: (sites: Site[]) => string = (sites: Site[]): string => {
+            return sites.map((site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
+        }
+
+        res.send = function() {
+            if (req.url == '/') {
+                logger.debug('Mods here');
+                let ol = arguments[0].indexOf('</ol>');
+                logger.debug(`ol is at ${ol}`);
+                logger.debug(self._root);
+                arguments[0] = arguments[0].slice(0, ol) + sitesToHtml(self._sites) + arguments[0].slice(ol);
+            }
+            originalSend.apply(res, arguments);
+        }
+
+        next();
+    }
+
     
     public async run(): Promise<boolean> {
+
+        // function responseInterceptor(req: any, res: any, next: any): void {
+        //     let originalSend = res.send;
+
+        //     res.send = () => {
+        //         if (req.url == '/') {
+        //             logger.debug('Mods here');
+        //             let ol = arguments[0].index('</ol>');
+        //             logger.debug(`ol is at ${ol}`);
+        //         }
+        //         originalSend.apply(res, arguments);
+        //     }
+
+        //     next();
+        // }
 
         this._app.set('views', path.join(this._root, 'views'));
         this._app.set('view engine', 'pug');
@@ -83,6 +138,7 @@ export default class WebServer extends AppParent {
 
         this._app.use(serveFavicon(path.join(this._root, "icons/server.ico"), { maxAge: 2592000000 }));
         this._app.use(Express.static(path.join(this._root, "styles")));
+        this._app.use(this._responseInterceptor.bind(this));
         this._app.use('/styles', Express.static(path.join(this._root, 'styles')));
         this._app.use('/icons', Express.static(path.join(this._root, 'icons')))
         this._app.use('/files', Express.static(path.join(this._root, 'files')));
@@ -99,9 +155,9 @@ export default class WebServer extends AppParent {
                 if (this.controller.isConnected == false) {
                     throw new Error('Not connected to home assistant');
                 }
-                let testvar = entityValidator.isValid(req.query.entity, { entityType: HaGenericUpdateableItem, name: 'Health Check'});
+                let testVar = entityValidator.isValid(req.query.entity, { entityType: HaGenericUpdateableItem, name: 'Health Check'});
                 let now = new Date().toISOString();
-                let result: ServicePromise = await testvar.updateState(now, false);
+                let result: ServicePromise = await testVar.updateState(now, false);
 
                 if (result.result != ServicePromiseResult.Success) {
                     throw result.err;
@@ -122,8 +178,8 @@ export default class WebServer extends AppParent {
                 if (this.controller.isConnected == false) { 
                     throw new Error('Not connected to home assistant');
                 }
-                let testvar = entityValidator.isValid(req.query.entity, { entityType: HaParentItem, name: 'Get Entity'});
-                rc = { status: 200, message: testvar.state.toString() };
+                let testVar = entityValidator.isValid(req.query.entity, { entityType: HaParentItem, name: 'Get Entity'});
+                rc = { status: 200, message: testVar.state.toString() };
             }
             catch (err) {
                 rc = { status: 404, error: err.message };
