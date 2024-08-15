@@ -42,6 +42,7 @@ type ContainerEntry = {
 type LocalContainer = {
     name: string;
     version: string;
+    found: boolean;
 }
 
 type ContainerWrapper = {
