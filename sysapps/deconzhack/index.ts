@@ -1,4 +1,4 @@
-import { WSWrapper } from '../../common/wswrapper';
+import { WSWrapper, WSWrapperOptions } from '../../common/wswrapper';
 import mqtt from 'mqtt';
 import { getLogger, Logger } from 'log4js';
 import { HaMain } from '../../hamain';
@@ -105,7 +105,12 @@ export default class DeconzHack extends AppParent {
             this._client.on('reconnect', () => logger.warn('MQTT is reconnecting'));
             await new Promise(resolve => this._client.once('connect', resolve));
             logger.info('Connected to MQTT server');
-            this._ws = new WSWrapper(`ws://${this._deconzConfig.host}:${this._deconzConfig.port}`, 60);
+            let options: WSWrapperOptions = {
+                url: 'ws://' + this._deconzConfig.host + ':' + this._deconzConfig.port,
+                proxyUrl: null,
+                pingInterval: 60
+            }
+            this._ws = new WSWrapper(options);
             this._ws.on('message', (msg) => {
                 if (this._printMessages) logger.info(msg);
                 var msgData = JSON.parse(msg.toString());

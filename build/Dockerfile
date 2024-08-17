@@ -8,7 +8,7 @@ RUN apk update
 RUN apk add curl jq git
 RUN npm install -g npm@9.3.0
 RUN npm install -g typescript
-RUN git -c advice.detachedHead=false clone -b v1.6.35 https://github.com/markrad/nodedaemon.git
+RUN git -c advice.detachedHead=false clone -b v1.6.41 https://github.com/markrad/nodedaemon.git
 
 WORKDIR /nodedaemon
 

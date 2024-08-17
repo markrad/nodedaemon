@@ -61,6 +61,7 @@ export class HaMain extends EventEmitter {
     private _hostname: string = null;
     private _port: number = NaN;
     private _accessToken: string = null;
+    private _proxy: string | URL = null;
     private _pingInterval: number = NaN;
     private _memInterval: number = NaN;
     private _memHandle: NodeJS.Timer = null;
@@ -80,6 +81,7 @@ export class HaMain extends EventEmitter {
         this._hostname = this._config.getConfigSection('main').hostname ?? '127.0.0.1';
         this._port = this._config.getConfigSection('main').port ?? 8123
         this._accessToken = this._config.getConfigSection('main').accessToken;
+        this._proxy = this._config.getConfigSection('main').proxy ?? null;
         this._pingInterval = this._config.getConfigSection('main').pintInterval ?? 0;
         this._memInterval = this._config.getConfigSection('main').memInterval ?? 0;
         // this._configWatcher = hound.watch(this._configFile);
@@ -164,7 +166,7 @@ export class HaMain extends EventEmitter {
                     heapUsed = mem.heapUsed;
                 }, this._memInterval * 1000);
             }
-            this._haInterface = new HaInterface(this._useTLS, this._hostname, this._port, this._accessToken, this._pingInterval);
+            this._haInterface = new HaInterface(this._useTLS, this._hostname, this._port, this._accessToken, this._proxy, this._pingInterval);
             this._haInterface.on('serviceevent', async (eventType: string, data: any) => {
                 // if (eventType != 'state_changed') logger.info(`Service Event: ${eventType}`);
                 if (eventType == 'state_changed') {

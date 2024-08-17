@@ -10,6 +10,8 @@ import { HaGenericUpdateableItem } from '../../haitems/hagenericupdatableitem';
 import { fileValidator, numberValidator, stringValidator, entityValidator } from '../../common/validator';
 import { IHaItem } from '../../haitems/ihaitem';
 import Path from 'path';
+import https from 'https';
+import { IncomingHttpHeaders } from 'http';
 
 const CATEGORY: string = 'ContainerVersionCheck';
 var logger: Logger = getLogger(CATEGORY);
@@ -20,6 +22,10 @@ type Registry = {
     userId: string;
     password: string;
     ca: string;
+    tokenUrl: string,
+    tokenEndpoint: string,
+    tokenUserId: string,
+    tokenPassword: string,
 }
 
 type RegistryType = {
@@ -36,6 +42,7 @@ type ContainerEntry = {
 type LocalContainer = {
     name: string;
     version: string;
+    found: boolean;
 }
 
 type ContainerWrapper = {
@@ -59,7 +66,6 @@ export default class ContainerVersionCheck extends AppParent {
     private _hosts: HostEntry[] = [];
     private _job: schedule.Job = null;
     private _configRoot: string;
-    private readonly _re: RegExp = /^\d{1,4}\.\d{1,2}\.\d{1,2}$/;
     constructor(controller: HaMain, _config: any) {
         super(controller, logger);
         this._configRoot = controller.configPath;
@@ -81,7 +87,20 @@ export default class ContainerVersionCheck extends AppParent {
                 let userId = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
                 let password = stringValidator.isValid(registry.userId, { noValueOk: true, defaultValue: null, name: registry.name });
                 let ca = fileValidator.isValid(registry.ca, { name: 'registry CA', noValueOk: true, returnContent: true });
-                this._registries[name] = { name: registry.name, url: registry.url, userId: userId ?? null, password: password ?? null, ca: ca };
+                let tokenUrl = stringValidator.isValid(registry.tokenUrl, { noValueOk: true, defaultValue: null, name: registry.name });
+                let tokenEndpoint = stringValidator.isValid(registry.tokenEndpoint, { noValueOk: true, defaultValue: null, name: registry.name });
+                let tokenUserId = stringValidator.isValid(registry.tokenUserId, { noValueOk: true, defaultValue: null, name: registry.name });
+                let tokenPassword = stringValidator.isValid(registry.tokenPassword, { noValueOk: true, defaultValue: null, name: registry.name });
+                this._registries[name] = { 
+                    name: registry.name, 
+                    url: registry.url, 
+                    userId: userId ?? null, 
+                    password: password ?? null, 
+                    ca: ca, 
+                    tokenUrl: tokenUrl, 
+                    tokenEndpoint: tokenEndpoint, 
+                    tokenUserId: tokenUserId,
+                    tokenPassword: tokenPassword };
             });
 
             if (!config.hosts || !Array.isArray(config.hosts)) {
@@ -171,27 +190,28 @@ export default class ContainerVersionCheck extends AppParent {
                                 repo = repo.substring(cwValue.containerEntry.registry.url.length + 1);
                             }
                             try {
-                                const initalValue: string = '';
+                                let token = null;
                                 logger.debug(`Registry: ${cwValue.containerEntry.registry.url} Repo: ${repo}`)
-                                let tags = (await getTags(cwValue.containerEntry.registry.url, 
-                                                            repo, 
-                                                            cwValue.containerEntry.registry.userId, 
-                                                            cwValue.containerEntry.registry.password,
-                                                            undefined, 
-                                                            undefined,
-                                                            { ca: cwValue.containerEntry.registry.ca }))
-                                    .filter((item: string) => this._re.exec(item))
-                                    .sort((left: string, right: string) => {
-                                        return left.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) <
-                                                right.split('.').reduce((previousValue: string, currentValue: string) => previousValue += currentValue.padStart(4, '0'), initalValue) 
-                                                ? 1
-                                                : -1;
-                                    }
-                                );
-                                let updated: string = cwValue.container.version == tags[0]? '' : ' - update available';
-                                logger.info(`Image ${cwValue.container.name}: Current ${cwValue.container.version} Latest ${tags[0]}${updated}`);
+                                let tagOptions: { ca?: string, headers?: any } = {};
+                                if (cwValue.containerEntry.registry.ca) tagOptions.ca = cwValue.containerEntry.registry.ca;
+                                if (cwValue.containerEntry.registry.tokenUrl != null) {
+                                    token = await ContainerVersionCheck._getToken(
+                                        Path.join(cwValue.containerEntry.registry.tokenUrl, cwValue.containerEntry.registry.tokenEndpoint),
+                                        cwValue.containerEntry.registry.tokenUserId,
+                                        cwValue.containerEntry.registry.tokenPassword);
+                                        tagOptions.headers = { Authorization: token }; 
+                                }
+                                let highTag = await ContainerVersionCheck._getHighTag(await getTags(cwValue.containerEntry.registry.url, 
+                                    repo, 
+                                    cwValue.containerEntry.registry.userId, 
+                                    cwValue.containerEntry.registry.password,
+                                    undefined, 
+                                    undefined,
+                                    tagOptions));
+                                let updated: string = cwValue.container.version == highTag? '' : ' - update available';
+                                logger.info(`Image ${cwValue.container.name}: Current ${cwValue.container.version} Latest ${highTag}${updated}`);
                                 cwValue.containerEntry.currentEntity.updateState(cwValue.container.version, false);
-                                cwValue.containerEntry.dockerEntity.updateState(tags[0], false);
+                                cwValue.containerEntry.dockerEntity.updateState(highTag, false);
                             }
                             catch (err) {
                                 logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
@@ -225,5 +245,50 @@ export default class ContainerVersionCheck extends AppParent {
             this._hosts = [];
             resolve();
         });
+    }
+
+    private static async _httpGet(url: string, options: object): Promise<[ IncomingHttpHeaders, string ]> {
+        return new Promise<[ IncomingHttpHeaders, string ]>((resolve, reject) => {
+            logger.debug(`Getting ${url}`)
+            https.get(url, options, (res) => {
+                if (res.statusCode != 200) {
+                    reject(new Error(`HTTP request failed with status ${res.statusCode}`));
+                }
+                else {
+                    let body = '';
+            
+                    res.on('data', (d) => body += d);
+                    res.on('end', () => resolve([ res.headers, body ]));
+                    res.on('error', (err) => reject(err));
+                }
+            
+            });
+        })
+    }
+    
+    private static async _getToken(url: string, userId: string, password: string): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            let options = {
+                auth: `${userId}:${password}`
+            };
+    
+            try {
+                let [_headers, body] = await ContainerVersionCheck._httpGet(url, options);
+                resolve(`Bearer ${JSON.parse(body).token}`);
+            }
+            catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    private static async _getHighTag(tags: string[]): Promise<string> {
+
+        let highTag = tags.filter((t) => /^\d+\.\d+\.\d+$/.test(t))
+            .map((t) => ({ version: t, work: parseInt(t.split('.')
+            .map((p) => p.padStart(4, '0')).join('')) }))
+            .reduce((l, r) => l.work > r.work? l : r, { version: '0.0.0', work: 0 }).version;
+        
+        return highTag;
     }
 }
