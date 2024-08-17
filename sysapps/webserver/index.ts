@@ -14,6 +14,7 @@ import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
 import { entityValidator } from "../../common/validator";
 import { HaParentItem, ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
 import { readFileSync } from "fs";
+const hound = require('hound');
 
 const CATEGORY = 'WebServer';
 
@@ -45,7 +46,8 @@ export default class WebServer extends AppParent {
     private _app: Express.Application;
     private _server: http.Server;
     private _root: string;
-    private _sites: Site[];
+    private _sites: string;
+    private _watcher: any;
     public constructor(controller: HaMain, config: any) {
         super(controller, logger);
         this._port = config.webserver?.port ?? 4526;
@@ -75,14 +77,22 @@ export default class WebServer extends AppParent {
         this._root = path.normalize(this._root);
         logger.info('Validated successfully');
 
+        let siteLoc = path.join(this._root, '/sites/sites.json');
+        let handler = async (_file?: string, _stats?: any) => {
+            this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' })).map((site: Site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
+            // sites.map((site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');        
+        }
+
         try {
-            let siteLoc = path.join(this._root, '/sites/sites.json');
             logger.debug(`Reading sites from ${siteLoc}`);
-            this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' }));
+            handler();
+
+            this._watcher = hound.watch(siteLoc);
+            this._watcher.on('change', handler)
         }
         catch (err) {
             logger.error(`Failed to read sites file ${err}`);
-            this._sites = [];
+            this._sites = '';
         }
 
         return true;
@@ -92,17 +102,13 @@ export default class WebServer extends AppParent {
         let originalSend = res.send;
         let self = this;
 
-        let sitesToHtml: (sites: Site[]) => string = (sites: Site[]): string => {
-            return sites.map((site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
-        }
-
         res.send = function() {
             if (req.url == '/') {
                 logger.debug('Mods here');
                 let ol = arguments[0].indexOf('</ol>');
                 logger.debug(`ol is at ${ol}`);
                 logger.debug(self._root);
-                arguments[0] = arguments[0].slice(0, ol) + sitesToHtml(self._sites) + arguments[0].slice(ol);
+                arguments[0] = arguments[0].slice(0, ol) + self._sites + arguments[0].slice(ol);
             }
             originalSend.apply(res, arguments);
         }
@@ -112,21 +118,6 @@ export default class WebServer extends AppParent {
 
     
     public async run(): Promise<boolean> {
-
-        // function responseInterceptor(req: any, res: any, next: any): void {
-        //     let originalSend = res.send;
-
-        //     res.send = () => {
-        //         if (req.url == '/') {
-        //             logger.debug('Mods here');
-        //             let ol = arguments[0].index('</ol>');
-        //             logger.debug(`ol is at ${ol}`);
-        //         }
-        //         originalSend.apply(res, arguments);
-        //     }
-
-        //     next();
-        // }
 
         this._app.set('views', path.join(this._root, 'views'));
         this._app.set('view engine', 'pug');
@@ -272,6 +263,10 @@ export default class WebServer extends AppParent {
         return new Promise((resolve, reject) => {
             if (!this._server) {
                 return reject(new Error('Webserver is not running'));
+            }
+
+            if (this._watcher) {
+                this._watcher.clear();
             }
             this._server.close((err) => {
                 this._server = null;
