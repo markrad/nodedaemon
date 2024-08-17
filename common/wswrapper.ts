@@ -1,6 +1,7 @@
 "use strict";
 
 import WebSocket = require('ws');
+import { HttpProxyAgent } from 'http-proxy-agent';
 import { getLogger, Level } from 'log4js';
 import EventEmitter from 'events';
 
@@ -9,6 +10,13 @@ import { dumpError } from './errorUtil';
 
 const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);
+
+export type WSWrapperOptions = {
+    url: string | URL;
+    proxyUrl: string | URL;
+    pingInterval: number;
+    level?: string | Level;
+}
 
 export interface IWSWrapperEvents {
     'connected': () => void;
@@ -23,19 +31,19 @@ export declare interface WSWrapper {
 }
 
 export class WSWrapper extends EventEmitter {
-    private _url: string;
+    private _url: string | URL;
     private _pingInterval: number;
     private _pingTimer: NodeJS.Timer;
     private _connected: boolean;
     private _closing: boolean;
     private _client: WebSocket;
-    public constructor(url: string, pingInterval: number, level?: Level) {
+    public constructor(options: WSWrapperOptions) {
         super();
 
-        if (level) logger.level = level;
-        if (!url) throw new Error('Error: WSWrapper requires url');
-        this._url = url;
-        this._pingInterval = pingInterval ?? 0;
+        if (options.level) logger.level = options.level;
+        if (!options.url) throw new Error('Error: WSWrapper requires url');
+        this._url = options.url;
+        this._pingInterval = options.pingInterval ?? 0;
         this._pingTimer = null;
         this._connected = false;
         this._closing = false;
@@ -61,31 +69,24 @@ export class WSWrapper extends EventEmitter {
                         dumpError(err, logger);
                         // Retry on ENOTFOUND
                         if (err.errno != -3008) {
-                            logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
+                            logger.fatal(`Unhandled DNS error ${err.syscall} - ${err.errno}`);
                             this.emit('fatal', err);
                             reject(err);
-                            break;
                         }
                         else {
                             logger.info(`${err.message} - retrying`);
                         }
-                        logger.fatal(`Unable to resolve host address: ${this._url}`);
-                        this.emit('fatal', err);
-                        reject(err);
-                        break;
                     }
                     else if (err instanceof GenericSyscallError) {
                         logger.fatal(`Unhandled syscall error: ${err.syscall}`);
                         this.emit('fatal', err);
                         reject(err);
-                        break;
                     }
                     else if (err instanceof ConnectionError) {
                         if (!(handled.includes(err.code))) {
                             logger.fatal(`Unhandled connection error ${err.syscall} - ${err.errno}`);
                             this.emit('fatal', err);
                             reject(err);
-                            break;
                         }
                         else {
                             logger.info(`${err.message} - retrying`);
@@ -95,7 +96,6 @@ export class WSWrapper extends EventEmitter {
                         logger.fatal(`Unhandled error ${err.message}`);
                         dumpError(err, logger, 'FATAL');
                         reject(err);
-                        break;
                     }
                 }
                 await new Promise<void>((resolve) => setTimeout(resolve, 1000));
@@ -176,13 +176,15 @@ export class WSWrapper extends EventEmitter {
         return this._connected;
     }
 
-    public get url(): string {
+    public get url(): string | URL{
         return this._url;
     }
 
-    private async _open(url: string): Promise<WebSocket> {
+    private async _open(url: string | URL, proxy?: string | URL): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
-            var client = new WebSocket(url);
+            let options: WebSocket.ClientOptions = {};
+            if (proxy) options.agent = new HttpProxyAgent(proxy);
+            var client = new WebSocket(url, options);
             var connectFailed = (err: Error) => {
                 client.off('connected', connectSucceeded);
                 reject(ErrorFactory(err));

@@ -1,0 +1,8 @@
+// List of sites to put on the shortcuts webpage
+[
+    {
+        "name": "Description here",
+        "url": "URL to be link to"
+    }
+    // etc
+]

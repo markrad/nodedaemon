@@ -86,7 +86,7 @@ try {
         .name('nodedaemon')
         .option('-a, --appsdir <location...>', 'location of apps directory\n(default: if present the value from config.yaml appsDir otherwise ./apps')
         .option('-r, --replace', 'replace config file appsdir with command line appsdir - default is to merge them')
-        .option('-c, --config <locaton>', 'name and location of config.yaml', './config.yaml')
+        .option('-c, --config <location>', 'name and location of config.yaml', './config.yaml')
         .option('-l --loglevel <type>', `logging level [${LogLevels().join(' | ')}]\n(default: if present the value from config.yaml logLevel otherwise ${defaultLogLevel.levelStr})`)
         .option('-s', '--scriptpid <number>', 'when run under docker kill this script to terminate the container')
         .parse(process.argv);
@@ -120,7 +120,7 @@ try {
 
     if (config.getConfigSection('main').loggers?.mqtt ?? null) {
         loggerOptions.appenders.mqtt = { 
-            type: 'common/mqttlogger', 
+            type: 'common/emitlogger', 
             host: config.getConfigSection('main').loggers.mqtt.host,
             clientid: config.getConfigSection('main').loggers.mqtt.clientid,
             username: config.getConfigSection('main').loggers.mqtt.username,

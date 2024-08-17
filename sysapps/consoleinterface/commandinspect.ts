@@ -36,31 +36,33 @@ class CommandInspect extends CommandBase {
     }
 
     public async execute(inputArray: string[], that: ConsoleInterface, sock: IChannelWrapper): Promise<number> {
-        try {
-            this._validateParameters(inputArray.slice(0, inputArray.length - 1));
-            if (inputArray.length != 2) {
-                throw new Error('Missing or invalid inspection target');
-            }
-            logger.debug(`inspect called with ${inputArray.join(' ')}`);
-            let items = that.items.getItemByEntityId(inputArray[1], true);
-            items.forEach((item) => {
-                sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
-                sock.write(`Type = ${item.type}\r\n`);
-                sock.write(`State = ${item.state}\r\n`);
-                if (item.isSwitch) {
-                    sock.write(`Off time: ${(item as HaGenericSwitchItem).isTimerRunning? (item as HaGenericSwitchItem).timeBeforeOff / 1000 : 'inactive'}\r\n`);
+        return new Promise<number>((resolve, _reject) => {
+            try {
+                this._validateParameters(inputArray.slice(0, inputArray.length - 1));
+                if (inputArray.length != 2) {
+                    throw new Error('Missing or invalid inspection target');
                 }
-                sock.write(`Last Changed = ${item.lastChanged.toISOString()}\r\n`);
-                sock.write(`Last Updated = ${item.lastUpdated.toISOString()}\r\n`);
-                sock.write('Attributes:\r\n');
-                sock.write(`${JSON.stringify(item.attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
-                return 0;
-            });
-        }
-        catch (err: any) {
-            this._displayError(logger, sock, err);
-            return 4;
-        }
+                logger.debug(`inspect called with ${inputArray.join(' ')}`);
+                let items = that.items.getItemByEntityId(inputArray[1], true);
+                items.forEach((item) => {
+                    sock.writeLightMagenta(`Entity Id = ${item.entityId}\r\n`);
+                    sock.write(`Type = ${item.type}\r\n`);
+                    sock.write(`State = ${item.state}\r\n`);
+                    if (item.isSwitch) {
+                        sock.write(`Off time: ${(item as HaGenericSwitchItem).isTimerRunning? (item as HaGenericSwitchItem).timeBeforeOff / 1000 : 'inactive'}\r\n`);
+                    }
+                    sock.write(`Last Changed = ${item.lastChanged.toISOString()}\r\n`);
+                    sock.write(`Last Updated = ${item.lastUpdated.toISOString()}\r\n`);
+                    sock.write('Attributes:\r\n');
+                    sock.write(`${JSON.stringify(item.attributes, null, 2).replace(/\n/g, '\r\n')}\r\n`);
+                    resolve(0);
+                });
+            }
+            catch (err: any) {
+                this._displayError(logger, sock, err);
+                resolve(4);
+            }
+        })
     }
 }
 

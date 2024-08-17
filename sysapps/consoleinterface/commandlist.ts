@@ -66,7 +66,7 @@ class CommandList extends CommandBase {
             break;
             case 'names':
                 possibles = [ ...items ]
-                    .filter(item => item[1].attributes?.friendly_name.startsWith(parameters[2]))
+                    .filter((item) => (item[1].attributes?.friendly_name?? '').startsWith(parameters[2]))
                     .map((item) => item[1].attributes.friendly_name)
                     .sort((l, r) => l < r? -1 : 1);
             break;

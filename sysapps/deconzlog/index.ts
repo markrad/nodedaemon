@@ -1,4 +1,4 @@
-import { WSWrapper } from '../../common/wswrapper';
+import { WSWrapper, WSWrapperOptions } from '../../common/wswrapper';
 import { getLogger, Logger } from 'log4js';
 import { AppParent } from '../../common/appparent';
 import { HaMain } from '../../hamain';
@@ -25,7 +25,12 @@ export default class DeconzLog extends AppParent {
 
     async run(): Promise<boolean> {
         return new Promise(async (resolve, _reject) => {
-            this._ws = new WSWrapper(`ws://${this._deconz.host}:${this._deconz.port}`, 60);
+            let options: WSWrapperOptions = {
+                url: 'ws://' + this._deconz.host + ':' + this._deconz.port,
+                proxyUrl: null,
+                pingInterval: 60
+            }
+            this._ws = new WSWrapper(options);
             this._ws.on('message', (msg: string) => {
                 var msgData: any = JSON.parse(msg);
                 logger.debug(`Received:\n${JSON.stringify(msgData, null, 2)}`);
