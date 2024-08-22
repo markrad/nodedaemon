@@ -2,8 +2,8 @@ name: Build Docker Image
 
 on:
   push:
-    # tags:
-    #   - 'v*'
+    tags:
+      - 'v*'
 
 # Required for secrets.GITHUB_TOKEN
 permissions:
@@ -64,11 +64,9 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         context: ./build
-        push: true  # ${{ github.event_name != 'pull_request' }}
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
 
         # labels: ${{ steps.meta.outputs.labels }}
         # build-args: ${{ inputs.build-args }}      # - name: GHCR-Action
-      #   uses: KuhlTime/ghcr-action@v1
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
