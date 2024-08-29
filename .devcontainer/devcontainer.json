@@ -1,0 +1,29 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/marcosgomesneto/bun-devcontainers/tree/main/src/basic-bun
+{
+    "name": "Bun",
+    "dockerFile": "../build/DockerfileBun",
+    // Configure tool-specific properties.
+    "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "oven.bun-vscode",
+                "maixiaojie.git-emoji"
+            ]
+        }
+    },
+    "runArgs": [
+        "-p=8822:8822",
+        "--network=host",
+    ],
+    "mounts": [
+        {
+            "type": "bind",
+            "source": "/home/markrad/.ssh",
+            "target": "/home/bun/.ssh"
+        }
+    ],
+    "containerEnv": {}
+}

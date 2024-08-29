@@ -1,0 +1,38 @@
+ARG VARIANT=latest
+ARG ROOTCERT="./radrealm.crt"
+FROM oven/bun:${VARIANT}
+
+RUN apt-get update \
+    && apt-get -y install --no-install-recommends \
+    git \
+    nano \
+    npm \
+    openssh-client \
+    && apt-get auto-remove -y \
+    && apt-get clean -y \
+    && chsh -s $(which bash) bun \
+    && echo 'export PS1="\e[01;32m\u\e[m:\e[01;34m\w\e[m\$ "' >> /home/bun/.bashrc
+
+# Add a root certificate if necessary
+RUN mkdir junk
+COPY . ./junk
+RUN cp ./junk/*.crt /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+RUN rm -rf ./junk
+
+USER bun
+# ENV DOCKER_RUNNING=true
+
+# RUN npm install -g npm@9.3.0
+# RUN npm install -g typescript
+
+# WORKDIR /nodedaemon
+
+# RUN npm install -g npm@9.4.2
+# RUN npm install
+
+# ADD healthcheck.sh ./healthcheck.sh
+# HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "./healthcheck.sh" ]
+
+# TODO Add --inspect as arg between keepalive and nodedaemon
+# CMD [ "node", "./output/tools/keepalive/index.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]

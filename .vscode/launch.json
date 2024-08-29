@@ -41,6 +41,28 @@
             }
         },
         {
+            "type": "bun",
+            "request": "launch",
+            "name": "Launch (bun) nodedaemon",
+            // "skipFiles": [
+            //     "<node_internals>/**"
+            // ],
+            "program": "${workspaceFolder}/nodedaemon.ts",
+            // "outputCapture": "std",
+            // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
+            "args": [
+                "--appsdir",
+                "./output/sysapps",
+                "--config",
+                "./build/test/config/configTest.yaml"
+            ],
+            "env": {
+                "HAINTERFACE_LOGGING": "info",
+                "HAMAIN_LOGGING": "info",
+                "NODE_OPTIONS": "--use-openssl-ca"
+            }
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Launch keepalive",
