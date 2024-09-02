@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { Logger, getLogger, Level } from 'log4js';
 import { State } from '../hamain/state';
-import { IHaItem } from './ihaitem';
+import { IHaItem, ItemAttributes } from './ihaitem';
 import { LogLevelValidator } from '../common/loglevelvalidator';
 
 // Super slow for debugging
@@ -42,7 +42,7 @@ export declare interface HaParentItem {
 }
 
 export class HaParentItem extends EventEmitter implements IHaItem {
-    private _attributes: any;
+    private _attributes: ItemAttributes;
     private _name: string;
     private _type: string;
     private _friendlyName: string;
@@ -73,8 +73,8 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         return this._logger;
     }
 
-    public get attributes(): any {
-        return this._attributes ?? {};
+    public get attributes(): ItemAttributes {
+        return this._attributes ?? null;
     }
 
     public get name(): string {
@@ -186,7 +186,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
             return;
         }
 
-        if (this.state != expectedState || this._childOveride(state)) {
+        if (this.state != expectedState || this._childOverride(state)) {
             let timer: NodeJS.Timeout;
             let newState = (that: HaParentItem, _oldState: string | boolean | number) => {
                 clearTimeout(timer);
@@ -218,7 +218,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
         return { action: newState, expectedNewState: newState };
     }
 
-    protected _childOveride(_state: ServiceTarget): boolean {
+    protected _childOverride(_state: ServiceTarget): boolean {
         return false;
     }
 }
