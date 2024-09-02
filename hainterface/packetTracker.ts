@@ -24,12 +24,12 @@ export class PacketTracker {
             for (const [ key, value ] of this._inflight) {
                 if (now - value.timeAdded > 120) {
                     logger.debug(`Dropping ${key}`);
-                    let err = new Error(`No reponse received for packet ${key}: ${JSON.stringify(value)}`);
+                    let err = new Error(`No response received for packet ${key}: ${JSON.stringify(value)}`);
                     value.reject(err);
                     this._inflight.delete(key);
                 }
             }
-        });
+        }, 1000);
     }
     addInFlight(key: number, message: Message): void {
         logger.trace(`Adding ${key}: ${JSON.stringify(message)}`)
