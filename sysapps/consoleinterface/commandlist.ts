@@ -66,8 +66,8 @@ class CommandList extends CommandBase {
             break;
             case 'names':
                 possibles = [ ...items ]
-                    .filter((item) => (item[1].attributes?.friendly_name?? '').startsWith(parameters[2]))
-                    .map((item) => item[1].attributes.friendly_name)
+                    .filter((item) => (item[1].friendlyName?? '').startsWith(parameters[2]))
+                    .map((item) => item[1].friendlyName)
                     .sort((l, r) => l < r? -1 : 1);
             break;
             default:
@@ -137,7 +137,7 @@ class CommandList extends CommandBase {
             let maxType = 1 + Math.max(items.reduce((max, item) => max = Math.max(max, item.type.length), 0), TYPE.length);
             let maxName = 1 + Math.max(items.reduce((max, item) => max = Math.max(max, item.name.length), 0), NAME.length);
             sock.write(`${TYPE.padEnd(maxType)}${NAME.padEnd(maxName)}${FRIENDLY}\r\n`);
-            items.forEach((item) => sock.write(`${item.type.padEnd(maxType)}${item.name.padEnd(maxName)}${item.attributes.friendly_name}\r\n`));
+            items.forEach((item) => sock.write(`${item.type.padEnd(maxType)}${item.name.padEnd(maxName)}${item.friendlyName}\r\n`));
         }
     }
 
