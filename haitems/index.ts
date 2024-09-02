@@ -1,25 +1,31 @@
 import { promises as fs } from 'fs';
 import log4js from 'log4js';
-import { IHaItem } from './ihaitem';
+import { IHaItem, IHaItemConstructor } from './ihaitem';
 import { LoggerLevel } from '../hamain';
+import path from 'path';
 
 const CATEGORY: string = 'HaItemFactory';
 var logger: any = log4js.getLogger(CATEGORY);
 logger.level = 'info';
 
 export class HaItemFactory {
-    private _itemClasses: any;
+    private static _itemClasses: Map<string, IHaItemConstructor>;
     private _loggerLevels: LoggerLevel[];
 
-    public constructor(loggerLevels: LoggerLevel[]) {
+    public static async createItemFactory(loggerLevels: LoggerLevel[]): Promise<HaItemFactory> {
+        return new Promise<HaItemFactory>(async (resolve, reject) => {
+            try {
+                HaItemFactory._itemClasses = await HaItemFactory._getItemObjects();
+                resolve(new HaItemFactory(loggerLevels));
+            }
+            catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    private constructor(loggerLevels: LoggerLevel[]) {
         this._loggerLevels = loggerLevels;
-        this._itemClasses = {};
-        this._getItemObjects()
-            .then(() => logger.debug('Objects acquired'))
-            .catch((err) => {
-                logger.error('Unable to walk directory of haitems');
-                throw (err);
-            });
     }
 
     public getItemObject(item: any): IHaItem {
@@ -40,13 +46,13 @@ export class HaItemFactory {
             if (logLevel) logger.info(`Set logging to ${logLevel} for ${item.entity_id}`);
 
             if (item?.attributes?.addedBy == 'nodedaemon') {
-                return new this._itemClasses['usersensor'](item, logLevel);
+                return new (HaItemFactory._itemClasses.get('nodedaemon'))(item, logLevel)
             }
-            else if (itemType in this._itemClasses) {
-                return new this._itemClasses[itemType](item, logLevel);
+            else if (HaItemFactory._itemClasses.has(itemType)) {
+                return new (HaItemFactory._itemClasses.get(itemType))(item, logLevel);
             }
             else {
-                return new this._itemClasses['unknown'](item , logLevel);
+                return new (HaItemFactory._itemClasses.get('unknown'))(item , logLevel);
             }
         }
         catch (err) {
@@ -54,19 +60,18 @@ export class HaItemFactory {
         }
     }
 
-    private async _getItemObjects(): Promise<void> {
-        return new Promise<void>(async (resolve, reject) => {
+    private static async _getItemObjects(): Promise<Map<string, IHaItemConstructor>> {
+        return new Promise<Map<string, IHaItemConstructor>>(async (resolve, reject) => {
+            const filetype = process.versions.bun? '.ts' : '.js';
             try {
-                const dir = await fs.opendir(__dirname);
-
-                for await (const dirent of dir) {
-                    if (dirent.name.startsWith('haitem') && dirent.name.endsWith('.js')) {
-                        let itemType = dirent.name.split('.')[0].substr(6);
-                        this._itemClasses[itemType] = (await import('./' + dirent.name)).default;
+                const dirEnts = await fs.readdir(__dirname, { withFileTypes: true });
+                const files: [string, IHaItemConstructor][] = await Promise.all(dirEnts
+                    .filter((dirent) => dirent.name.startsWith('haitem') && dirent.name.endsWith(filetype))
+                    .map(async (dirent: any) => {
+                        return [ dirent.name.split('.')[0].substring(6), (await import(path.join('../haitems/', dirent.name))).default ];
                     }
-                }
-
-                resolve();
+                ));
+                resolve(new Map<string, IHaItemConstructor>(files));
             }
             catch(err) {
                 reject(err);
