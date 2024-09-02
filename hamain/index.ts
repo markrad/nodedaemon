@@ -2,7 +2,7 @@
 
 import EventEmitter from 'events';
 import * as path from 'path';
-import fs /*, { stat }*/ from 'fs';
+import { access, opendir } from 'fs/promises';
 import { Dir } from 'node:fs';
 
 import { State, StateChange } from './state';
@@ -16,8 +16,6 @@ import { IApplication } from '../common/IApplication';
 import { LogLevelValidator } from '../common/loglevelvalidator';
 import { AppInfo, AppStatus } from './appinfo';
 import { ConfigWrapper } from '../common/ConfigWrapper';
-
-var reload: NodeRequire = require('require-reload');
 
 const CATEGORY: string = 'HaMain';
 var logger: Logger = getLogger(CATEGORY);
@@ -250,7 +248,7 @@ export class HaMain extends EventEmitter {
                 }
             });
 
-            this._haItemFactory = new HaItemFactory(this._loggerLevels);
+            this._haItemFactory = await HaItemFactory.createItemFactory(this._loggerLevels);
             await this._haInterface.start();
             this._haConfig = await this._haInterface.getConfig();
             
@@ -273,24 +271,32 @@ export class HaMain extends EventEmitter {
 
             Object.keys(itemTypes).sort().forEach((value, _index) => {
                 logger.info(`${value}: ${itemTypes[value]}`);
-            }); 
+            });
 
-            let appPromises: Promise<AppInfo[]>[] = [];
-            this._config.getConfigSection('main').appsDir.forEach(async (item: string) => {
+            this._apps = await this._getApps(this._config.getConfigSection('main').ignoreApps, this._config.getConfigSection('main').appsDir);
+
+            this._apps.forEach(async (app) => {
+                await this._startApp(app, this._config.getConfigSection('main').norunApps);
+            });
+            logger.info(`Apps loaded: ${this._apps.length}`);
+            this.emit('appsinitialized');
+
+            // let appPromises: Promise<AppInfo[]>[] = [];
+            // this._config.getConfigSection('main').appsDir.forEach(async (item: string) => {
             
-                appPromises.push(this._getApps(this._config.getConfigSection('main').ignoreApps, item));
-            });
+            //     appPromises.push(this._getApps(this._config.getConfigSection('main').ignoreApps, item));
+            // });
 
-            Promise.all(appPromises)
-            .then((results) => {
-                results.forEach(result => this._apps = this._apps.concat(result));
-                // Construct all apps
-                this._apps.forEach(async (app) => {
-                    await this._startApp(app, this._config.getConfigSection('main').norunApps);
-                });
-                logger.info(`Apps loaded: ${this._apps.length}`);
-                this.emit('appsinitialized');
-            });
+            // Promise.all(appPromises)
+            // .then((results) => {
+            //     results.forEach(result => this._apps = this._apps.concat(result));
+            //     // Construct all apps
+            //     this._apps.forEach(async (app) => {
+            //         await this._startApp(app, this._config.getConfigSection('main').norunApps);
+            //     });
+            //     logger.info(`Apps loaded: ${this._apps.length}`);
+            //     this.emit('appsinitialized');
+            // });
         }
         catch (err) {
             logger.error(`Error: ${err}`);
@@ -578,8 +584,9 @@ export class HaMain extends EventEmitter {
         let ret = new Promise<AppInfo[]>(async (resolve, reject) => {
             try {
                 let apps: AppInfo[] = new Array<AppInfo>();
-                const dir: Dir = await fs.promises.opendir(appsDirectory);
+                const dir: Dir = await opendir(appsDirectory);
                 let appobject: IApplication;
+                const filetype = process.versions.bun? '.ts' : '.js';
 
                 for await (const dirent of dir) {
                     if (dirent.isDirectory()) {
@@ -588,37 +595,31 @@ export class HaMain extends EventEmitter {
                             logger.info(`App ${dirent.name} ignored`);
                         }
                         else {
-                            let fullname: string = path.join(dir.path, dirent.name, 'index.js');
-                            fs.access(fullname, (err) => {
-                                if (!err) {
-                                    let app = reload(fullname).default;
-                                    let loc: string = path.join(dir.path, dirent.name);
-                                    try {
-                                        if (this._config.getConfigSection(dirent.name) === undefined) {
-                                            logger.warn(`Ignoring ${dirent.name} - no config`);
-                                        }
-                                        else {
-                                            appobject = new app(this, this._config);
-                                            appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
-                                                try {
-                                                    await this._haInterface.callService(domain, service, data)
-                                                }
-                                                catch (err) {
-                                                    // Error already logged
-                                                }
-                                            });
-                                            apps.push({ name: appobject.constructor.name, path: loc, instance: appobject, status: AppStatus.CONSTRUCTED, config: this._config.getConfigSection(dirent.name) });
-                                        }
-                                    }
-                                    catch (err) {
-                                        apps.push({ name: appobject?.constructor.name, path: loc, instance: appobject, status: AppStatus.FAILED, config: this._config.getConfigSection(dirent.name) });
-                                        logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
-                                    }
+                            let fullname: string = path.join(dir.path, dirent.name, `index${filetype}`);
+                            
+                            try {
+                                await access(fullname);
+                                if (this._config.getConfigSection(dirent.name) === undefined) {
+                                    logger.warn(`Ignoring ${dirent.name} - no config`);
                                 }
                                 else {
-                                    logger.warn(`Search for index.js in ${dirent.name} failed - ${err}`);
+                                    let app = require(path.join(process.cwd(), fullname)).default;
+                                    appobject = new app(this, this._config);
+                                    appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
+                                        try {
+                                            await this._haInterface.callService(domain, service, data);
+                                        }
+                                        catch (err) {
+                                            // Error already logged
+                                        }
+                                    });
+                                    apps.push({ name: appobject.constructor.name, path: location, instance: appobject, status: AppStatus.CONSTRUCTED, config: this._config.getConfigSection(dirent.name) });
                                 }
-                            });
+                            }
+                            catch (err) {
+                                apps.push({ name: appobject?.constructor.name, path: location, instance: appobject, status: AppStatus.FAILED, config: this._config.getConfigSection(dirent.name) });
+                                logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
+                            }
                         }
                     }
                 }
