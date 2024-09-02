@@ -44,6 +44,7 @@
             "type": "bun",
             "request": "launch",
             "name": "Launch (bun) nodedaemon",
+            "preLaunchTask": "bunmod",
             // "skipFiles": [
             //     "<node_internals>/**"
             // ],
@@ -51,10 +52,8 @@
             // "outputCapture": "std",
             // "args": [ "-l", "debug", "--appsdir", "./output/sysapps" ],
             "args": [
-                "--appsdir",
-                "./output/sysapps",
                 "--config",
-                "./build/test/config/configTest.yaml"
+                "./build/test/config/configTestBun.yaml"
             ],
             "env": {
                 "HAINTERFACE_LOGGING": "info",

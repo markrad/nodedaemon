@@ -21,18 +21,3 @@ RUN update-ca-certificates
 RUN rm -rf ./junk
 
 USER bun
-# ENV DOCKER_RUNNING=true
-
-# RUN npm install -g npm@9.3.0
-# RUN npm install -g typescript
-
-# WORKDIR /nodedaemon
-
-# RUN npm install -g npm@9.4.2
-# RUN npm install
-
-# ADD healthcheck.sh ./healthcheck.sh
-# HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "./healthcheck.sh" ]
-
-# TODO Add --inspect as arg between keepalive and nodedaemon
-# CMD [ "node", "./output/tools/keepalive/index.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]

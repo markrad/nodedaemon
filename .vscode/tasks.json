@@ -27,6 +27,11 @@
 			"label": "shutdown",
 			"type": "shell",
 			"command": "${workspaceFolder}/tools/shutdown.sh"
+		},
+		{
+			"label": "bunmod",
+			"type": "shell",
+			"command": "sed 's|./output/|./|g' ${workspaceFolder}/build/test/config/configTest.yaml > ${workspaceFolder}/build/test/config/configTestBun.yaml"
 		}
 	]
 }
