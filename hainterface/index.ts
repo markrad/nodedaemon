@@ -82,8 +82,8 @@ export class HaInterface extends EventEmitter {
                 this._client = new WSWrapper(options);
                 logger.info(`Connecting to ${this._client.url}`);
 
-                this._client.on('message', async (message: string) => {
-                    if (typeof message != 'string') {
+                this._client.on('message', async (message: string | Buffer) => {
+                    if (typeof message != 'string' && !Buffer.isBuffer(message)) {
                         logger.warn(`Unrecognized message type: ${typeof message}`);
                     }
                     else {
@@ -334,8 +334,8 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    private _messageFactory(msgJSON: string): IServiceAuthOk | IServiceAuthRequired | IServiceAuthInvalid | IServiceError | IServicePong | IServiceSuccess | IServiceEvent {
-        let msg: any = JSON.parse(msgJSON);
+    private _messageFactory(msgJSON: string | Buffer): IServiceAuthOk | IServiceAuthRequired | IServiceAuthInvalid | IServiceError | IServicePong | IServiceSuccess | IServiceEvent {
+        let msg: any = JSON.parse(Buffer.isBuffer(msgJSON)? msgJSON.toString() : msgJSON);
 
         switch (msg.type) {
             case "auth_required":
