@@ -107,7 +107,7 @@ export class ItemsManager {
             ? new RegExp(friendly)
             : new RegExp(`^${friendly}$`);
         return this.getItemsAsArray()
-            .filter(item => re? re.test(item.attributes.friendly_name) : true)
-            .sort((l, r) => l.attributes.friendly_name < r.attributes.friendly_name ? -1 : l.attributes.friendly_name > r.attributes.friendly_name ? 1 : 0);
+            .filter(item => re? re.test(item.friendlyName) : true)
+            .sort((l, r) => l.friendlyName < r.friendlyName ? -1 : l.friendlyName > r.friendlyName ? 1 : 0);
     }
 }
