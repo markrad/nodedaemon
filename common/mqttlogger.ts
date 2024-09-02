@@ -6,9 +6,20 @@ import { os } from 'node-os-utils';
 import { appender, appenderConfig} from "./appender";
 
 function mqttAppender(layout: any, otherOptions: any, client: mqtt.MqttClient, mqttTopic: string): appender {
+    let msgCache: string[] = [];
     const appender = (loggingEvent: LoggingEvent) => {
         if (client.connected) {
+            let cachedLine: string;
+            while (cachedLine = msgCache.shift()) {
+                client.publish(mqttTopic, cachedLine);
+            }
             client.publish(mqttTopic, `${layout(loggingEvent, otherOptions)}`);
+        }
+        else {
+            msgCache.push(`${layout(loggingEvent, otherOptions)}`);
+            if (msgCache.length > 100) {
+                msgCache.shift();
+            }
         }
     };
 
@@ -22,7 +33,7 @@ function mqttAppender(layout: any, otherOptions: any, client: mqtt.MqttClient, m
 function config(config: appenderConfig, layouts: any): appender {
     let layout: Layout = config.layout? layouts.layout(config.layout.type, config.layout) : layouts.coloredLayout;
     let mqttHost: string = config.host || "mqtt://127.0.0.1:1883";
-    let mqttTopic: string = config.topic || `logger/${os.hostname()}`;
+    let mqttTopic: string = config.topic || `/logger/${os.hostname()}`;
     let mqttOptions: mqtt.IClientOptions = {};
     mqttOptions.clientId = config.clientid || os.hostname() + '_logger';
     if (config.username != null) mqttOptions.username = config.username;

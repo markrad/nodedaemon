@@ -120,7 +120,7 @@ try {
 
     if (config.getConfigSection('main').loggers?.mqtt ?? null) {
         loggerOptions.appenders.mqtt = { 
-            type: 'common/emitlogger', 
+            type: 'common/mqttlogger', 
             host: config.getConfigSection('main').loggers.mqtt.host,
             clientid: config.getConfigSection('main').loggers.mqtt.clientid,
             username: config.getConfigSection('main').loggers.mqtt.username,
@@ -182,14 +182,14 @@ try {
         config.getConfigSection('main').logLevel = defaultLogLevel.levelStr;
     }
 
-    if (!config.getConfigSection('main').appsDir) {
-        config.getConfigSection('main').appsDir = [];
-    }
-    else if (!Array.isArray(config.getConfigSection('main').appsDir)) {
-        config.getConfigSection('main').appsDir = [ config.getConfigSection('main').appsDir ];
-    }
+    // if (!config.getConfigSection('main').appsDir) {
+    //     config.getConfigSection('main').appsDir = [];
+    // }
+    // else if (!Array.isArray(config.getConfigSection('main').appsDir)) {
+    //     config.getConfigSection('main').appsDir = [ config.getConfigSection('main').appsDir ];
+    // }
 
-    let cmdAppsDir = [];
+    let cmdAppsDir = null;
 
     if (!program.opts().appsdir) {
         if (program.opts().replace) {
@@ -200,33 +200,42 @@ try {
         cmdAppsDir = program.opts().appsdir;
     }
 
-    config.getConfigSection('main').appsDir = program.opts().replace? cmdAppsDir : config.getConfigSection('main').appsDir.concat(cmdAppsDir);
+    // BUG: Multiple appsdir facility has been deprecated
+    // config.getConfigSection('main').appsDir = program.opts().replace? cmdAppsDir : config.getConfigSection('main').appsDir.concat(cmdAppsDir);
 
-    if (config.getConfigSection('main').appsDir.length == 0) {
-        config.getConfigSection('main').appsDir.push('./apps');
+    if (!config.getConfigSection('main').appsDir) {
+        config.getConfigSection('main').appsDir = cmdAppsDir? cmdAppsDir : './apps';
     }
 
-    config.getConfigSection('main').appsDir = config.getConfigSection('main').appsDir.map((item: string) => {
-        if (typeof item != 'string') {
-            fatalExit(`appsDir ${item} is invalid`, 4, defaultLogger);
-        }
-        return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
-    });
+    let appsDir: string = config.getConfigSection('main').appsDir;
 
-    config.getConfigSection('main').appsDir = Array.from(new Set(config.getConfigSection('main').appsDir));
-
-    config.getConfigSection('main').appsDir.forEach((item: string, index: number) => {
-        if (!fs.existsSync(item)) {
-            config.getConfigSection('main').appsDir[index] = null;
-            defaultLogger.error(`Specified appsdir ${item} does not exist`);
-        }
-    });
-
-    config.getConfigSection('main').appsDir = config.getConfigSection('main').appsDir.filter((item: string) => item != null);
-
-    if (config.getConfigSection('main').appsDir.length == 0) {
-        fatalExit('No valid apps directories were found', 4, defaultLogger);
+    if (appsDir && typeof appsDir != 'string') {
+        fatalExit(`appsDir ${appsDir} is invalid`, 4, defaultLogger);
     }
+    else {
+        config.getConfigSection('main').appsDir = Path.normalize(config.getConfigSection('main').appsDir);
+    }
+    // config.getConfigSection('main').appsDir = config.getConfigSection('main').appsDir.map((item: string) => {
+    //     if (typeof item != 'string') {
+    //         fatalExit(`appsDir ${item} is invalid`, 4, defaultLogger);
+    //     }
+    //     return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
+    // });
+
+    // config.getConfigSection('main').appsDir = Array.from(new Set(config.getConfigSection('main').appsDir));
+
+    // config.getConfigSection('main').appsDir.forEach((item: string, index: number) => {
+    //     if (!fs.existsSync(item)) {
+    //         config.getConfigSection('main').appsDir[index] = null;
+    //         defaultLogger.error(`Specified appsdir ${item} does not exist`);
+    //     }
+    // });
+
+    // config.getConfigSection('main').appsDir = config.getConfigSection('main').appsDir.filter((item: string) => item != null);
+
+    // if (config.getConfigSection('main').appsDir.length == 0) {
+    //     fatalExit('No valid apps directories were found', 4, defaultLogger);
+    // }
 
     if (!config.getConfigSection('main').ignoreApps) {
         config.getConfigSection('main').ignoreApps = [];
@@ -239,7 +248,7 @@ try {
         if (typeof item != 'string') {
             fatalExit(`ignoreApps ${item} is invalid`, 4, defaultLogger);
         }
-        return Path.normalize((!Path.isAbsolute(item))? Path.join(process.cwd(), item) : item);
+        return Path.normalize(Path.join(appsDir, item));
     });
 
     defaultLogger.level = config.getConfigSection('main').logLevel;
