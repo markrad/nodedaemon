@@ -61,6 +61,13 @@ export class WSWrapper extends EventEmitter {
                 try {
                     logger.debug(`Connecting to ${this._url}`);
                     this._client = await this._open(this._url);
+                    this._client.once('close', (code, reason) => {
+                        // It is possible to receive a close event before the open event
+                        let err = new Error(`Connection closed by server before open: ${code} ${reason}`);
+                        logger.error(err.message);
+                        this.emit('fatal', err);
+                        reject(err);
+                    });
                     if (this._connected) break;
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
@@ -112,9 +119,17 @@ export class WSWrapper extends EventEmitter {
                     this._connected = false;
                     this.emit('disconnected');
 
+                    // Only retry the connection on these close codes - all others are unrecoverable
+                    let handled = [ 1000, 1001, 1006, 1011, 1012, 1013 ];
+
                     if (!this._closing) {
                         logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
-                        await this.open();
+                        if (code in handled) {
+                            await this.open();
+                        }
+                        else {
+                            this.emit('fatal', new Error(`Connection closed by server: ${code} ${reason}`));
+                        }
                     }
                 })
                 .on('error', async (err) => {
@@ -197,6 +212,16 @@ export class WSWrapper extends EventEmitter {
             };
             client.once('open', connectSucceeded);
             client.once('error', connectFailed);
+            // client.once('close', (i, ...err) => {
+            //     // BUG: This will be called if the TLS verification fails - currently not handled
+            //     logger.warn(`Connection closed ${err[0]}`);
+            // });
+            client.once('unexpected-response', (_clientRequest, _incomingMessage) => {
+                logger.warn('Unexpected response');
+            });
+            client.once('upgrade', (_response) => {
+                logger.debug('Upgrade received');
+            });
         });
     }
 
