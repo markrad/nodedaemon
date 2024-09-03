@@ -10,16 +10,16 @@ block layout-content
     }
     window.onload = async function() {
       (async function setTemp() {
-        var response = await fetch(`http://${window.location.hostname}:4526/getentity?entity=sensor.netatmo_rr_netatmo1_indoor_netatmo1o1_temperature`);
+        var response = await fetch(`${window.location.origin}/getentity?entity=sensor.netatmo_rr_netatmo1_indoor_netatmo1o1_temperature`);
         const temp = await response.json();
         document.getElementById('temp').textContent = `Backyard temperature: ${temp.message}°F`;
         setTimeout(setTemp, 5 * 60 * 1000);
       })();
       (async function setSunTimes() {
         var response;
-        response = await fetch(`http://${window.location.hostname}:4526/getentity?entity=var.sunrise`);
+        response = await fetch(`${window.location.origin}/getentity?entity=var.sunrise`);
         const sunrise = await response.json();
-        response = await fetch(`http://${window.location.hostname}:4526/getentity?entity=var.sunset`);
+        response = await fetch(`${window.location.origin}/getentity?entity=var.sunset`);
         const sunset = await response.json();
         var dayBox = document.getElementById('daybox');
         dayBox.textContent = `Sunrise: ${dateString(new Date(sunrise.message))} Sunset: ${dateString(new Date(sunset.message))}`;
@@ -47,10 +47,3 @@ block layout-content
     div#daybox.time 
       //- | Sunrise: ? Sunset: ?
     div#temp.time
-
-//- <a href="https://time.is/Carnation" id="time_is_link" rel="nofollow" style="font-size:15px">Time in Carnation:</a>
-//- <span id="Carnation_z14e" style="font-size:15px"></span>
-//- <script src="//widget.time.is/en.js"></script>
-//- <script>
-//- time_is_widget.init({Carnation_z14e:{template:"TIME<br>DATE<br>SUN", date_format:"dayname, monthname dnum, year", sun_format:"Sunrise: srhour:srminute Sunset: sshour:ssminute<br>Day length: dlhoursh dlminutesm", coords:"47.6478800,-121.9140100"}});
-//- </script>

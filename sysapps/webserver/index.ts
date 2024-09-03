@@ -78,23 +78,29 @@ export default class WebServer extends AppParent {
         }
 
         this._root = path.normalize(this._root);
-        logger.info('Validated successfully');
 
         try {
-
+            if (config.certificate && !config.key) {
+                logger.error('Certificate specified but key is missing');
+                return false;
+            }
+            if (!config.certificate && config.key) {
+                logger.error('Key specified but certificate is missing');
+                return false;
+            }
             this._certificate = config.certificate ? readFileSync(path.join(this._root, config.certificate), { encoding: 'utf8' }) : null;
             this._key = config.key ? readFileSync(path.join(this._root, config.key), { encoding: 'utf8' }) : null;
             let siteLoc = path.join(this._root, 'sites/sites.json');
             let handler = async (_file?: string, _stats?: any) => {
-            this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' })).map((site: Site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
-            // sites.map((site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');        
-        }
+                this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' })).map((site: Site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
+            }
 
             logger.debug(`Reading sites from ${siteLoc}`);
             handler();
 
             this._watcher = hound.watch(siteLoc);
             this._watcher.on('change', handler)
+            logger.info('Validated successfully');
         }
         catch (err) {
             logger.error(`Failed to read sites file ${err}`);
