@@ -127,3 +127,6 @@ build/buildkit/
 
 # Internal sites
 sites.json
+
+# certificates and keys
+certs/

@@ -8,6 +8,7 @@ import Express from 'express';
 import serveFavicon = require('serve-favicon');
 import path from 'path';
 import http from 'http';
+import https from 'https';
 import { getLogger, Logger } from "log4js";
 import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
@@ -43,8 +44,10 @@ type Site = {
 
 export default class WebServer extends AppParent {
     private _port: number;
+    private _certificate: string;
+    private _key: string;
     private _app: Express.Application;
-    private _server: http.Server;
+    private _server: http.Server | https.Server;
     private _root: string;
     private _sites: string;
     private _watcher: any;
@@ -77,13 +80,16 @@ export default class WebServer extends AppParent {
         this._root = path.normalize(this._root);
         logger.info('Validated successfully');
 
-        let siteLoc = path.join(this._root, '/sites/sites.json');
-        let handler = async (_file?: string, _stats?: any) => {
+        try {
+
+            this._certificate = config.certificate ? readFileSync(path.join(this._root, config.certificate), { encoding: 'utf8' }) : null;
+            this._key = config.key ? readFileSync(path.join(this._root, config.key), { encoding: 'utf8' }) : null;
+            let siteLoc = path.join(this._root, 'sites/sites.json');
+            let handler = async (_file?: string, _stats?: any) => {
             this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' })).map((site: Site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
             // sites.map((site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');        
         }
 
-        try {
             logger.debug(`Reading sites from ${siteLoc}`);
             handler();
 
@@ -224,9 +230,22 @@ export default class WebServer extends AppParent {
                 .send('No such page');
         });
 
-        this._server = this._app.listen(this._port, () => {
-            logger.info(`Web server started on port ${this._port}`);
-        });
+        try {
+            if (this._certificate && this._key) {
+                this._server = https.createServer({ key: this._key, cert: this._certificate }, this._app).listen(this._port, () => {
+                    logger.info(`Web server started on port ${this._port}`);
+                });
+            }
+            else {
+                this._server = this._app.listen(this._port, () => {
+                    logger.info(`Web server started on port ${this._port}`);
+                });
+            }
+        }
+        catch (err) {
+            logger.error(`Failed to start server: ${err}`);
+            return false;
+        }
 
         return true;
     }
