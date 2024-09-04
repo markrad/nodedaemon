@@ -8,6 +8,14 @@ import { ConfigWrapper } from './common/ConfigWrapper';
 
 const CATEGORY: string = 'main';
 
+/**
+ * The main function that starts the application.
+ *
+ * @param version - The version of the application.
+ * @param config - The configuration wrapper object.
+ * @param log4js - The Log4js object for logging.
+ * @returns A promise that resolves when the application has started.
+ */
 async function main(version: string, config: ConfigWrapper, log4js: Log4js) {
     const LOGO: string = `
                                                   
@@ -67,6 +75,13 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___
     }
 }
 
+/**
+ * Exits the process with a fatal error message and return code.
+ * 
+ * @param message - The error message to display.
+ * @param returnCode - The return code to exit the process with.
+ * @param logger - (Optional) The logger to use for logging the error message. If not provided, a default logger will be used.
+ */
 function fatalExit(message: string, returnCode: number, logger?: Logger) {
     let defaultLogger = logger? logger : getLogger();
     defaultLogger.level = 'info';
@@ -78,6 +93,9 @@ const defaultLogLevel: Level = levels.WARN;
 var defaultLogger: Logger; 
 let configFile: string = '';
 
+/**
+ * Validate the configuration file before calling the main function.
+ */
 try {
     const program = new Command();
     var packageJSON: any = JSON.parse(fs.readFileSync('package.json').toString());
