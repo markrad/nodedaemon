@@ -229,7 +229,6 @@ export class HaMain extends EventEmitter {
                 //         this.emit('itemdeleted', item);
                 //     }
                 //     else {
-                //         // TODO: Handle this
                 //         logger.debug(`${eventType} unhandled: ${JSON.stringify(data, null, 4)}`)
                 //     }
                 // }
@@ -524,17 +523,17 @@ export class HaMain extends EventEmitter {
             let addComplete = async (name: string): Promise<void> => {
                 return new Promise((resolve, reject) => {
                     let timer: NodeJS.Timer = setTimeout(() => {
-                        this.off('itemadded', waitadd);
+                        this.off('itemadded', waitAdd);
                         reject(new Error('Timeout awaiting addition of new item'));
                     }, 5000);
-                    let waitadd = (item: IHaItem) => {
+                    let waitAdd = (item: IHaItem) => {
                         if (item.entityId == name) {
-                            this.off('itemadded', waitadd);
+                            this.off('itemadded', waitAdd);
                             clearTimeout(timer);
                             resolve();
                         }
                     };
-                    this.on('itemadded', waitadd);
+                    this.on('itemadded', waitAdd);
                 });
             };
             try {
@@ -748,7 +747,7 @@ export class HaMain extends EventEmitter {
             try {
                 let apps: AppInfo[] = new Array<AppInfo>();
                 const dir: Dir = await opendir(appsDirectory);
-                let appobject: IApplication;
+                let appObject: IApplication;
                 const filetype = process.versions.bun? '.ts' : '.js';
 
                 for await (const dirent of dir) {
@@ -767,8 +766,8 @@ export class HaMain extends EventEmitter {
                                 }
                                 else {
                                     let app = require(path.join(process.cwd(), fullname)).default;
-                                    appobject = new app(this, this._config);
-                                    appobject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
+                                    appObject = new app(this, this._config);
+                                    appObject.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
                                         try {
                                             await this._haInterface.callService(domain, service, data);
                                         }
@@ -776,11 +775,11 @@ export class HaMain extends EventEmitter {
                                             // Error already logged
                                         }
                                     });
-                                    apps.push({ name: appobject.constructor.name, path: location, instance: appobject, status: AppStatus.CONSTRUCTED, config: this._config.getConfigSection(dirent.name) });
+                                    apps.push({ name: appObject.constructor.name, path: location, instance: appObject, status: AppStatus.CONSTRUCTED, config: this._config.getConfigSection(dirent.name) });
                                 }
                             }
                             catch (err) {
-                                apps.push({ name: appobject?.constructor.name, path: location, instance: appobject, status: AppStatus.FAILED, config: this._config.getConfigSection(dirent.name) });
+                                apps.push({ name: appObject?.constructor.name, path: location, instance: appObject, status: AppStatus.FAILED, config: this._config.getConfigSection(dirent.name) });
                                 logger.warn(`Could not construct app in ${dirent.name} - ${err.message}`);
                             }
                         }

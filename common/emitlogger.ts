@@ -1,5 +1,6 @@
 "use strict";
 
+// FUTURE: Deprecate this?
 import { Layout, LoggingEvent } from 'log4js';
 import { EventEmitter } from 'events';
 import { appender, appenderConfig} from "./appender";
