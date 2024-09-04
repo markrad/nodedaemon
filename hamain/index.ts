@@ -44,6 +44,15 @@ export declare interface HaMain {
     emit<U extends keyof IHaMainEvents>(event: U, ...args: Parameters<IHaMainEvents[U]>): boolean;
 }
 
+/**
+ * Represents the `HaMain` class.
+ * 
+ * @remarks
+ * This class extends the `EventEmitter` class and serves as the main entry point for the application.
+ * It manages the initialization, starting, stopping, and restarting of the application and its associated components.
+ * 
+ * @public
+ */
 export class HaMain extends EventEmitter {
     private static _instance: HaMain = null;
     private _haInterface: HaInterface = null;
@@ -71,6 +80,12 @@ export class HaMain extends EventEmitter {
         }
         return HaMain._instance;
     }
+    /**
+     * Constructs a new instance of the HaMain class.
+     * 
+     * @param config - The configuration wrapper.
+     * @param version - The version string.
+     */
     constructor(config: ConfigWrapper, version: string) {
         super();
         this._config = config;
@@ -154,6 +169,12 @@ export class HaMain extends EventEmitter {
         HaMain._instance = this;
     }
 
+    /**
+     * Starts the application. Constructs the `HaInterface` object, subscribes to events, and processes the items.
+     * 
+     * @returns A promise that resolves to void.
+     * @throws Throws an error if an error occurs during the start process.
+     */
     public async start(): Promise<void> {
         try {
             if (this._memInterval > 0) {
@@ -305,6 +326,10 @@ export class HaMain extends EventEmitter {
         }
     }
 
+    /**
+     * Waits for Home Assistant to start.
+     * @returns A promise that resolves to void when Home Assistant is started.
+     */
     private async _waitHomeAssistantStarted(): Promise<void> {
         return new Promise<void>((resolve, _reject) => {
             this.once('homeassistantstarted', () => {
@@ -313,6 +338,12 @@ export class HaMain extends EventEmitter {
         });
     }
 
+    /**
+     * Restarts the specified app.
+     * If the app is currently running, it will be stopped before restarting.
+     * @param app - The app to restart.
+     * @returns A promise that resolves when the app has been restarted.
+     */
     public async restartApp(app: AppInfo): Promise<void> {
         if (app.status == AppStatus.RUNNING) {
             await this.stopApp(app);
@@ -320,16 +351,30 @@ export class HaMain extends EventEmitter {
         await this.startApp(app);
     }
 
+    /**
+     * Starts the specified app.
+     *
+     * @param app - The app to start.
+     * @returns A promise that resolves when the app has started.
+     */
     public async startApp(app: AppInfo): Promise<void> {
         return await this._startApp(app);
     }
 
-    private async _startApp(app: AppInfo, norunApps?: string[]): Promise<void> {
+    /**
+     * Starts the specified app.
+     * 
+     * @param app - The app to start.
+     * @param noRunApps - Optional. An array of app names that should not be started.
+     * @returns A promise that resolves when the app has started successfully.
+     * @throws If the app is not in a startable state or if there is an error starting the app.
+     */
+    private async _startApp(app: AppInfo, noRunApps?: string[]): Promise<void> {
         try {
             if (app.status != AppStatus.FAILED && app.status != AppStatus.RUNNING) {
                 if (app.instance.validate != undefined && app.instance.validate(app.config)) {
                     app.status = AppStatus.VALIDATED;
-                    if (norunApps == undefined || !norunApps.includes(app.name)) {
+                    if (noRunApps == undefined || !noRunApps.includes(app.name)) {
                         await app.instance.run();
                         app.status = AppStatus.RUNNING;
                         logger.info(`Started ${app.name}`);
@@ -352,6 +397,12 @@ export class HaMain extends EventEmitter {
         }
     }
 
+    /**
+     * Stops the specified app.
+     * 
+     * @param app - The app to stop.
+     * @returns A promise that resolves when the app is stopped successfully, or rejects with an error if the app fails to stop.
+     */
     public async stopApp(app: AppInfo): Promise<void> {
         return new Promise<void>(async (resolve, reject) => { 
             try {
@@ -369,6 +420,11 @@ export class HaMain extends EventEmitter {
         });
     }
 
+    /**
+     * Stops the process.
+     * 
+     * @returns A promise that resolves when the process is stopped.
+     */
     public async stop(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             try {
@@ -381,6 +437,12 @@ export class HaMain extends EventEmitter {
         });
     }
 
+    /**
+     * Restarts the process.
+     * 
+     * @returns A promise that resolves when the process is successfully restarted, or rejects with an error if the restart fails.
+     * @throws An error if the process is not running under keepalive.
+     */
     public async restart(): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             if (!process.env['KEEPALIVE_RUNNING']) {
@@ -398,6 +460,12 @@ export class HaMain extends EventEmitter {
         });
     }
 
+    /**
+     * Stops or restarts the application.
+     * 
+     * @param rc - The return code.
+     * @returns A promise that resolves when the operation is complete.
+     */
     private async _stopOrRestart(rc: number): Promise<void> {
         return new Promise<void>(async (resolve, reject) => {
             if (this._memHandle != null) {
@@ -430,6 +498,15 @@ export class HaMain extends EventEmitter {
         });
     }
 
+    /**
+     * Adds a sensor with the specified name, type, and value.
+     * 
+     * @param name - The name of the sensor.
+     * @param type - The type of the sensor.
+     * @param value - The value of the sensor.
+     * @returns A promise that resolves when the sensor is added successfully.
+     * @throws An error if the sensor with the same name already exists.
+     */
     public async addSensor(name: string, type: SensorType, value: boolean | string | number): Promise<void> {
         return new Promise(async (resolve, reject) => {
             if (type == SensorType.binary) {
@@ -471,48 +548,103 @@ export class HaMain extends EventEmitter {
         });
     }
 
+    /**
+     * Gets the path of the configuration file.
+     * 
+     * @returns The path of the configuration file.
+     */
     public get configPath(): string {
         return this._config.configPath;
     }
 
+    /**
+     * Gets the items manager.
+     *
+     * @returns The items manager.
+     */
     public get items(): ItemsManager {
         return this._items
     }
 
+    /**
+     * Gets the apps.
+     *
+     * @returns The apps.
+     */
     public get apps() {
         return this._apps;
     }
 
+    /**
+     * Retrieves an AppInfo object based on the provided name.
+     * @param name - The name of the app to retrieve.
+     * @returns The AppInfo object matching the provided name, or undefined if not found.
+     */
     public getApp(name: string): AppInfo {
         return this.apps.find(item => item.name == name);
     }
 
+    /**
+     * Retrieves an AppInfo object by path.
+     *
+     * @param name - The name of the app.
+     * @returns The AppInfo object found at the given path, or undefined if not found.
+     */
     public getAppByDirent(name: string): AppInfo {
         return this.apps.find(item => path.basename(item.path) == name);
     }
 
+    /**
+     * Gets the HA (Home Assistant) configuration.
+     *
+     * @returns The HA configuration.
+     */
     public get haConfig() {
         return this._haConfig;
     }
 
+    /**
+     * Gets the time the server was started.
+     *
+     * @returns The start time as a Date object.
+     */
     public get startTime(): Date {
         return this._starttime;
     }
 
+    /**
+     * Gets the version of the application.
+     *
+     * @returns The version as a string.
+     */
     public get version(): string {
         return this._version;
     }
 
+    /**
+     * Gets the connection status.
+     * @returns {boolean} The connection status.
+     */
     public get isConnected(): boolean {
         return this._haInterface
             ? this._haInterface.isConnected 
             : false;
     }
 
+    /**
+     * Gets the logging level.
+     * @returns The logging level as a string or Level object.
+     */
     public get logging(): string | Level {
         return logger.level;
     }
 
+    /**
+     * Sets the logging level.
+     * 
+     * @param value - The logging level to set. It can be either a string or a Level object.
+     * @throws Error - If an invalid logging level is passed.
+     */
     public set logging(value: string | Level) {
         if (!LogLevelValidator(value)) {
             let err: Error = new Error(`Invalid level passed: ${value}`);
@@ -524,18 +656,36 @@ export class HaMain extends EventEmitter {
         }
     }
 
+    /**
+     * Gets the configuration object.
+     *
+     * @returns The configuration object.
+     */
     public get config(): any {
         return this._config;
     }
 
+    /**
+     * Restarts the Home Assistant service.
+     * @returns A promise that resolves when the restart is complete.
+     */
     public async restartHA(): Promise<void> {
         await this._haInterface.callService('homeassistant', 'restart', {});
     }
 
+    /**
+     * Stops the Home Assistant service.
+     * @returns A promise that resolves when the service is stopped.
+     */
     public async stopHA(): Promise<void> {
         await this._haInterface.callService('homeassistant', 'stop', {});
     }
 
+    /**
+     * Processes an array of states.
+     * 
+     * @param states - The array of states to process.
+     */
     private _processItems(states: State[]) {
         states.forEach((item) => {
             let work: IHaItem;
@@ -553,6 +703,11 @@ export class HaMain extends EventEmitter {
         logger.info(`Number of log overrides not used is ${unusedCnt}`)
     }
 
+    /**
+     * Sets up an item instance.
+     *
+     * @param itemInstance - The item instance to set up.
+     */
     private _setupItem(itemInstance: IHaItem): void {
         itemInstance.on('callservice', async (domain: string, service: string, data: ServiceTarget) => {
             try {
@@ -580,6 +735,14 @@ export class HaMain extends EventEmitter {
         this.emit('itemadded', this.items.getItem(itemInstance.entityId));
 }
 
+    /**
+     * Retrieves the list of applications from the specified directory, excluding the ones in the ignoreApps array.
+     * 
+     * @param ignoreApps - An array of app locations to be ignored.
+     * @param appsDirectory - The directory path where the applications are located.
+     * @returns A promise that resolves to an array of AppInfo objects representing the retrieved applications.
+     * @throws If there is an error while retrieving the applications.
+     */
     private async _getApps(ignoreApps: string[], appsDirectory: string): Promise<AppInfo[]> {
         let ret = new Promise<AppInfo[]>(async (resolve, reject) => {
             try {
