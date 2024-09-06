@@ -17,7 +17,7 @@
     },
     "runArgs": [
         "-p=8822:8822",
-        "--network=host",
+        "--network=host"
     ],
     "mounts": [
         {
