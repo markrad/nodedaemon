@@ -3,8 +3,6 @@
 import { HaMain } from "../../hamain";
 
 import Express from 'express';
-// import serveFavicon.default as serveFavicon from 'serve-favicon';
-// import * as serveFavicon from 'serve-favicon';
 import serveFavicon = require('serve-favicon');
 import path from 'path';
 import http from 'http';
@@ -14,7 +12,9 @@ import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
 import { entityValidator } from "../../common/validator";
 import { HaParentItem, ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
-import { readFileSync } from "fs";
+import { readFileSync, statSync, unlinkSync, writeFileSync } from "fs";
+import { X509Certificate } from "crypto";
+
 const hound = require('hound');
 
 const CATEGORY = 'WebServer';
@@ -30,12 +30,6 @@ type GetResponseSuccess = {
     status: number;
     message: string;
 }
-// type GetResponse = {
-//     status: number;
-//     response: GetResponseError | GetResponseSuccess;
-//     // message?: string;
-//     // data?: string;
-// }
 
 type Site = {
     name: string;
@@ -51,11 +45,13 @@ export default class WebServer extends AppParent {
     private _root: string;
     private _sites: string;
     private _watcher: any;
+    // private _controller: HaMain;
     public constructor(controller: HaMain, config: any) {
         super(controller, logger);
         this._port = config.webserver?.port ?? 4526;
         this._app = Express(); 
         this._server = null;
+        // this._controller = controller;
         logger.info('Constructed');
     }
 /*
@@ -127,9 +123,19 @@ export default class WebServer extends AppParent {
 
         next();
     }
-
     
     public async run(): Promise<boolean> {
+
+        try {
+            const fqdn = this._certificate
+                ? (new X509Certificate(this._certificate)).subject.split('\n').find((line) => line.startsWith('CN=')).split('=')[1]
+                : 'localhost';
+            logger.debug(fqdn);
+            writeFileSync(`${this.controller.configPath}/url.txt`, `http${this._certificate ? 's' : ''}://${fqdn}:${this._port}`);
+        }
+        catch (err) {
+            logger.error(`Failed to write URL to file: ${err}`);
+        }
 
         this._app.set('views', path.join(this._root, 'views'));
         this._app.set('view engine', 'pug');
@@ -290,6 +296,14 @@ export default class WebServer extends AppParent {
                 return reject(new Error('Webserver is not running'));
             }
 
+            try {
+                statSync(`${this.controller.configPath}/url.txt`);
+                unlinkSync(`${this.controller.configPath}/url.txt`);
+            }
+            catch {
+                // Don't care - probably couldn't create the file
+            }
+            if (statSync(`${this.controller.configPath}/url.txt`))
             if (this._watcher) {
                 this._watcher.clear();
             }
