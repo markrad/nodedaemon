@@ -24,10 +24,21 @@ export class HaItemFactory {
         });
     }
 
+    /**
+     * Constructs a new instance of the `HaItems` class.
+     * 
+     * @param loggerLevels - An array of logger levels.
+     */
     private constructor(loggerLevels: LoggerLevel[]) {
         this._loggerLevels = loggerLevels;
     }
 
+    /**
+     * Retrieves the corresponding HaItem object based on the provided item.
+     * 
+     * @param item - The item to be converted into an HaItem object.
+     * @returns The HaItem object representing the provided item.
+     */
     public getItemObject(item: any): IHaItem {
         // BUG This breaks when Home Assistant is restarted due to trying to get events during that restart period - maybe fixed now
         // BUG This is NOT FIXED
@@ -61,6 +72,10 @@ export class HaItemFactory {
         }
     }
 
+    /**
+     * Retrieves a map of item objects.
+     * @returns A promise that resolves to a Map containing item objects.
+     */
     private static async _getItemObjects(): Promise<Map<string, IHaItemConstructor>> {
         return new Promise<Map<string, IHaItemConstructor>>(async (resolve, reject) => {
             const filetype = process.versions.bun? '.ts' : '.js';

@@ -30,6 +30,10 @@ export declare interface WSWrapper {
     emit<U extends keyof IWSWrapperEvents>(event: U, ...args: Parameters<IWSWrapperEvents[U]>): boolean;
 }
 
+/**
+ * WebSocket wrapper class that provides functionality for connecting to and communicating with a WebSocket server.
+ * @extends EventEmitter
+ */
 export class WSWrapper extends EventEmitter {
     private _url: string | URL;
     private _pingInterval: number;
@@ -37,6 +41,12 @@ export class WSWrapper extends EventEmitter {
     private _connected: boolean;
     private _closing: boolean;
     private _client: WebSocket;
+    /**
+     * Constructs a new instance of the WSWrapper class.
+     * 
+     * @param options - The options for configuring the WSWrapper.
+     * @throws Error if the options.url is not provided.
+     */
     public constructor(options: WSWrapperOptions) {
         super();
 
@@ -51,6 +61,15 @@ export class WSWrapper extends EventEmitter {
         logger.debug(`Constructed with ${this._url}`);
     }
     
+    /**
+     * Opens a connection to the specified URL.
+     * 
+     * @returns A Promise that resolves when the connection is successfully opened.
+     * @throws {DNSError} If there is an unhandled DNS error.
+     * @throws {GenericSyscallError} If there is an unhandled syscall error.
+     * @throws {ConnectionError} If there is an unhandled connection error.
+     * @throws {Error} If there is an unhandled error.
+     */
     public async open(): Promise<void> {
         this._closing = false;
         // Note: It appears that ENOTFOUND can be thrown during docker upheaval thus it may be transient
@@ -150,6 +169,12 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
+    /**
+     * Sends data over the WebSocket connection.
+     * 
+     * @param data - The data to be sent. It can be a string or a Buffer.
+     * @returns A promise that resolves when the data is sent successfully, or rejects with an error if sending fails.
+     */
     public async send(data: string | Buffer): Promise<void> {
         return new Promise<void>(async (resolve, reject) =>{
             if (!this._connected || this._client.readyState != WebSocket.OPEN) {
@@ -172,6 +197,11 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
+    /**
+     * Closes the WebSocket connection.
+     * 
+     * @returns A promise that resolves when the connection is closed.
+     */
     public async close(): Promise<void> {
         return new Promise(async (resolve, _reject) => {
             this._closing = true;
@@ -187,14 +217,31 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
+    /**
+     * Gets the connection status of the WebSocket wrapper.
+     * @returns {boolean} The connection status.
+     */
     public get connected(): boolean {
         return this._connected;
     }
 
+    /**
+     * Gets the URL of the WebSocket server.
+     *
+     * @returns The URL of the WebSocket server.
+     */
     public get url(): string | URL{
         return this._url;
     }
 
+    /**
+     * Opens a WebSocket connection to the specified URL with optional proxy configuration.
+     * 
+     * @param url - The URL to connect to.
+     * @param proxy - The proxy URL to use for the connection (optional).
+     * @returns A promise that resolves to the WebSocket instance upon successful connection.
+     * @throws An error if the connection fails.
+     */
     private async _open(url: string | URL, proxy?: string | URL): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
             let options: WebSocket.ClientOptions = {};
@@ -225,6 +272,16 @@ export class WSWrapper extends EventEmitter {
         });
     }
 
+    /**
+     * Runs pings to keep the WebSocket connection alive.
+     * 
+     * @remarks
+     * This method sets up a timer to send ping messages to the server at regular intervals.
+     * It also handles the corresponding pong messages received from the server.
+     * If no pong response is received within a certain threshold, it will attempt to reconnect.
+     * 
+     * @private
+     */
     private _runPings() {
         if (!this._pingTimer && this._pingInterval > 0) {
             let pingId: number = 0;
