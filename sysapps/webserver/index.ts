@@ -159,7 +159,6 @@ export default class WebServer extends AppParent {
 
         this._app.get('/healthcheck', async (req, res) => {
             let rc: GetResponseSuccess | GetResponseError;
-            logger.debug(req);
             try {
                 if (this.controller.isConnected == false) {
                     throw new Error('Not connected to home assistant');
