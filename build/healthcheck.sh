@@ -1,5 +1,5 @@
 #!/bin/sh
-URL_TEXT=/config/url.txt
+URL_TEXT=/tmp/url.txt
 # URL_TEXT=/home/markrad/source/nodedaemon/build/test/config/url.txt        # for testing
 
 [ -f $URL_TEXT ] && URL=$(head -n 1 $URL_TEXT) || exit 1
