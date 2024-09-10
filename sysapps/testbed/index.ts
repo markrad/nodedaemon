@@ -20,8 +20,8 @@ export default class TestBed extends AppParent {
         logger.info('Constructed');
     }
 
-    validate(config: any): boolean {
-        if (!super.validate(config)) {
+    public async validate(config: any): Promise<boolean> {
+        if (! await super.validate(config)) {
             return false;
         }
         // Since this is test code we don't do much in here

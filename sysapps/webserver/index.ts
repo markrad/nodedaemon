@@ -12,9 +12,10 @@ import { AppParent } from '../../common/appparent';
 import { HaGenericUpdateableItem } from "../../haitems/hagenericupdatableitem";
 import { entityValidator } from "../../common/validator";
 import { HaParentItem, ServicePromise, ServicePromiseResult } from "../../haitems/haparentitem";
-import { readFileSync, statSync, unlinkSync, writeFileSync } from "fs";
+import { readFile, stat, unlink, writeFile } from "fs/promises";
 import { X509Certificate } from "crypto";
 
+const URL_FILE = '/tmp/url.txt';
 const hound = require('hound');
 
 const CATEGORY = 'WebServer';
@@ -38,8 +39,8 @@ type Site = {
 
 export default class WebServer extends AppParent {
     private _port: number;
-    private _certificate: string;
-    private _key: string;
+    private _certificate: string = null;
+    private _key: string = null;
     private _app: Express.Application;
     private _server: http.Server | https.Server;
     private _root: string;
@@ -62,8 +63,8 @@ export default class WebServer extends AppParent {
         return items;
     }
 */
-    public validate(config: any): boolean {
-        if (!super.validate(config)) {
+    public async validate(config: any): Promise<boolean> {
+        if (! await super.validate(config)) {
             return false;
         }
         this._root = config.webdataroot;
@@ -75,32 +76,35 @@ export default class WebServer extends AppParent {
 
         this._root = path.normalize(this._root);
 
+        if (config.certificate && !config.key) {
+            logger.error('Certificate specified but key is missing');
+            return false;
+        }
+        if (!config.certificate && config.key) {
+            logger.error('Key specified but certificate is missing');
+            return false;
+        }
         try {
-            if (config.certificate && !config.key) {
-                logger.error('Certificate specified but key is missing');
-                return false;
+            if (config.certificate) {
+                this._certificate = await readFile(path.join(this._root, config.certificate), { encoding: 'utf8' });
+                this._key = await readFile(path.join(this._root, config.key), { encoding: 'utf8' });
             }
-            if (!config.certificate && config.key) {
-                logger.error('Key specified but certificate is missing');
-                return false;
-            }
-            this._certificate = config.certificate ? readFileSync(path.join(this._root, config.certificate), { encoding: 'utf8' }) : null;
-            this._key = config.key ? readFileSync(path.join(this._root, config.key), { encoding: 'utf8' }) : null;
             let siteLoc = path.join(this._root, 'sites/sites.json');
             let handler = async (_file?: string, _stats?: any) => {
-                this._sites = JSON.parse(readFileSync(siteLoc, { encoding: 'utf8' })).map((site: Site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
+                this._sites = JSON.parse(await readFile(siteLoc, { encoding: 'utf8' })).map((site: Site) => `<li><a href="${site.url}"><div class="NavButton">${site.name}</div></a></li>`).join('');
             }
 
             logger.debug(`Reading sites from ${siteLoc}`);
-            handler();
+            await handler();
 
             this._watcher = hound.watch(siteLoc);
             this._watcher.on('change', handler)
             logger.info('Validated successfully');
         }
         catch (err) {
-            logger.error(`Failed to read sites file ${err}`);
+            logger.error(`Validation failed: ${err}`);
             this._sites = '';
+            return false;
         }
 
         return true;
@@ -131,7 +135,7 @@ export default class WebServer extends AppParent {
                 ? (new X509Certificate(this._certificate)).subject.split('\n').find((line) => line.startsWith('CN=')).split('=')[1]
                 : 'localhost';
             logger.debug(fqdn);
-            writeFileSync(`${this.controller.configPath}/url.txt`, `http${this._certificate ? 's' : ''}://${fqdn}:${this._port}`);
+            await writeFile(URL_FILE, `http${this._certificate ? 's' : ''}://${fqdn}:${this._port}`);
         }
         catch (err) {
             logger.error(`Failed to write URL to file: ${err}`);
@@ -290,19 +294,18 @@ export default class WebServer extends AppParent {
     }
 
     public async stop(): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             if (!this._server) {
                 return reject(new Error('Webserver is not running'));
             }
 
             try {
-                statSync(`${this.controller.configPath}/url.txt`);
-                unlinkSync(`${this.controller.configPath}/url.txt`);
+                await stat(URL_FILE);
+                await unlink(URL_FILE);
             }
             catch {
                 // Don't care - probably couldn't create the file
             }
-            if (statSync(`${this.controller.configPath}/url.txt`))
             if (this._watcher) {
                 this._watcher.clear();
             }

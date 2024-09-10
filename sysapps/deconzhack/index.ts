@@ -78,8 +78,8 @@ export default class DeconzHack extends AppParent {
         logger.info('Constructed');
     }
 
-    validate(configIn: any): boolean {
-        if (!super.validate(configIn)) {
+    public async validate(configIn: any): Promise<boolean> {
+        if (! await super.validate(configIn)) {
             return false;
         }
         let config: Config = configIn;

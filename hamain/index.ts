@@ -371,7 +371,7 @@ export class HaMain extends EventEmitter {
     private async _startApp(app: AppInfo, noRunApps?: string[]): Promise<void> {
         try {
             if (app.status != AppStatus.FAILED && app.status != AppStatus.RUNNING) {
-                if (app.instance.validate != undefined && app.instance.validate(app.config)) {
+                if (app.instance.validate != undefined && await app.instance.validate(app.config)) {
                     app.status = AppStatus.VALIDATED;
                     if (noRunApps == undefined || !noRunApps.includes(app.name)) {
                         await app.instance.run();

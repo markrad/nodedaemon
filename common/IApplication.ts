@@ -2,7 +2,7 @@ import { Level } from "log4js";
 import { HaMain } from "../hamain";
 
 export interface IApplication {
-    validate(config: any): boolean;
+    validate(config: any): Promise<boolean>;
     run(): Promise<boolean>;
     stop(): Promise<void>;
     get logging(): string | Level;

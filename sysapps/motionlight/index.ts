@@ -34,9 +34,9 @@ export default class MotionLight extends AppParent {
         logger.info('Constructed');
     }
 
-    public validate(config: any): boolean {
+    public async validate(config: any): Promise<boolean> {
         const ops: string[] = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'];
-        if (!super.validate(config)) {
+        if (! await super.validate(config)) {
             return false;
         }
         if (!config || !config.entries) {

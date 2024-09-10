@@ -20,8 +20,8 @@ export default class TrashTalk extends AppParent {
         logger.info('Constructed');
     }
 
-    public validate(config: any): boolean {
-        if (!super.validate(config)) {
+    public async validate(config: any): Promise<boolean> {
+        if (! await super.validate(config)) {
             return false;
         }
         try {

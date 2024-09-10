@@ -23,7 +23,7 @@ export abstract class AppParent extends EventEmitter implements IApplication {
      * @param config - The configuration object to validate.
      * @returns A boolean indicating whether the validation was successful.
      */
-    validate(config: any): boolean {
+    async validate(config: any): Promise<boolean> {
         if (config && config.logLevel) {
             try {
                 let ll = LogLevelValidator(config.logLevel);
