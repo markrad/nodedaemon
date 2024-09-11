@@ -179,7 +179,7 @@ export default class ContainerVersionCheck extends AppParent {
                         );
                     }
                     catch (err) {
-                        logger.error(`Failed to retreive local containers from ${host.host}: ${err}`);
+                        logger.error(`Failed to retrieve local containers from ${host.host}: ${err}`);
                     }
                     try {
                         containerList.forEach(async (cwValue) => {
