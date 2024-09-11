@@ -121,8 +121,9 @@ git push && \
 git tag v$newver && \
 git push origin v$newver
 
-if ! docker buildx build --platform linux/arm64,linux/arm/v7,linux/amd64 --tag $repo/nodedaemon:$newver /home/markrad/source/nodedaemon/build --push
-then
-    echo Docker build and push failed
-    help
-fi
+# Remove the comment from the next lines to build and push the image
+# if ! docker buildx build --platform linux/arm64,linux/arm/v7,linux/amd64 --tag $repo/nodedaemon:$newver /home/markrad/source/nodedaemon/build --push
+# then
+#     echo Docker build and push failed
+#     help
+# fi
