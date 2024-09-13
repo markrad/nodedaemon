@@ -150,7 +150,7 @@ export default class ContainerVersionCheck extends AppParent {
     async run(): Promise<boolean> {
         let updateFunc: () => Promise<boolean> = async () => {
             return new Promise<boolean>(async (resolve, _reject) => {
-                this._hosts.forEach(async (host) => {
+                for (let host of this._hosts) {
                     logger.debug(`Processing host ${host.host}`);
                     let containerList: ContainerWrapper[] = [];
                     try {
@@ -182,7 +182,7 @@ export default class ContainerVersionCheck extends AppParent {
                         logger.error(`Failed to retrieve local containers from ${host.host}: ${err}`);
                     }
                     try {
-                        containerList.forEach(async (cwValue) => {
+                        for (let cwValue of containerList) {
                             let repo: string = cwValue.container.name.includes('/')
                                 ? cwValue.container.name
                                 : 'library/' + cwValue.container.name;
@@ -207,7 +207,7 @@ export default class ContainerVersionCheck extends AppParent {
                                     cwValue.containerEntry.registry.password,
                                     undefined, 
                                     undefined,
-                                    tagOptions));
+                                    tagOptions), cwValue.container.version);
                                 let updated: string = cwValue.container.version == highTag? '' : ' - update available';
                                 logger.info(`Image ${cwValue.container.name}: Current ${cwValue.container.version} Latest ${highTag}${updated}`);
                                 cwValue.containerEntry.currentEntity.updateState(cwValue.container.version, false);
@@ -216,12 +216,12 @@ export default class ContainerVersionCheck extends AppParent {
                             catch (err) {
                                 logger.error(`Failed to retrieve tags for ${repo}: ${(err as Error).message}`)
                             }
-                        });
+                        }
                     }
                     catch (err) {
                         logger.error(`Failed to connect to docker: ${(err as Error).message}`)
                     }
-                });
+                }
                 resolve(true);
             });
         }
@@ -282,10 +282,11 @@ export default class ContainerVersionCheck extends AppParent {
         });
     }
 
-    private static async _getHighTag(tags: string[]): Promise<string> {
-
-        let highTag = tags.filter((t) => /^\d+\.\d+\.\d+$/.test(t))
-            .map((t) => ({ version: t, work: parseInt(t.split('.')
+    private static async _getHighTag(tags: string[], currentVersion: string): Promise<string> {
+        let [ front, back ] = currentVersion.replace(/\d+\.\d+\.\d+/, '\n').split('\n');
+        const regex = new RegExp(`^${front}\\d+\\.\\d+\\.\\d+${back}$`);
+        let highTag = tags.filter((t) => regex.test(t))
+            .map((t) => ({ version: t, work: parseInt(t.slice(0, t.length - back.length).slice(front.length).split('.')
             .map((p) => p.padStart(4, '0')).join('')) }))
             .reduce((l, r) => l.work > r.work? l : r, { version: '0.0.0', work: 0 }).version;
         
