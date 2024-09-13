@@ -28,7 +28,7 @@ const commandInfo: CommandInfo = {
         {
             subcommandName: 'on',
             subcommandParm: '[item]',
-            description: 'Switch [itme] to on'
+            description: 'Switch [item] to on'
         },
         {
             subcommandName: 'off',

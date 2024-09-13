@@ -39,8 +39,8 @@ export declare interface HaInterface {
 }
 
 export class HaInterface extends EventEmitter {
-    private static readonly APIPATH = '/api/websocket';
-    private static readonly RESTPATH = '/api';
+    private static readonly API__PATH = '/api/websocket';
+    private static readonly REST_PATH = '/api';
     private _accessToken: string;
     private _client: WSWrapper = null;
     private _restProtocol: typeof http | typeof https;
@@ -54,6 +54,16 @@ export class HaInterface extends EventEmitter {
     // private _running: boolean = false;
     private _waitAuth: EventWaiter = new EventWaiter();
     private _packetTracker: PacketTracker = new PacketTracker();
+    /**
+     * Constructs a new instance of the `Hainterface` class.
+     * 
+     * @param useTLS - Specifies whether to use TLS for the connection.
+     * @param hostname - The hostname of the server to connect to.
+     * @param port - The port number of the server to connect to.
+     * @param accessToken - The access token for authentication.
+     * @param proxy - The proxy URL for the connection (optional).
+     * @param pingInterval - The interval (in seconds) for sending ping messages (default: 30).
+     */
     public constructor(useTLS: boolean, hostname: string, port: number,  accessToken: string, proxy: string | URL = null, pingInterval: number = 30) {
         super();
         this._accessToken = accessToken;
@@ -70,11 +80,16 @@ export class HaInterface extends EventEmitter {
         }
     }
 
+    /**
+     * Starts the connection to the server.
+     * 
+     * @returns A promise that resolves when the connection is successfully established, or rejects with an error if the connection fails.
+     */
     public async start(): Promise<void> {
         return new Promise<void>(async (resolve, reject): Promise<void> => {    
             try {
                 let options: WSWrapperOptions = {
-                    url: this._protocol + this._hostname + ':' + this._port.toString() + HaInterface.APIPATH,
+                    url: this._protocol + this._hostname + ':' + this._port.toString() + HaInterface.API__PATH,
                     proxyUrl: this._proxy,
                     pingInterval: this._pingInterval,
                     level: logger.level
@@ -155,6 +170,11 @@ export class HaInterface extends EventEmitter {
         });
     }
 
+    /**
+     * Stops the operation of the interface.
+     * 
+     * @returns A promise that resolves when the interface has stopped.
+     */
     public async stop(): Promise<void> {
         return new Promise<void>(async (resolve, _reject) => {
             logger.info('Closing');
@@ -167,18 +187,29 @@ export class HaInterface extends EventEmitter {
         });
     }
 
+    /**
+     * Gets the connection status.
+     *
+     * @returns {boolean} The connection status.
+     */
     public get isConnected() {
         return this._connected;
     }
 
+    /**
+     * Gets the authentication status.
+     * @returns {boolean} The authentication status.
+     */
     public get isAuthenticated() {
         return this._waitAuth.EventIsResolved;
     }
 
-    // public get isHaRunning() {
-    //     return this._running;
-    // }
-
+    /**
+     * Creates a packet of the specified type.
+     * 
+     * @param packetType - The type of the packet.
+     * @returns The created packet.
+     */
     private _makePacket(packetType: string): IOutPacket {
         let packet: IOutPacket = { id: ++this._id, type: packetType };
         logger.trace(`id=${packet.id};type=${packet.type}`);
@@ -187,20 +218,32 @@ export class HaInterface extends EventEmitter {
 
     public async subscribe() {
         return new Promise(async (resolve, reject) => {
-            //await this._waitHaRunning();
-            await this._waitAuthenticated();
-            this._sendPacket(this._makePacket('subscribe_events'))
-                .then((response: any) => {
-                    logger.info('Subscribed to events');
-                    resolve(response.result);
-                })
-                .catch((err) => {
-                    logger.error(`Error subscribing to events: ${err}`);
-                    reject(err);
-                });
+            try {
+                await this._waitAuthenticated();
+                let response = await this._sendPacket(this._makePacket('subscribe_events'));
+                logger.info('Subscribed to events');
+                resolve((response as IServiceSuccess).result);
+            }
+            catch (err) {
+                logger.error(`Error subscribing to events: ${err}`);
+                reject(err);
+            }
+            // this._sendPacket(this._makePacket('subscribe_events'))
+            //     .then((response: any) => {
+            //         logger.info('Subscribed to events');
+            //         resolve(response.result);
+            //     })
+            //     .catch((err) => {
+            //         logger.error(`Error subscribing to events: ${err}`);
+            //         reject(err);
+            //     });
         });
     }
 
+    /**
+     * Retrieves the states from the Home Assistant interface.
+     * @returns A promise that resolves to an array of states.
+     */
     public async getStates(): Promise<any []> {
         return new Promise<any []>(async (resolve, reject) => {
             // await this._waitHaRunning();
@@ -216,21 +259,39 @@ export class HaInterface extends EventEmitter {
         });
     }
 
+    /**
+     * Retrieves the configuration asynchronously.
+     * @returns A promise that resolves with the configuration object.
+     * @throws If there is an error retrieving the configuration.
+     */
     public async getConfig(): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
-            this._sendPacket(this._makePacket('get_config'))
-                .then((response: any) => {
-                    logger.debug('Config acquired');
-                    // this._running = 'RUNNING' == response.result.state;
-                    resolve(response.result);
-                })
-                .catch((err) => {
-                    logger.error(`Error getting config: ${err}`);
-                    reject(err);
-                });
+            try {
+                let response = await this._sendPacket(this._makePacket('get_config'));
+                logger.debug('Config acquired');
+                resolve((response as IServiceSuccess).result);
+            }
+            catch (err) {
+                logger.error(`Error getting config: ${err}`);
+                reject(err);
+            }
+            // this._sendPacket(this._makePacket('get_config'))
+            //     .then((response: any) => {
+            //         logger.debug('Config acquired');
+            //         // this._running = 'RUNNING' == response.result.state;
+            //         resolve(response.result);
+            //     })
+            //     .catch((err) => {
+            //         logger.error(`Error getting config: ${err}`);
+            //         reject(err);
+            //     });
         });
     }
 
+    /**
+     * Retrieves the panels from the server.
+     * @returns A Promise that resolves with a string representing the panels.
+     */
     public async getPanels(): Promise<string> {
         return new Promise<string>(async (resolve, reject) => {
             // await this._waitHaRunning();
@@ -246,6 +307,14 @@ export class HaInterface extends EventEmitter {
         });
     }
 
+    /**
+     * Calls a service with the specified domain, service, and data.
+     * 
+     * @param domain - The domain of the service.
+     * @param service - The name of the service.
+     * @param data - The data to be passed to the service.
+     * @returns A promise that resolves to a string representing the result of the service call.
+     */
     public async callService(domain: string, service: string, data: ServiceTarget): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             let packet = { id: ++this._id, type: 'call_service', domain: domain, service: service, service_data: data };
@@ -261,7 +330,16 @@ export class HaInterface extends EventEmitter {
         });
     }
 
-    private _getrestparms(entityId: string, value: boolean | string | number, newEntity: boolean ): { body: any, options: any } {
+    /**
+     * Retrieves the REST parameters for making a POST request to update the state of an entity.
+     * 
+     * @param entityId - The ID of the entity to update.
+     * @param value - The new value for the state of the entity.
+     * @param newEntity - Indicates whether the entity is new or not.
+     * @returns An object containing the request body and options for the POST request.
+     */
+    private _getRestParms(entityId: string, value: boolean | string | number, newEntity: boolean ): { body: any, options: any } {
+        // TODO: Clean up this any types
         const body: any = {
             state: value,
             attributes: {}
@@ -273,7 +351,7 @@ export class HaInterface extends EventEmitter {
         const options: any = {
             hostname: this._hostname,
             port: this._port.toString(),
-            path: `${HaInterface.RESTPATH}/states/${entityId}`,
+            path: `${HaInterface.REST_PATH}/states/${entityId}`,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -285,10 +363,16 @@ export class HaInterface extends EventEmitter {
         return { body: body, options: options };
     }
 
+    /**
+     * Adds a sensor with the specified entityId, value, and optional attributes.
+     * 
+     * @param entityId - The ID of the sensor entity.
+     * @param value - The value of the sensor (boolean, string, or number).     * @param attributes - Optional attributes to be added to the sensor.     * @returns A promise that resolves when the sensor is successfully added, or rejects with an error.te fails.
+     */
     public async addSensor(entityId: string, value: boolean | string | number, attributes?: object): Promise<void> {
         return new Promise<void>((resolve, reject) => {
 
-            const parameters = this._getrestparms(entityId, value, true);
+            const parameters = this._getRestParms(entityId, value, true);
 
             if (attributes) {
                 parameters.body.attributes = { ...parameters.body.attributes, ...attributes };
@@ -309,9 +393,16 @@ export class HaInterface extends EventEmitter {
         });
     }
 
+    /**
+     * Converts a JSON string or Buffer into a service message object.
+     * 
+     * @param msgJSON - The JSON string or Buffer to be converted.
+     * @returns The converted service message object.
+     * @throws Error if the server response is unrecognized.
+     */
     public async updateSensor(entityId: IHaItem, value: boolean | string | number, forceUpdate: boolean): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const parameters = this._getrestparms(entityId.entityId, value, false);
+            const parameters = this._getRestParms(entityId.entityId, value, false);
 
             parameters.body.attributes = { ...parameters.body.attributes, ...entityId.attributes };
 
@@ -359,48 +450,35 @@ export class HaInterface extends EventEmitter {
         }
     }
 
-    // private async _wait(seconds: number) {
-    //     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-    // }
-
+    /**
+     * Sets the '_connected' flag to false.
+     */
     private _kill() {
         this._connected = false;
-        // this._running = false;
-        // clearTimeout(this._pingInterval);
     }
 
+    /**
+     * Waits for authentication to complete.
+     * @returns A promise that resolves when authentication is complete.
+     */
     private async _waitAuthenticated(): Promise<void> {
-        return new Promise<void>((resolve, _reject) => {
-            this._waitAuth.EventWait()
-            .then(() => {
-                resolve()
-            });
+        return new Promise<void>(async (resolve, _reject) => {
+            await this._waitAuth.EventWait();
+            resolve();
+            // this._waitAuth.EventWait()
+            // .then(() => {
+            //     resolve()
+            // });
         })
     }
 
-    // private async _waitHaRunningx(): Promise<void> {
-    //     return new Promise<void>(async (resolve, _reject) => {
-    //         if (this._running) {
-    //             resolve();
-    //         }
-    //         else {
-    //             while ('RUNNING' != (await this.getConfig()).state) {
-    //                 try {
-    //                     logger.info('Waiting for HA to signal RUNNING');
-    //                     await this._wait(3);
-    //                 }
-    //                 catch (err) {
-    //                     logger.warn(`Failed to get config - will delay ten seconds`);
-    //                     await this._wait(10);
-    //                 }
-    //             }
-
-    //             resolve();
-    //         }
-    //     });
-    // }
-
-    private async _sendPacket(packet: IOutPacket/*, handler?:Function*/): Promise<IServiceSuccess | IServiceError | IServicePong> {
+    /**
+     * Sends a packet to the HA server.
+     *
+     * @param packet - The packet to send.
+     * @returns A promise that resolves with the response from the server.
+     */
+    private async _sendPacket(packet: IOutPacket): Promise<IServiceSuccess | IServiceError | IServicePong> {
         return new Promise<IServiceSuccess | IServiceError | IServicePong>(async (resolve, reject) => {
             await this._waitAuthenticated();
             logger.trace(`Sending packet id=${packet.id};type=${packet?.type || 'none'}`);

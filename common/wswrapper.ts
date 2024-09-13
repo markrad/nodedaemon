@@ -11,6 +11,9 @@ import { dumpError } from './errorUtil';
 const CATEGORY = 'WSWrapper';
 var logger = getLogger(CATEGORY);
 
+/**
+ * Options for WSWrapper.
+ */
 export type WSWrapperOptions = {
     url: string | URL;
     proxyUrl: string | URL;
@@ -18,6 +21,9 @@ export type WSWrapperOptions = {
     level?: string | Level;
 }
 
+/**
+ * Represents the events supported by the IWSWrapper interface.
+ */
 export interface IWSWrapperEvents {
     'connected': () => void;
     'disconnected': () => void;
@@ -25,6 +31,11 @@ export interface IWSWrapperEvents {
     'fatal': (err: any) => void;
 };
 
+/**
+ * Represents a WebSocket wrapper.
+ * 
+ * @interface
+ */
 export declare interface WSWrapper {
     on<U extends keyof IWSWrapperEvents>(event: U, listner: IWSWrapperEvents[U]): this;
     emit<U extends keyof IWSWrapperEvents>(event: U, ...args: Parameters<IWSWrapperEvents[U]>): boolean;
