@@ -1,5 +1,14 @@
 import { Logger } from "log4js";
 
+/**
+ * Calculates the total number of event listeners attached to an instance that implements EventEmitter.
+ * 
+ * @param instance - The instance that implements EventEmitter.
+ * @param logger - The logger used for logging warnings and errors.
+ * @returns The total number of event listeners attached to the instance.
+ * 
+ * @ Note This function is for debugging only
+ */
 export function eventTender(instance: any, logger: Logger): number {
     let count = 0;
     try {
@@ -10,7 +19,7 @@ export function eventTender(instance: any, logger: Logger): number {
             let events = this.eventNames();
             events.forEach((item: string | Symbol) => {
                 let work: number = this.listenerCount(item);
-                logger.info(`Event ${String(item)} has ${work}`);       // TODO Change this to debug
+                logger.debug(`Event ${String(item)} has ${work}`);
                 count += work;
             });
         }

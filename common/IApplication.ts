@@ -1,6 +1,9 @@
 import { Level } from "log4js";
 import { HaMain } from "../hamain";
 
+/**
+ * Interface for applications
+ */
 export interface IApplication {
     validate(config: any): Promise<boolean>;
     run(): Promise<boolean>;
