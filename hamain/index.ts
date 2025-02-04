@@ -72,7 +72,7 @@ export class HaMain extends EventEmitter {
     private _pingInterval: number = NaN;
     private _memInterval: number = NaN;
     private _memHandle: NodeJS.Timer = null;
-    private _configWatcher: any;
+    // private _configWatcher: any;
     private _loggerLevels: LoggerLevel[];
     public static getInstance(): HaMain {
         if (!HaMain._instance) {
@@ -471,7 +471,7 @@ export class HaMain extends EventEmitter {
                 clearInterval(this._memHandle);
                 this._memHandle = null;
             }
-            this._configWatcher.clear();
+            // this._configWatcher.clear();
             this._apps.forEach(async (app) => {
                 try {
                     await this.stopApp(app);
