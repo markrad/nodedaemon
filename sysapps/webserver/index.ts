@@ -178,6 +178,7 @@ export default class WebServer extends AppParent {
                 rc = { status: 200, message: 'Healthy'};
             }
             catch (err) {
+                logger.error(`Health check failed: ${err}`);
                 rc = { status: 500, error: err.message };
             }
 
