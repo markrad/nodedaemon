@@ -194,7 +194,7 @@ export class HaParentItem extends EventEmitter implements IHaItem {
                     resolve({ result: ServicePromiseResult.Success, err: null });
                 }
                 else {
-                    var err = new Error('New state did not match expected state');
+                    var err = new Error(`New state did not match expected state - new state: ${that.state}, expected state: ${expectedState}`);
                     this.logger.info(`${err.message}`);
                     resolve({ result:ServicePromiseResult.Warn, err: err });
                 }
