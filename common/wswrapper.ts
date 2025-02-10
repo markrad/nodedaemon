@@ -87,18 +87,25 @@ export class WSWrapper extends EventEmitter {
         let handled = [ 'ECONNREFUSED', 'ETIMEDOUT', 'EHOSTUNREACH' ];
         return new Promise(async (resolve, reject) => {
 
+            let earlyClose = (code: number, reason: string) => {
+                // It is possible to receive a close event before the open event
+                let err = new Error(`Connection closed by server before open: ${code} ${reason}`);
+                logger.error(err.message);
+                this.emit('fatal', err);
+                reject(err);
+            };
+
             while (true) {
                 try {
                     logger.debug(`Connecting to ${this._url}`);
                     this._client = await this._open(this._url);
-                    this._client.once('close', (code, reason) => {
-                        // It is possible to receive a close event before the open event
-                        let err = new Error(`Connection closed by server before open: ${code} ${reason}`);
-                        logger.error(err.message);
-                        this.emit('fatal', err);
-                        reject(err);
-                    });
-                    if (this._connected) break;
+                    this._client.once('close', earlyClose);
+                    if (this._connected)
+                    {
+                        logger.debug('Open event received');
+                        this._client.removeListener('close', earlyClose);
+                        break;
+                    }
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
                 catch (err) {
@@ -154,7 +161,7 @@ export class WSWrapper extends EventEmitter {
 
                     if (!this._closing) {
                         logger.warn(`Connection closed by server: ${code} ${reason} - reconnecting`);
-                        if (code in handled) {
+                        if (handled.includes(code)) {
                             await this.open();
                         }
                         else {
