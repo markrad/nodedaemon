@@ -37,6 +37,7 @@
             "env": {
                 "HAINTERFACE_LOGGING": "info",
                 "HAMAIN_LOGGING": "info",
+                "WSWRAPPER_LOGGING": "debug",
                 "NODE_OPTIONS": "--use-openssl-ca"
             }
         },

@@ -92,7 +92,7 @@ export class HaInterface extends EventEmitter {
                     url: this._protocol + this._hostname + ':' + this._port.toString() + HaInterface.API__PATH,
                     proxyUrl: this._proxy,
                     pingInterval: this._pingInterval,
-                    level: logger.level
+                    level: process.env.WSWRAPPER_LOGGING? process.env.WSWRAPPER_LOGGING : logger.level
                 };
                 this._client = new WSWrapper(options);
                 logger.info(`Connecting to ${this._client.url}`);
