@@ -17,7 +17,9 @@
     },
     "runArgs": [
         "-p=8822:8822",
-        "--network=host"
+        "--network=host",
+        "--volume=/var/run/docker.sock:/var/run/docker.sock",
+        "--volume=/home/markrad/.docker/buildx:/home/bun/.docker/buildx"
     ],
     "mounts": [
         {
