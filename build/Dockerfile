@@ -8,7 +8,7 @@ RUN apk update
 RUN apk --no-cache add curl jq git ca-certificates
 RUN npm install -g npm@9.3.0
 RUN npm install -g typescript
-RUN git -c advice.detachedHead=false clone -b v1.9.1 https://github.com/markrad/nodedaemon.git
+RUN git -c advice.detachedHead=false clone -b v1.9.2 https://github.com/markrad/nodedaemon.git
 
 WORKDIR /nodedaemon
 
@@ -19,10 +19,10 @@ RUN tsc
 ADD healthcheck.sh ./healthcheck.sh
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "./healthcheck.sh" ]
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# COPY entrypoint.sh /entrypoint.sh
+# RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+# ENTRYPOINT ["/entrypoint.sh"]
 
 # TODO Add --inspect as arg between keepalive and nodedaemon
 CMD [ "node", "./output/tools/keepalive/index.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
