@@ -24,5 +24,7 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "./
 
 # ENTRYPOINT ["/entrypoint.sh"]
 
+USER node
+
 # TODO Add --inspect as arg between keepalive and nodedaemon
 CMD [ "node", "./output/tools/keepalive/index.js", "./output/nodedaemon.js", "-c", "/config/config.yaml" ]
