@@ -11,7 +11,8 @@
             "extensions": [
                 "oven.bun-vscode",
                 "maixiaojie.git-emoji",
-                "redhat.vscode-yaml"
+                "redhat.vscode-yaml",
+                "ms-azuretools.vscode-containers"
             ]
         }
     },
