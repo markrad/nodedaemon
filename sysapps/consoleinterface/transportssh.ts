@@ -15,8 +15,8 @@ const CATEGORY: string = 'TransportSSH';
 var logger = getLogger(CATEGORY);
 
 export type User = {
-    userid: Buffer;
-    password: Buffer;
+    userid: string;
+    password: string;
 }
 
 export class TransportSSH implements ITransport {
@@ -45,7 +45,7 @@ export class TransportSSH implements ITransport {
             if (!user.userid || !user.password) {
                 throw new Error('Incorrect format for userids');
             }
-            this._users.push({ userid: Buffer.from(user.userid), password: Buffer.from(user.password) });
+            this._users.push(user);
         });
 
         let key = config.keyFile;
