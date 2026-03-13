@@ -138,9 +138,10 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
         // this._transport = transport;
         this._client
         .on('authentication', (ctx: AuthContext) => {
+            let encoder = new TextEncoder();
             this._user = Buffer.from(ctx.username);
             let found: User = transport.Users.find((entry) => {
-                return entry.userid.length == this._user.length && Crypto.timingSafeEqual(this._user, entry.userid);
+                return entry.userid.length == this._user.length && Crypto.timingSafeEqual(this._user, encoder.encode(entry.userid));
             });
             if (!found) {
                 return ctx.reject();
@@ -149,7 +150,7 @@ ___  ___  ___| ___  ___| ___  ___  _ _  ___  ___\r
             switch (ctx.method) {
                 case 'password':
                     let password: Buffer = Buffer.from(ctx.password);
-                    if (password.length != found.password.length || !Crypto.timingSafeEqual(password, found.password)) {
+                    if (password.length != found.password.length || !Crypto.timingSafeEqual(password, encoder.encode(found.password))) {
                         return ctx.reject();
                     }
                 break;
