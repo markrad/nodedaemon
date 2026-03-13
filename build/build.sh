@@ -101,29 +101,30 @@ newver=$(IFS="." ; echo "${parts[*]}")
 echo This will update the version from $version to $newver and push a new tag
 read -p "Do you wish to continue? [Yy] " response
 
-if [ $response != "Y" ] && [ $response != "y" ]
-then
+if ! [[ "${response:-Y}" =~ ^[Yy]$ ]]; then
     echo Exiting
     exit 4
 fi
 
 echo Testing npm install
-npm install --dry-run || { echo 'npm install failed' ; exit 1; }
+npm install --dry-run > /dev/null || { echo 'npm install failed' ; exit 1; }
 
 echo Updating
 
-sed -i s/$version/$newver/ Dockerfile
+sed -i "s/${version}/${newver}/" Dockerfile
 sed -i "3,3 s/${version}/${newver}/" ../package.json
 
-git add --verbose Dockerfile ../package.json && \
+echo Committing version changes
+git add Dockerfile ../package.json && \
 git commit -m ":bookmark: Bump version to $newver" && \
 git push && \
 git tag v$newver && \
 git push origin v$newver
 
+echo Building image
 # Remove the comment from the next lines to build and push the image
-# if ! docker buildx build --platform linux/arm64,linux/arm/v7,linux/amd64 --tag $repo/nodedaemon:$newver /home/markrad/source/nodedaemon/build --push
-# then
-#     echo Docker build and push failed
-#     help
-# fi
+if ! docker buildx build --platform linux/arm64,linux/arm/v7,linux/amd64 --tag $repo/nodedaemon:$newver /workspaces/nodedaemon/build --push
+then
+    echo Docker build and push failed
+    help
+fi

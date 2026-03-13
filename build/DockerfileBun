@@ -12,6 +12,8 @@ RUN apt-get update \
     gpg \
     ca-certificates \
     lsb-release \
+    jq \
+    gh \
     && apt-get auto-remove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/* \
@@ -41,4 +43,4 @@ RUN rm -rf ./junk
 RUN groupadd -g 1001 docker
 RUN usermod -aG docker bun
 
-USER bun
+# USER bun
