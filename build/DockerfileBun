@@ -43,4 +43,4 @@ RUN rm -rf ./junk
 RUN groupadd -g 1001 docker
 RUN usermod -aG docker bun
 
-# USER bun
+USER bun
